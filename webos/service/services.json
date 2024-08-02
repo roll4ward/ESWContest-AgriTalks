@@ -1,0 +1,9 @@
+{
+  "id": "xyz.rollforward.app.service",
+  "description": "HelloWorld Service",
+  "services": [
+    {
+      "name": "xyz.rollforward.app.service"
+    }
+  ]
+}
