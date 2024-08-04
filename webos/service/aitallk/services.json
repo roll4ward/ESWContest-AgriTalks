@@ -1,0 +1,9 @@
+{
+  "id": "xyz.rollforward.app.aitalk",
+  "description": "HelloWorld Service",
+  "services": [
+    {
+      "name": "xyz.rollforward.app.aitalk"
+    }
+  ]
+}
