@@ -6,9 +6,13 @@
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
+    "bootstrap": "^5.3.3",
     "react": "^18.3.1",
+    "react-bootstrap": "^2.10.4",
     "react-dom": "^18.3.1",
     "react-scripts": "5.0.1",
+    "styled-component": "^2.8.0",
+    "styled-components": "^6.1.12",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
@@ -16,8 +20,8 @@
     "build": "react-scripts build && npm run info-update",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "webos-pack" : "ares-package -o ipk build",
-    "info-update" : "cp webos/* build/"
+    "webos-pack": "ares-package -o ipk build",
+    "info-update": "cp webos/* build/"
   },
   "eslintConfig": {
     "extends": [
