@@ -1,64 +1,66 @@
-var pkg_info = require("./package.json");
-let service_id = pkg_info.name;
+const pkg_info = require("./package.json");
+const config = require("./config.json")
 
-const http = require("https");
+const { aitalk_response, api_ask_parameters, error } = require("./dto");
 
-var Service = require("webos-service");
-var aitalk_service = new Service(service_id);
+// API URL의 Protocl에 따라 다른 모듈 import
+const http = config.api_url.startsWith("https") ? require("https") : require("http");
 
-// ai와 talk 요청 method
-aitalk_service.register("talk", (message) => { 
-  var command = message.payload.command
-    ? message.payload.command
-    : "No send message...";
+const Service = require("webos-service");
 
-  let url = "https://rollforward.free.beeceptor.com/ask";
+const aitalk_service = new Service(pkg_info.name);
 
-  const request = http.request(url, {
-    method: "POST",
-    timeout: 2000,
-    headers: {
-      "Content-Type": "application/json",
-    }},
-    (res)=> {
+// aitalk method
+aitalk_service.register("talk", (msg) => { 
+  if (!("prompt" in msg.payload)) {
+    msg.respond(new error('prompt is required.'));
+    return;
+  }
+
+  const prompt = msg.payload.prompt;
+
+  const req = http.request(
+    `${config.api_url}/ask`, 
+    {
+      method: "POST",
+      timeout: 5000,
+      headers: {
+        "Content-Type": "application/json",
+      }
+    },
+    (res) => {
       let data = "";
 
       res.on("data", (chunk) => {
         console.log("data arrived");
         data += chunk;
-        });
+        }
+      );
 
       res.on("end", () => {
         console.log("end event");
         try {
           const json = JSON.parse(data);
           console.log("parse json");
-          message.respond({
-            returnValue: true,
-            Response: json.answer,
-          });
+          msg.respond(new aitalk_response(json.answer));
           console.log("message sent");
         }
         catch (err) {
           console.log("error occured");
-          message.respond({
-            returnValue: false,
-            errorMessage: "Error occured while parsing JSON",
-          });
+          msg.respond(new error("Json Parsing Error."));
           console.log("message sent")
         }
       })
-    });
-  request.on("timeout", ()=> {
+    }
+  );
+  
+  req.on("timeout", ()=> {
     console.log("timeout");
-    message.respond({
-      returnValue: false,
-      errorMessage: "Timeout",
-    });
+    msg.respond(error("API Response Timeout"));
     console.log("message sent");
   });
 
   console.log("before request");
-  request.end(JSON.stringify({ prompt: { prompt: command } }));
+  req.end(JSON.stringify(new api_ask_parameters(prompt)));
   console.log("after request");
 });
