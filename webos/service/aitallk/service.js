@@ -19,6 +19,11 @@ aitalk_service.register("talk", (msg) => {
 
   const prompt = msg.payload.prompt;
 
+  if (msg.payload.dryRun === true) {
+    msg.respond(new aitalk_response(`AI response on Dry-run mode.\n prompt : ${prompt}`));
+    return;
+  }
+
   const req = http.request(
     `${config.api_url}/ask`, 
     {
