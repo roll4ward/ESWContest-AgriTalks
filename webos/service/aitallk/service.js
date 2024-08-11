@@ -45,13 +45,14 @@ aitalk_service.register("talk", (msg) => {
       res.on("end", () => {
         console.log("end event");
         try {
+          console.log(data);
           const json = JSON.parse(data);
           console.log("parse json");
           msg.respond(new aitalk_response(json.answer));
           console.log("message sent");
         }
         catch (err) {
-          console.log("error occured");
+          console.log("error occured :", err);
           msg.respond(new error("Json Parsing Error."));
           console.log("message sent")
         }
@@ -61,7 +62,7 @@ aitalk_service.register("talk", (msg) => {
   
   req.on("timeout", ()=> {
     console.log("timeout");
-    msg.respond(error("API Response Timeout"));
+    msg.respond(new error("API Response Timeout"));
     console.log("message sent");
   });
 
