@@ -3,22 +3,39 @@ import MessageBox from "../component/MessageBox";
 import { Button, Form, InputGroup, Card } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import styled from "styled-components";
+import { sendMessageToWebOS } from "../api/aiService";
 
 export default function ChatPage() {
-  const [messages, setMessages] = useState([
-    { type: "user", text: "LG, 현재 농장 상태를 보고해줘" },
-    {
-      type: "ai",
-      text: "2024년 8월 1일 기준, 광량은 ~~이고 습도는 ~~이고 온도는 ~~이고 수분량은 ~~~입니다. 광량은 ~~이고 습도는 ~~이고 온도는 ~~이고 수분량은 ~~~입니다. ",
-    },
-    { type: "user", text: "그렇구나. 알려줘서 고마워! 오늘의 날씨는 어때?" },
-    { type: "ai", text: "오늘의 날씨는 맑음입니다. 오후부터 비가 예상됩니다." },
-  ]);
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
-
-  const handleSendMessage = () => {
+  const [dryRun, setDryRun] = useState(false);
+  const [images, setImages] = useState([]);
+  const [response, setResponse] = useState("");
+  const handleSendMessage = async () => {
     if (input.trim()) {
-      setMessages([...messages, { type: "user", text: input }]);
+      const newMessages = [...messages, { type: "user", text: input }];
+      setMessages(newMessages);
+      console.log("User message sent: ", input);
+      try {
+        const response = await sendMessageToWebOS(input, dryRun, images);
+        console.log("Response from WebOS: ", response);
+        setResponse(response);
+        if (response.success) {
+          setMessages([...newMessages, { type: "ai", text: response.result }]);
+        } else {
+          setMessages([
+            ...newMessages,
+            { type: "ai", text: `Error: ${response.error}` },
+          ]);
+        }
+      } catch (error) {
+        console.error("Error handling message: ", error.message);
+        setMessages([
+          ...newMessages,
+          { type: "ai", text: `Error: ${error.message}` },
+        ]);
+      }
+
       setInput("");
     }
   };
@@ -40,7 +57,7 @@ export default function ChatPage() {
               style={{ height: "50px", fontSize: "1.5rem" }}
             />
             <Button
-              style={{ backgroundColor: "#448569", color: "#white" }}
+              style={{ backgroundColor: "#448569", color: "#fff" }}
               onClick={handleSendMessage}
             >
               ↑
