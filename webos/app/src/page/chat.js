@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import MessageBox from "../component/MessageBox";
 import { Button, Form, InputGroup, Card } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import styled from "styled-components";
 
 export default function ChatPage() {
+  const navigate = useNavigate();
   const [messages, setMessages] = useState([
     { type: "user", text: "LG, 현재 농장 상태를 보고해줘" },
     {
@@ -15,6 +17,10 @@ export default function ChatPage() {
     { type: "ai", text: "오늘의 날씨는 맑음입니다. 오후부터 비가 예상됩니다." },
   ]);
   const [input, setInput] = useState("");
+
+  const onClickCamera = () => {
+    navigate("/camera");
+  };
 
   const handleSendMessage = () => {
     if (input.trim()) {
@@ -45,6 +51,10 @@ export default function ChatPage() {
             >
               ↑
             </Button>
+            <Button
+              style={{ backgroundColor: "#448569", color: "#white" }}
+              onClick={onClickCamera}
+            ></Button>
           </InputGroup>
         </CardFooter>
       </StyledCard>
