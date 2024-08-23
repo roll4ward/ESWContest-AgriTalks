@@ -33,6 +33,23 @@ export const Camera = () => {
       };
     });
   };
+
+  const captureImage = () => {
+    return new Promise((resolve, reject) => {
+      let isRequset = {
+        service: "luna://com.webos.service.camera2",
+        method: "capture",
+        parameters: { handle: 189, nimage: 2 }, //path 추가 예정
+        onSuccess: () => {
+          resolve();
+        },
+        onFailure: () => {
+          reject();
+        },
+      };
+    });
+  };
+
   return (
     <Container>
       <Button
