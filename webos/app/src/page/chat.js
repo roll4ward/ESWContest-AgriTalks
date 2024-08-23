@@ -10,33 +10,39 @@ export default function ChatPage() {
   const [input, setInput] = useState("");
   const [dryRun, setDryRun] = useState(false);
   const [images, setImages] = useState([]);
-  const [response, setResponse] = useState("");
+
   const handleSendMessage = async () => {
     if (input.trim()) {
       const newMessages = [...messages, { type: "user", text: input }];
       setMessages(newMessages);
       console.log("User message sent: ", input);
+
       try {
         const response = await sendMessageToWebOS(input, dryRun, images);
-        console.log("Response from WebOS: ", response);
-        setResponse(response);
+
         if (response.success) {
           setMessages([...newMessages, { type: "ai", text: response.result }]);
         } else {
           setMessages([
             ...newMessages,
-            { type: "ai", text: `Error: ${response.error}` },
+            {
+              type: "ai",
+              text: `Error-else success: ${
+                response.error || "No result from AI."
+              }`,
+            },
           ]);
         }
       } catch (error) {
-        console.error("Error handling message: ", error.message);
         setMessages([
           ...newMessages,
-          { type: "ai", text: `Error: ${error.message}` },
+          { type: "ai", text: `Error-catch: ${error.message}` },
         ]);
       }
 
       setInput("");
+    } else {
+      console.warn("Input is empty, no message sent.");
     }
   };
 
