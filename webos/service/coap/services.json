@@ -1,0 +1,9 @@
+{
+  "id": "xyz.rollforward.app.coap",
+  "description": "A CoAP client service",
+  "services": [
+    {
+      "name": "xyz.rollforward.app.coap"
+    }
+  ]
+}
