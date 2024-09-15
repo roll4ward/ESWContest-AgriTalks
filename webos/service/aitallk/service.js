@@ -1,5 +1,6 @@
 const pkg_info = require("./package.json");
 const config = require("./config.json")
+const fs = require("fs");
 
 const { aitalk_response, api_ask_parameters, error } = require("./dto");
 
@@ -108,8 +109,7 @@ aitalk_service.register("talk2", async function(msg) {
   }
 });
 
-// aitalk method
-aitalk_service.register("ask", async function(msg) { 
+async function ask(msg) {
   if (!("prompt" in msg.payload)) {
     msg.respond(new error('prompt is required.'));
     return;
@@ -134,8 +134,45 @@ aitalk_service.register("ask", async function(msg) {
       run.thread_id
   );
 
-  
-  console.log(messages.data[0].content[0].text.value)
+  return messages.data[0].content[0].text.value
+}
 
-  msg.respond(new aitalk_response(messages.data[0].content[0].text.value));
+// aitalk method
+aitalk_service.register("ask", async function(msg) { 
+  const answer = await ask(msg)
+  console.log(answer)
+
+  msg.respond(new aitalk_response(answer));
+});
+
+aitalk_service.register("voice_ask", async function(msg) {
+  // 0. check msg contains "voice_path"
+  if (!("voice_path" in msg.payload)) {
+    msg.respond(new error('It requires voice_path (e.g. voice_text.mp3).'));
+    return;
+  }
+
+  // 1. check is voice file (e.g. mp3) is exist
+  // 1.1. if doesn't exist, then raise RuntimeError
+  if (!fs.existsSync(msg.payload.voice_path)) {
+    msg.respond(new error("File not found. ", msg.payload.voice_path))
+    return;
+  }
+
+  // 2. send voice file to API servce
+  const transcription = await openai.audio.transcriptions.create({
+      file: fs.createReadStream(msg.payload.voice_path),
+      model: "whisper-1",
+  });
+
+  // 3. return text converted from voice file
+  const voice_prompt = transcription.text;
+
+  const answer = await ask({payload: {prompt: voice_prompt}});
+  
+  msg.respond(new aitalk_response({
+    voice_prompt: voice_prompt,
+    answer: answer,
+  }));
+  return;
 });
