@@ -7,8 +7,14 @@ const { aitalk_response, api_ask_parameters, error } = require("./dto");
 const http = config.api_url.startsWith("https") ? require("https") : require("http");
 
 const Service = require("webos-service");
+const OpenAI = require("openai");
+
+const openai = new OpenAI({apiKey: config.openai_api_key});
+var thread = null;
 
 const aitalk_service = new Service(pkg_info.name);
+
+
 
 // aitalk method
 aitalk_service.register("talk", (msg) => { 
@@ -28,7 +34,7 @@ aitalk_service.register("talk", (msg) => {
     `${config.api_url}/ask`, 
     {
       method: "POST",
-      timeout: 5000,
+      timeout: 30000,
       headers: {
         "Content-Type": "application/json",
       }
@@ -69,4 +75,67 @@ aitalk_service.register("talk", (msg) => {
   console.log("before request");
   req.end(JSON.stringify(new api_ask_parameters(prompt)));
   console.log("after request");
+});
+
+aitalk_service.register("hello_api", (message) => {
+  console.log("Hello wolrd!");
+
+  message.respond(new aitalk_response("Hello World! hello_api is invoked successfully!"))
+});
+
+
+
+// aitalk method
+aitalk_service.register("talk2", async function(msg) { 
+  if (!("prompt" in msg.payload)) {
+    msg.respond(new error('prompt is required.'));
+    return;
+  }
+
+  const prompt = msg.payload.prompt;
+
+  const stream = await openai.completions.create({
+    model: "gpt-4o-mini",
+    prompt: prompt,
+    stream: true,
+  });
+
+  let answer = "";
+  for await (const chunk of stream) {
+    answer += chunk.choices[0].text;
+    console.log(answer);
+    msg.respond(new aitalk_response(answer));
+  }
+});
+
+// aitalk method
+aitalk_service.register("ask", async function(msg) { 
+  if (!("prompt" in msg.payload)) {
+    msg.respond(new error('prompt is required.'));
+    return;
+  }
+  const prompt = msg.payload.prompt;
+
+  if (thread == null) {
+    thread = await openai.beta.threads.create();    
+  } 
+  console.log("thread_id", thread.id);
+
+  const threadMessages = await openai.beta.threads.messages.create(
+      thread.id,
+      { role: "user", content: prompt }
+    );
+
+  let run = await openai.beta.threads.runs.createAndPoll(
+      thread.id,
+      {assistant_id: config.openai_assistant_id}
+  );
+  const messages = await openai.beta.threads.messages.list(
+      run.thread_id
+  );
+
+  
+  console.log(messages.data[0].content[0].text.value)
+
+  msg.respond(new aitalk_response(messages.data[0].content[0].text.value));
 });
