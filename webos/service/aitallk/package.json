@@ -7,5 +7,9 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
-  "license": "BSD"
+  "license": "BSD",
+  "homepage": "./",
+  "dependencies": {
+    "openai": "^4.60.0"
+  }
 }
