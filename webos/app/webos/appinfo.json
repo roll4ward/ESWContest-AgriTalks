@@ -6,5 +6,10 @@
   "main": "index.html",
   "title": "My Awesome App",
   "icon": "icon.png",
-  "requiredPermissions": ["time.query", "activity.operation"]
+  "requiredPermissions": [
+    "time.query",
+    "activity.operation",
+    "all",
+    "database.operation"
+  ]
 }
