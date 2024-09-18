@@ -15,29 +15,27 @@ service.register('createKind', function(message) {
             type: 'object',
             properties: {
                 _id: { type: 'string' },
-                sensorId: { type: 'string' },
-                sensorNm: {type: 'string'},
-                sensorType: { type: 'string' },
-                description: { type: 'string' },
-                timestamp: { type: 'string' },
-                sensorValue: { type: 'number' },
+                name: {type: 'string'},
+                type: { type: 'string' },
+                desc: { type: 'string' },
+                time: { type: 'string' },
+                value: { type: 'number' },
                 unit: {type: 'string'},
             },
-            required: ['sensorId', 'sensorType', 'timestamp', 'sensorValue']
+            required: ['name','type', 'time', 'value']
         },
         indexes: [
-            { name: 'sensorId', props: [{ name: 'sensorId' }] },
-            { name: 'sensorType', props: [{ name: 'sensorType' }] },
-            { name: 'timestamp', props: [{ name: 'timestamp' }] }
+            { name: 'name', props: [{ name: 'name' }] },
+            { name: 'type', props: [{ name: 'type' }] },
+            { name: 'time', props: [{ name: 'time' }] }
         ]
     };
 
     service.call('luna://com.webos.service.db/putKind', kindData, (response) => {
-        console.log(response)
         if (response.payload.returnValue) {
-            message.respond({ success: true, message: 'Kind created successfully' });
+            message.respond({ returnValue: true});
         } else {
-            message.respond({ success: false, message: 'Failed to create kind', error: response.error });
+            message.respond({ returnValue: false, error: response.error });
         }
     });
 });
@@ -68,13 +66,12 @@ function sendCoapMessageAndStore(hostIP) {
 function storeSensorData(sensorData) {
     const dataToStore = {
         _kind: DB_KIND,
-        sensorId: sensorData.sensorId,
-        sensorNm: sensorData.sensorNm,
-        sensorType: sensorData.sensorType,
-        description: sensorData.description,
-        sensorValue: sensorData.sensorValue,
+        name: sensorData.name,
+        type: sensorData.type,
+        desc: sensorData.desc,
+        value: sensorData.value,
         unit: "%",
-        timestamp: new Date().toISOString()
+        time: new Date().toISOString()
     };
 
     service.call('luna://com.webos.service.db/put', { objects: [dataToStore] }, (response) => {
@@ -89,7 +86,7 @@ function storeSensorData(sensorData) {
 // 서비스 메소드: CoAP 메시지 전송 시작
 service.register("startSending", (msg) => {
     if (!interval) {
-        interval = setInterval(() => sendCoapMessageAndStore(msg.payload.ip), 5000);
+        interval = setInterval(() => sendCoapMessageAndStore(msg.payload.ip), msg.payload.interval * 1000);
         msg.respond({
             returnValue: true,
             message: "Started sending CoAP messages and storing data"
@@ -126,23 +123,22 @@ service.register('read', function(message) {
         where: []
     };
 
-    if (message.payload.sensorId) {
-        query.where.push({ prop: 'sensorId', op: '=', val: message.payload.sensorId });
+    if (message.payload.name) {
+        query.where.push({ prop: 'name', op: '=', val: message.payload.name });
     }
-    if (message.payload.sensorType) {
-        query.where.push({ prop: 'sensorType', op: '=', val: message.payload.sensorType });
+    if (message.payload.type) {
+        query.where.push({ prop: 'type', op: '=', val: message.payload.type });
     }
-    if (message.payload.fromTimestamp && message.payload.toTimestamp) {
-        query.where.push({ prop: 'timestamp', op: '>=', val: message.payload.fromTimestamp });
-        query.where.push({ prop: 'timestamp', op: '<=', val: message.payload.toTimestamp });
+    if (message.payload.fromTime && message.payload.toTime) {
+        query.where.push({ prop: 'time', op: '>=', val: message.payload.fromTime });
+        query.where.push({ prop: 'time', op: '<=', val: message.payload.toTime });
     }
 
     service.call('luna://com.webos.service.db/find', { query: query }, (response) => {
-        console.log(response);
         if (response.payload.returnValue) {
-            message.respond({ success: true, results: response.payload.results });
+            message.respond({ returnValue: true, results: response.payload.results });
         } else {
-            message.respond({ success: false, error: response.error });
+            message.respond({ returnValue: false, results: response.error });
         }
     });
 });
