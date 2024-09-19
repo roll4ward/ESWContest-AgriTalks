@@ -1,0 +1,10 @@
+{
+  "globals": {
+    "webOS": "readonly",
+    "PalmSystem": "readonly",
+    "PalmServiceBridge": "readonly"
+  },
+  "rules": {
+    "no-undef": "off"
+  }
+}

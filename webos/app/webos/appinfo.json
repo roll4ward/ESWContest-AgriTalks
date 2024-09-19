@@ -8,6 +8,8 @@
   "icon": "icon.png",
   "requiredPermissions": [
     "time.query",
-    "activity.operation"
+    "activity.operation",
+    "all",
+    "database.operation"
   ]
 }
