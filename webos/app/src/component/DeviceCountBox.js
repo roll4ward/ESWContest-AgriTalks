@@ -2,13 +2,18 @@ import styled from "styled-components";
 import sensor from "../icon/sensor.png";
 import actuator from "../icon/actuator.png";
 
-export const DeviceCountBox = () => {
+export const DeviceCountBox = ({ isSensor }) => {
   return (
     <Container>
-      <Title>{"센서"}</Title>
+      <Title>{isSensor ? "센서" : "작동기"}</Title>
 
       <CountWrap>
-        <img src={sensor} alt="" width={109} height={109} />
+        <img
+          src={isSensor ? sensor : actuator}
+          alt=""
+          width={109}
+          height={109}
+        />
         {/* <img src={actuator} alt="" width={109} height={109} /> */}
 
         <Count>

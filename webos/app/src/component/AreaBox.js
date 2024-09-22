@@ -9,7 +9,7 @@ export const AreaBox = () => {
       <InputText>{"재배 : 포도"}</InputText>
 
       <DeviceWrap>
-        <DeviceCountBox />
+        <DeviceCountBox isSensor />
         <DeviceCountBox />
       </DeviceWrap>
 
