@@ -9,6 +9,7 @@ const http = config.api_url.startsWith("https") ? require("https") : require("ht
 
 const Service = require("webos-service");
 const OpenAI = require("openai");
+const path = require("path");
 
 const openai = new OpenAI({apiKey: config.openai_api_key});
 var thread = null;
@@ -136,6 +137,19 @@ async function ask(msg) {
   return messages.data[0].content[0].text.value
 }
 
+async function tts(msg) {
+  let speechFile = msg.store_path? msg.store_path: "/tmp/tts.mp3"
+  const mp3 = await openai.audio.speech.create({
+    model: "tts-1",
+    voice: "alloy",
+    input: msg.text,
+  });
+  console.log("mp3 file will be stored to " + speechFile);
+  const buffer = Buffer.from(await mp3.arrayBuffer());
+  await fs.promises.writeFile(speechFile, buffer);
+  console.log("TTS done.")
+}
+
 // aitalk method
 aitalk_service.register("ask", async function(msg) { 
   const answer = await ask(msg)
@@ -173,5 +187,31 @@ aitalk_service.register("voice_ask", async function(msg) {
     voice_prompt: voice_prompt,
     answer: answer,
   }));
+  return;
+});
+
+aitalk_service.register("tts", async function(msg) {
+  // 0. check msg contains "tts"
+
+  console.log(msg)
+
+  if (!("text" in msg.payload)) {
+    msg.respond(new error('It requires text (e.g. {text: "Hello world"}).'));
+    return;
+  }
+  if (!("store_path" in msg.payload)) {
+    msg.respond(new error('It requires store_path (e.g. {store_path: "/tmp/tts.mp3"}).'));
+    return;
+  }
+
+  await tts({
+    text: msg.payload.text, 
+    store_path: msg.payload.store_path
+  })
+  
+  msg.respond(new aitalk_response({
+    store_path: msg.payload.store_path,
+  }));
+
   return;
 });
