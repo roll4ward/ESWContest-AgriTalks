@@ -2,12 +2,13 @@ import styled from "styled-components";
 import refresh from "../../icon/refresh.png";
 import { DeviceValueBox } from "./DeviceValueBox";
 
-export const DeviceMonitorBox = ({ isSensor }) => {
+export const DeviceMonitorBox = ({ isSensor, devices }) => {
   const currentTime = new Date().toLocaleTimeString("ko-KR", {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
   });
+  console.log("devices : ", devices);
   return (
     <Container>
       <TitleWrapper>
@@ -20,8 +21,15 @@ export const DeviceMonitorBox = ({ isSensor }) => {
       </TitleWrapper>
 
       <BoxWrapper>
-        <DeviceValueBox isSensor={isSensor} />
-        <DeviceValueBox isSensor={isSensor} />
+        {devices.length < 1 ? (
+          <NoDataText>기기를 추가해 주세요</NoDataText>
+        ) : (
+          devices.map((device, idx) => {
+            return (
+              <DeviceValueBox isSensor={isSensor} device={device} key={idx} />
+            );
+          })
+        )}
       </BoxWrapper>
     </Container>
   );
@@ -64,4 +72,12 @@ const BoxWrapper = styled.div`
   flex-wrap: wrap;
   padding-top: 50px;
   gap: 40px;
+`;
+
+const NoDataText = styled.span`
+  display: flex;
+  font-size: 50px;
+  color: #4c4c4c;
+  width: 100%;
+  justify-content: center;
 `;

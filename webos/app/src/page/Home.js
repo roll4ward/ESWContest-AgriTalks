@@ -3,6 +3,16 @@ import add from "../icon/add.png";
 import { AreaBox } from "../component/dashboard/AreaBox";
 
 export const Home = () => {
+  const areas = [];
+
+  const NoDataText = styled.span`
+    display: flex;
+    font-size: 50px;
+    color: #4c4c4c;
+    width: 100%;
+    justify-content: center;
+  `;
+
   return (
     <Container>
       <TextWrap>
@@ -23,7 +33,13 @@ export const Home = () => {
         </Button>
       </ButtonConatiner>
 
-      <AreaBox />
+      {areas.length < 1 ? (
+        <NoDataText>구역을 추가해 주세요</NoDataText>
+      ) : (
+        areas.map((area, idx) => {
+          <AreaBox />;
+        })
+      )}
     </Container>
   );
 };

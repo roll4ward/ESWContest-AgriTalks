@@ -5,6 +5,12 @@ import { DeviceMonitorBox } from "../component/controlDevices/DeviceMonitorBox";
 export const DeviceOverView = () => {
   const today = new Date();
 
+  const sensors = [
+    { id: 0, name: "센서1" },
+    { id: 1, name: "센서2" },
+  ];
+  const actuator = [];
+
   // 날짜 형식 포맷팅
   const year = today.getFullYear();
   const month = String(today.getMonth() + 1).padStart(2, "0");
@@ -31,13 +37,16 @@ export const DeviceOverView = () => {
         </select>
         <Button>
           <img src={add} alt="" width={48} height={48} />
-          {"구역 추가"}
+          {"기기 추가"}
         </Button>
       </EventWrapper>
 
       <DeviceMonitorWapprer>
-        <DeviceMonitorBox isSensor />
-        <DeviceMonitorBox />
+        {/* 센서 */}
+        <DeviceMonitorBox isSensor devices={sensors} />
+
+        {/* 작동기 */}
+        <DeviceMonitorBox devices={actuator} />
       </DeviceMonitorWapprer>
     </Container>
   );
