@@ -8,9 +8,11 @@ export const Home = () => {
       <TextWrap>
         <Title>{"안녕하세요,"}</Title>
         <SubTitleWrap>
-          <Text>{"든든한 농업 파트너"}</Text>
-          <AppName>{"농담"}</AppName>
-          <Text>{"입니다."}</Text>
+          <Text>
+            {"든든한 농업 파트너 "}
+            <span>농담</span>
+            입니다.
+          </Text>
         </SubTitleWrap>
       </TextWrap>
 
@@ -50,14 +52,15 @@ const Title = styled.p`
   font-weight: 700;
 `;
 
-const AppName = styled.p`
-  font-size: 64px;
-  color: #448569;
-  font-weight: 700;
-`;
 const Text = styled.p`
   font-size: 64px;
   margin: 5px 0;
+
+  & > span {
+    font-size: 64px;
+    color: #448569;
+    font-weight: 700;
+  }
 `;
 
 const Button = styled.button`

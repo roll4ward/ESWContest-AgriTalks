@@ -1,12 +1,21 @@
 import styled from "styled-components";
 import sensor from "../icon/sensor.png";
+import actuator from "../icon/actuator.png";
 
 export const DeviceCountBox = () => {
   return (
     <Container>
       <Title>{"센서"}</Title>
 
-      <img src={sensor} alt="" width={48} height={48} />
+      <CountWrap>
+        <img src={sensor} alt="" width={109} height={109} />
+        {/* <img src={actuator} alt="" width={109} height={109} /> */}
+
+        <Count>
+          {"N"}
+          <span>개</span>
+        </Count>
+      </CountWrap>
     </Container>
   );
 };
@@ -14,7 +23,6 @@ export const DeviceCountBox = () => {
 const Container = styled.div`
   display: flex;
   background-color: #ffff;
-  color: black;
   width: 305px;
   height: 293px;
   font-size: 18px;
@@ -22,15 +30,29 @@ const Container = styled.div`
   border-radius: 40px;
   cursor: pointer;
   transition: opacity 0.2s ease-in-out;
-
-  &:hover {
-    opacity: 0.7;
-  }
-
-  &:active {
-    opacity: 0.5;
-  }
+  padding: 30px;
+  flex-direction: column;
+  gap: 20px;
 `;
 const Title = styled.p`
+  display: flex;
+  justify-contents: flex-start;
   font-size: 50px;
+`;
+
+const CountWrap = styled.div`
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 10px;
+`;
+
+const Count = styled.p`
+  font-size: 100px;
+  color: #448569;
+
+  & > span {
+    font-size: 60px;
+    color: #4c4c4c;
+  }
 `;
