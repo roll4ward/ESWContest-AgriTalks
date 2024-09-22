@@ -5,6 +5,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import ChatPage from "./page/chat";
 import { Camera } from "./page/Camera";
 import { Home } from "./page/Home";
+import { DeviceOverView } from "./page/DeviceOverView";
 function App() {
   return (
     <Router>
@@ -12,6 +13,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/chat" element={<ChatPage />} />
         <Route path="/camera" element={<Camera />} />
+        <Route path="/devices" element={<DeviceOverView />} />
       </Routes>
     </Router>
   );

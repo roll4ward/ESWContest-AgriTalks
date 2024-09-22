@@ -1,6 +1,6 @@
 import styled from "styled-components";
 import add from "../icon/add.png";
-import { AreaBox } from "../component/AreaBox";
+import { AreaBox } from "../component/dashboard/AreaBox";
 
 export const Home = () => {
   return (

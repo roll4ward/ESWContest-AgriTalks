@@ -1,6 +1,6 @@
 import styled from "styled-components";
-import sensor from "../icon/sensor.png";
-import actuator from "../icon/actuator.png";
+import sensor from "../../icon/sensor.png";
+import actuator from "../../icon/actuator.png";
 
 export const DeviceCountBox = ({ isSensor }) => {
   return (
