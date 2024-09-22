@@ -5,14 +5,6 @@ import { AreaBox } from "../component/dashboard/AreaBox";
 export const Home = () => {
   const areas = [];
 
-  const NoDataText = styled.span`
-    display: flex;
-    font-size: 50px;
-    color: #4c4c4c;
-    width: 100%;
-    justify-content: center;
-  `;
-
   return (
     <Container>
       <TextWrap>
@@ -46,7 +38,7 @@ export const Home = () => {
 
 const Container = styled.div`
   display: flex;
-  width: 1920px;
+  width: 100%;
   height: 1080px;
   flex-direction: column;
   padding: 60px;
@@ -91,10 +83,22 @@ const Button = styled.button`
   color: #ffff;
   align-items: center;
   justify-content: center;
+
+  &:active {
+    opacity: 0.7;
+  }
 `;
 
 const ButtonConatiner = styled.div`
   display: flex;
   width: 100%;
   justify-content: flex-end;
+`;
+
+const NoDataText = styled.span`
+  display: flex;
+  font-size: 50px;
+  color: #4c4c4c;
+  width: 100%;
+  justify-content: center;
 `;
