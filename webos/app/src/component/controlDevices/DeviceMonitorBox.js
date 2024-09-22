@@ -2,7 +2,7 @@ import styled from "styled-components";
 import refresh from "../../icon/refresh.png";
 import { DeviceValueBox } from "./DeviceValueBox";
 
-export const DeviceMonitorBox = () => {
+export const DeviceMonitorBox = ({ isSensor }) => {
   const currentTime = new Date().toLocaleTimeString("ko-KR", {
     hour: "2-digit",
     minute: "2-digit",
@@ -11,7 +11,7 @@ export const DeviceMonitorBox = () => {
   return (
     <Container>
       <TitleWrapper>
-        <Title>센서</Title>
+        <Title>{isSensor ? "센서" : "작동기"}</Title>
 
         <ControllWrapper>
           <Time>{currentTime}</Time>
@@ -20,7 +20,8 @@ export const DeviceMonitorBox = () => {
       </TitleWrapper>
 
       <BoxWrapper>
-        <DeviceValueBox />
+        <DeviceValueBox isSensor={isSensor} />
+        <DeviceValueBox isSensor={isSensor} />
       </BoxWrapper>
     </Container>
   );
@@ -62,4 +63,5 @@ const BoxWrapper = styled.div`
   display: flex;
   flex-wrap: wrap;
   padding-top: 50px;
+  gap: 40px;
 `;

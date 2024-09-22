@@ -5,7 +5,7 @@ import { DeviceMonitorBox } from "../component/controlDevices/DeviceMonitorBox";
 export const DeviceOverView = () => {
   const today = new Date();
 
-  // 날짜 형식 포맷팅 mjiuytfdxjhesz m,lkoiuyf vbnm,.;[poijhbn ]
+  // 날짜 형식 포맷팅
   const year = today.getFullYear();
   const month = String(today.getMonth() + 1).padStart(2, "0");
   const date = String(today.getDate()).padStart(2, "0");
@@ -36,6 +36,7 @@ export const DeviceOverView = () => {
       </EventWrapper>
 
       <DeviceMonitorWapprer>
+        <DeviceMonitorBox isSensor />
         <DeviceMonitorBox />
       </DeviceMonitorWapprer>
     </Container>
@@ -77,6 +78,7 @@ const EventWrapper = styled.div`
   display: flex;
   width: 100%;
   justify-content: space-between;
+  padding-top: 90px;
 `;
 
 const Button = styled.button`
@@ -100,4 +102,5 @@ const Button = styled.button`
 const DeviceMonitorWapprer = styled.div`
   display: flex;
   padding-top: 20px;
+  justify-content: space-between;
 `;
