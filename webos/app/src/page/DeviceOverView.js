@@ -55,7 +55,7 @@ export const DeviceOverView = () => {
 const Container = styled.div`
   display: flex;
   flex-direction: column;
-  padding: 60px;
+  padding: 0px 60px;
 `;
 
 const TitleWrapper = styled.div`

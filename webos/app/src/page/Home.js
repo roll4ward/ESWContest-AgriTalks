@@ -39,9 +39,9 @@ export const Home = () => {
 const Container = styled.div`
   display: flex;
   width: 100%;
-  height: 1080px;
+  height: 100%;
   flex-direction: column;
-  padding: 60px;
+  padding: 0px 60px;
 `;
 
 const TextWrap = styled.div`
