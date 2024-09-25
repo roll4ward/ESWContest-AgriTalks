@@ -11,5 +11,8 @@
   "homepage": "./",
   "dependencies": {
     "openai": "^4.60.0"
-  }
+  },
+  "services": [
+    "com.webos.service.db"
+  ]
 }
