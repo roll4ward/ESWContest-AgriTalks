@@ -1,5 +1,5 @@
 {
-  "name": "xyz.rollforward.app.aitalk",
+  "name": "xyz.rollforward.app.infomanage",
   "version": "1.0.0",
   "description": "Helloworld service",
   "main": "service.js",
@@ -8,8 +8,7 @@
   },
   "author": "",
   "license": "BSD",
-  "homepage": "./",
-  "dependencies": {
-    "openai": "^4.60.0"
-  }
+  "services": [
+    "com.webos.service.db"
+  ]
 }
