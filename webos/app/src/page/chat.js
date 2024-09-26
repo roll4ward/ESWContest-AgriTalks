@@ -1,31 +1,94 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import MessageBox from "../component/MessageBox";
 import { Button, Form, InputGroup, Card } from "react-bootstrap";
-import { useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import styled from "styled-components";
+import {
+  createKind, // Kind 생성 함수
+  createSession,
+  createConversation,
+  readSession, // 세션 데이터 읽기
+} from "../database"; // WebOS API 호출 함수들
+import sendMessageToWebOS from "../api/aiService";
 
 export default function ChatPage() {
-  const navigate = useNavigate();
-  const [messages, setMessages] = useState([
-    { type: "user", text: "LG, 현재 농장 상태를 보고해줘" },
-    {
-      type: "ai",
-      text: "2024년 8월 1일 기준, 광량은 ~~이고 습도는 ~~이고 온도는 ~~이고 수분량은 ~~~입니다. 광량은 ~~이고 습도는 ~~이고 온도는 ~~이고 수분량은 ~~~입니다. ",
-    },
-    { type: "user", text: "그렇구나. 알려줘서 고마워! 오늘의 날씨는 어때?" },
-    { type: "ai", text: "오늘의 날씨는 맑음입니다. 오후부터 비가 예상됩니다." },
-  ]);
-  const [input, setInput] = useState("");
+  const [messages, setMessages] = useState([]);
+  const [prompt, setPrompt] = useState("");
+  const [sessionId, setSessionId] = useState(""); // 세션 ID를 상태로 관리
 
-  const onClickCamera = () => {
-    navigate("/camera");
-  };
+  useEffect(() => {
+    const initializeChat = async () => {
+      try {
+        console.log("Kind 생성 중..."); // Kind 생성 시작 로그
+        await createKind(); // Kind를 먼저 생성
+        console.log("Kind 생성 완료"); // Kind 생성 완료 로그
 
-  const handleSendMessage = () => {
-    if (input.trim()) {
-      setMessages([...messages, { type: "user", text: input }]);
-      setInput("");
+        console.log("세션 생성 중..."); // 세션 생성 시작 로그
+        const createdSession = await createSession();
+        setSessionId(createdSession); // 생성된 세션 ID 저장
+        console.log("세션 생성 완료:", createdSession); // 세션 생성 완료 및 ID 로그
+
+        console.log("대화 기록 불러오는 중..."); // 대화 기록 로드 시작 로그
+        const loadedMessages = await readSession(createdSession); // 세션 데이터 읽기
+        if (loadedMessages && loadedMessages.length > 0) {
+          setMessages(
+            loadedMessages.map((msg) => ({
+              type: msg.type,
+              text: msg.text,
+              kind: msg.kind, // kind 추가
+            }))
+          );
+        } else {
+          console.log("이전에 대화 기록 없음");
+        }
+      } catch (error) {
+        console.error("Initialization error:", error);
+      }
+    };
+
+    initializeChat();
+  }, []);
+
+  const handleSendMessage = async () => {
+    if (prompt.trim()) {
+      const newMessages = [...messages, { type: "user", text: prompt }];
+      setMessages(newMessages);
+
+      try {
+        // 사용자 메시지 저장
+        await createConversation(sessionId, prompt, "text"); // 세션 ID와 함께 kind 전달
+
+        // AI 응답을 받는 부분 (WebOS AI 서비스와 통신)
+        const response = await sendMessageToWebOS(prompt);
+
+        if (response.success) {
+          const aiMessage = { type: "ai", text: response.result };
+          setMessages((prevMessages) => [...prevMessages, aiMessage]);
+
+          // AI 응답을 DB에 저장
+          await createConversation(sessionId, response.result, "text"); // 세션 ID와 함께 kind 전달
+        } else {
+          setMessages((prevMessages) => [
+            ...prevMessages,
+            {
+              type: "ai",
+              text: `Error-else success: ${
+                response.error || "No result from AI."
+              }`,
+            },
+          ]);
+        }
+      } catch (error) {
+        console.error("Error sending message:", error);
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          { type: "ai", text: `Error-catch: ${error}` },
+        ]);
+      }
+
+      setPrompt("");
+    } else {
+      console.warn("Input이 입력되지 않았습니다");
     }
   };
 
@@ -41,20 +104,16 @@ export default function ChatPage() {
           <InputGroup>
             <Form.Control
               placeholder="텍스트를 입력하세요."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
               style={{ height: "50px", fontSize: "1.5rem" }}
             />
             <Button
-              style={{ backgroundColor: "#448569", color: "#white" }}
+              style={{ backgroundColor: "#448569", color: "#fff" }}
               onClick={handleSendMessage}
             >
               ↑
             </Button>
-            <Button
-              style={{ backgroundColor: "#448569", color: "#white" }}
-              onClick={onClickCamera}
-            ></Button>
           </InputGroup>
         </CardFooter>
       </StyledCard>

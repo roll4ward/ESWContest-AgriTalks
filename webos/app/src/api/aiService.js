@@ -8,7 +8,7 @@ function getBridge() {
   return bridge;
 }
 
-export function sendMessageToWebOS(prompt, dryRun = false, images = []) {
+export default function sendMessageToWebOS(prompt) {
   return new Promise((resolve, reject) => {
     const bridge =
       typeof WebOSServiceBridge !== "undefined"
@@ -29,7 +29,7 @@ export function sendMessageToWebOS(prompt, dryRun = false, images = []) {
       console.warn("WebOSServiceBridge is not defined, using mock bridge.");
     }
 
-    const service = "luna://xyz.rollforward.app.aitalk/talk";
+    const service = "luna://xyz.rollforward.app.aitalk/ask";
 
     bridge.onservicecallback = function (msg) {
       try {
@@ -57,8 +57,6 @@ export function sendMessageToWebOS(prompt, dryRun = false, images = []) {
     try {
       const params = JSON.stringify({
         prompt: prompt,
-        dryRun: dryRun,
-        images: images,
       });
 
       console.log("Calling service with params:", params);
@@ -72,3 +70,113 @@ export function sendMessageToWebOS(prompt, dryRun = false, images = []) {
     }
   });
 }
+
+// /* global webOS */
+// export function sendMessageToWebOS(prompt, dryRun = false, images = []) {
+//   return new Promise((resolve, reject) => {
+//     // 웹 환경에서는 webOS 객체가 존재하지 않으므로, 이를 확인합니다.
+//     if (typeof webOS === "undefined" || typeof webOS.service === "undefined") {
+//       reject({
+//         success: false,
+//         error: "webOS service is not available in this environment.",
+//       });
+//       return;
+//     }
+
+//     const service = "luna://xyz.rollforward.app.aitalk";
+
+//     // 서비스 호출
+//     webOS.service.request(service, {
+//       method: "talk",
+//       parameters: {
+//         prompt: prompt,
+//         dryRun: dryRun,
+//         images: images,
+//       },
+//       onSuccess: function (response) {
+//         if (response.returnValue) {
+//           resolve({ success: true, result: response.result });
+//         } else {
+//           reject({ success: false, error: response.errorText });
+//         }
+//       },
+//       onFailure: function (error) {
+//         // 실패 응답 처리
+//         reject({
+//           success: false,
+//           error: `Service call failed: ${error.message}`,
+//         });
+//       },
+//     });
+//   });
+// }
+
+// export function sendMessageToWebOS(prompt, dryRun = false, images = []) {
+//   return new Promise((resolve, reject) => {
+//     const service = "luna://xyz.rollforward.app.aitalk";
+
+//     // 서비스 호출
+
+//     webOS.service.request(service, {
+//       method: "talk",
+//       parameters: {
+//         prompt: prompt,
+//         dryRun: dryRun,
+//         images: images,
+//       },
+//       onSuccess: function (response) {
+//         if (response.returnValue) {
+//           resolve({ success: true, result: response.result });
+//         } else {
+//           reject({ success: false, error: response.errorText });
+//         }
+//       },
+//       onFailure: function (error) {
+//         // 실패 응답 처리
+//         reject({
+//           success: false,
+//           error: `Service call failed: ${error.message}`,
+//         });
+//       },
+//     });
+//   });
+// }
+
+// import WebOSServiceBridge from "@procot/webostv";
+
+// export function sendMessageToWebOS(prompt, dryRun = false, images = []) {
+//   return new Promise((resolve, reject) => {
+//     if (typeof WebOSServiceBridge === "undefined") {
+//       reject({ success: false, error: "WebOSServiceBridge is not defined." });
+//       return;
+//     }
+
+//     // WebOSServiceBridge가 객체라면 생성자 없이 바로 사용
+//     const bridge = WebOSServiceBridge;
+
+//     bridge.onservicecallback = function (msg) {
+//       try {
+//         const response = JSON.parse(msg);
+//         if (response.returnValue) {
+//           resolve({ success: true, result: response.result });
+//         } else {
+//           reject({ success: false, error: response.errorText });
+//         }
+//       } catch (error) {
+//         reject({
+//           success: false,
+//           error: `Error parsing response: ${error.message}`,
+//         });
+//       }
+//     };
+
+//     const params = JSON.stringify({
+//       prompt: prompt,
+//       dryRun: dryRun,
+//       images: images,
+//     });
+
+//     // 서비스 호출
+//     bridge.call("luna://xyz.rollforward.app.aitalk/", params);
+//   });
+// }
