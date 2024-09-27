@@ -240,6 +240,7 @@ service.register('area/read', function(message) {
     service.call('luna://com.webos.service.db/find', { query: areaQuery }, (areaResponse) => {
         console.log(areaResponse);
         if (areaResponse.payload.returnValue) {
+            console.log(areaResponse.payload.results);
             const areas = areaResponse.payload.results.shift();
             areas.sensorCount = 0;
             areas.actuatorCount = 0;

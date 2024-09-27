@@ -16,7 +16,6 @@ var thread = null;
 const aitalk_service = new Service(pkg_info.name);
 
 const CONVESKIND = 'xyz.rollforward.app.aitalk:1'
-const TEXTKIND = 'xyz.rollforward.app.aitalk:2';
 
 // aitalk method
 aitalk_service.register("talk", (msg) => { 
@@ -180,87 +179,62 @@ aitalk_service.register("voice_ask", async function(msg) {
 
 // 세션 & 대화 정보 데이터베이스 생성 (임시)
 aitalk_service.register('createKind', function (message) {
-  const CkindData = {
-      id: CONVESKIND,
-      owner: 'xyz.rollforward.app.aitalk',
-      schema: {
-          type: 'object',
-          properties: {
-              _id: { type: 'string' },
-              regdate: { type: 'string' }
-          },
-          required: ['regdate']
-      },
-      indexes: [
-          { name: 'regdate', props: [{ name: 'regdate' }] }
-      ]
-  };
+  const kindData = {
+    id: CONVESKIND,
+    owner: 'xyz.rollforward.app.aitalk',
+    schema: {
+        type: 'object',
+        properties: {
+            _id: { type: 'string' },
+            type: { type: 'string' },
+            text: { type: 'string' },
+            regdate: { type: 'string' }
 
-  aitalk_service.call('luna://com.webos.service.db/putKind', CkindData, (Cresponse) => {
-      if (Cresponse.payload.returnValue) {
-          const TkindData = {
-              id: TEXTKIND,
-              owner: 'xyz.rollforward.app.aitalk',
-              extends: [CONVESKIND],
-              schema: {
-                  type: 'object',
-                  properties: {
-                      _id: { type: 'string' },
-                      type: { type: 'string' },
-                      text: { type: 'string' },
-                      regdate: { type: 'string' },
-                      conversationId: { type: 'string' }
+        },
+        required: ['type', 'text', 'regdate']
+    },
+    indexes: [
+        { name: 'type', props: [{ name: 'type' }] },
+        { name: 'text', props: [{ name: 'text' }] },
+        { name: 'regdate', props: [{ name: 'regdate' }] }
+    ]
+};
 
-                  },
-                  required: ['type', 'text', 'regdate', 'conversationId']
-              },
-              indexes: [
-                  { name: 'type', props: [{ name: 'type' }] },
-                  { name: 'text', props: [{ name: 'text' }] },
-                  { name: 'regdate', props: [{ name: 'regdate' }] },
-                  { name: 'conversationId', props: [{ name: 'conversationId' }] }
-              ]
-          };
-
-          aitalk_service.call('luna://com.webos.service.db/putKind', TkindData, (Tresponse) => {
-              if (Tresponse.payload.returnValue) {
-                  message.respond({ returnValue: true });
-              } else {
-                  message.respond({ returnValue: false, results: Tresponse.error });
-              }
-          });
-
-      } else {
-          message.respond({ returnValue: false, results: Cresponse.error });
-      }
-  });
+aitalk_service.call('luna://com.webos.service.db/putKind', kindData, (response) => {
+    if (response.payload.returnValue) {
+        message.respond({ returnValue: true });
+    } else {
+        message.respond({ returnValue: false, results: response.error });
+    }
+});
 });
 
 // 세션 & 대화 데이터베이스 삭제 (임시)
 aitalk_service.register('deleteKind', function(message) {
-aitalk_service.call('luna://com.webos.service.db/delKind', { id: TEXTKIND }, (response) => {
-      if (response.payload.returnValue) {
-        aitalk_service.call('luna://com.webos.service.db/delKind', { id: CONVESKIND }, (response) => {
-              if (response.payload.returnValue) {
-                  message.respond({ returnValue: true });
-              } else {
-                  message.respond({ returnValue: false, results: response.error });
-              }
-          });
-      } else {
-          message.respond({ returnValue: false, results: response.error });
-      }
-  });
+    aitalk_service.call('luna://com.webos.service.db/delKind', { id: CONVESKIND }, (response) => {
+        if (response.payload.returnValue) {
+          message.respond({ returnValue: true });
+        } else {
+            message.respond({ returnValue: false, results: response.error });
+        }
+    });
 });
 
 // 세션 데이터 Create
-aitalk_service.register('session/create', function(message) {
+aitalk_service.register('create', function(message) {
   const dataToStore = {
       _kind: CONVESKIND,
+      text: message.payload.text,
+      type: message.payload.type,
       regdate: new Date().toISOString()
-      
   };
+
+  if (!dataToStore.type || !dataToStore.text) {
+      return message.respond({ returnValue: false, results: 'All fields are required.' });
+  } 
+  
   aitalk_service.call('luna://com.webos.service.db/put', { objects: [dataToStore] }, (response) => {
+      console.log(response);
       if (response.payload.returnValue) {
           message.respond({ returnValue: true, results: response.payload.results[0].id});
       } else {
@@ -269,119 +243,22 @@ aitalk_service.register('session/create', function(message) {
   });
 });
 
-// 대화 데이터 Create
-aitalk_service.register('conversation/create', function (message) {
-  const dataToStore = {
-      _kind: TEXTKIND,
-      text: message.payload.text,
-      type: message.payload.type,
-      conversationId: message.payload.id,
-      regdate: new Date().toISOString()
-  };
-  if (!dataToStore.type || !dataToStore.text || !dataToStore.conversationId) {
-      return message.respond({ returnValue: false, results: 'All fields are required.' });
-  }
-
-  aitalk_service.call('luna://com.webos.service.db/put', { objects: [dataToStore] }, (response) => {
-      if (response.payload.returnValue) {
-          message.respond({ returnValue: true, results: response.payload.results[0].id });
-      } else {
-          message.respond({ returnValue: false, results: response.error });
-      }
-  });
-});
-
 // 세션 데이터 Read
 aitalk_service.register('read', function(message) {
-  const conversQuery  = {
+  const query  = {
       from: CONVESKIND,
       where: []
   };
-
-  if (!message.payload.id) {
-    return message.respond({ returnValue: false, results: 'id field required.' });
-  }
-
-  if (message.payload.id) {
-    conversQuery.where.push({ prop: '_id', op: '=', val: message.payload.id });
-    // conversQuery.where.push({ prop: 'conversationId', op: '=', val: message.payload.id });
-  }
   
-  aitalk_service.call('luna://com.webos.service.db/find', { query: conversQuery }, (conversResponse) => {
-      if (conversResponse.payload.results.length > 0) {
-        const conversation = conversResponse.payload.results[0];
-
-        const textQuery  = {
-          from: TEXTKIND,
-          where: []
-        };
-        textQuery.where.push({ prop: 'conversationId', op: '=', val: message.payload.id });
-
-        aitalk_service.call('luna://com.webos.service.db/find', { query: textQuery }, (textResponse) => {
-            if (textResponse.payload.returnValue) {
-                conversation.context = textResponse.payload.results;
-                message.respond({ returnValue: true, results: conversation });
-    
-            } else {
-                message.respond({ returnValue: false, results: textResponse.error });
-            }
-        });
-
+  aitalk_service.call('luna://com.webos.service.db/find', { query: query }, (response) => {
+    if(response.payload.returnValue){
+      if (response.payload.results.length > 0) {
+          message.respond({ returnValue: true, results: response.payload.results });
       } else {
-          message.respond({ returnValue: false, results: 'cannot found conversation' });
+          message.respond({ returnValue: true, results: null });
       }
+    }else{
+        message.respond({ returnValue: false, results: 'cannot found conversation' });
+    }
   });
 });
-
-// 세션 & 대화 데이터 Delete
-aitalk_service.register('delete', function(message) {
-  const conversId = message.payload.id;
-  
-  if (!conversId) {
-      return message.respond({ returnValue: false, results: 'conversation ID is required.' });
-  }
-
-  // 먼저 해당 세션에 속한 모든 대화내용 조회
-  const conversQuery = {
-      from: CONVESKIND,
-      where: [{ prop: '_id', op: '=', val: conversId }]
-  };
-
-  aitalk_service.call('luna://com.webos.service.db/find', { query: conversQuery }, (conversResponse) => {
-      if (conversResponse.payload.results.length > 0) {
-        const textQuery = {
-          from: TEXTKIND,
-          where: [{ prop: 'conversationId', op: '=', val: conversId }]
-        };
-
-        aitalk_service.call('luna://com.webos.service.db/find', { query: textQuery }, (textResponse) => {
-          const Ids = [conversId];
-          if (textResponse.payload.returnValue) {
-                for(const i of textResponse.payload.results){
-                  Ids.push(i._id);
-                }
-                aitalk_service.call('luna://com.webos.service.db/del', { ids: Ids }, (delconversResponse) => {
-                    if (delconversResponse.payload.returnValue) {
-                        message.respond({ returnValue: true, results: 'conversation deleted successfully' });
-                    } else {
-                        message.respond({ returnValue: false, results: 'Failed to delete conversation' });
-                    }
-                });
-          } else {
-              message.respond({ returnValue: false, results: textResponse.error });
-          }
-
-      });
-      } else {
-          message.respond({ returnValue: false, results: 'cannot found conversation' });
-      }
-      aitalk_service.call('luna://com.webos.service.db/del', { ids: [conversId] }, (delconversResponse) => {
-          if (delconversResponse.payload.returnValue) {
-              message.respond({ returnValue: true, results: 'conversation deleted successfully' });
-          } else {
-              message.respond({ returnValue: false, results: 'Failed to delete conversation' });
-          }
-      });
-  });
-});
-

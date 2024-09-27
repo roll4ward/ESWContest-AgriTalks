@@ -4,35 +4,23 @@ import { Button, Form, InputGroup, Card } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import styled from "styled-components";
 import {
-  createKind, // Kind 생성 함수
-  createSession,
   createConversation,
-  readSession, // 세션 데이터 읽기
+  readConversation
 } from "../database"; // WebOS API 호출 함수들
+
 import sendMessageToWebOS from "../api/aiService";
 
 export default function ChatPage() {
   const [messages, setMessages] = useState([]);
   const [prompt, setPrompt] = useState("");
-  const [sessionId, setSessionId] = useState(""); // 세션 ID를 상태로 관리
 
   useEffect(() => {
     const initializeChat = async () => {
       try {
-        console.log("Kind 생성 중..."); // Kind 생성 시작 로그
-        await createKind(); // Kind를 먼저 생성
-        console.log("Kind 생성 완료"); // Kind 생성 완료 로그
-
-        console.log("세션 생성 중..."); // 세션 생성 시작 로그
-        const createdSession = await createSession();
-        setSessionId(createdSession); // 생성된 세션 ID 저장
-        console.log("세션 생성 완료:", createdSession); // 세션 생성 완료 및 ID 로그
-
-        console.log("대화 기록 불러오는 중..."); // 대화 기록 로드 시작 로그
-        const loadedMessages = await readSession(createdSession); // 세션 데이터 읽기
-        if (loadedMessages && loadedMessages.length > 0) {
+        const loadedMessages = await readConversation(); // 세션 데이터 읽기
+        if (loadedMessages && loadedMessages.result.length > 0) {
           setMessages(
-            loadedMessages.map((msg) => ({
+            loadedMessages.result.map((msg) => ({
               type: msg.type,
               text: msg.text,
               kind: msg.kind, // kind 추가
@@ -56,8 +44,7 @@ export default function ChatPage() {
 
       try {
         // 사용자 메시지 저장
-        await createConversation(sessionId, prompt, "text"); // 세션 ID와 함께 kind 전달
-
+        await createConversation(prompt, "user"); // 세션 ID와 함께 kind 전달
         // AI 응답을 받는 부분 (WebOS AI 서비스와 통신)
         const response = await sendMessageToWebOS(prompt);
 
@@ -66,7 +53,7 @@ export default function ChatPage() {
           setMessages((prevMessages) => [...prevMessages, aiMessage]);
 
           // AI 응답을 DB에 저장
-          await createConversation(sessionId, response.result, "text"); // 세션 ID와 함께 kind 전달
+          await createConversation(response.result, "ai"); // 세션 ID와 함께 kind 전달
         } else {
           setMessages((prevMessages) => [
             ...prevMessages,
