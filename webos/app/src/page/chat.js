@@ -22,8 +22,7 @@ export default function ChatPage() {
           setMessages(
             loadedMessages.result.map((msg) => ({
               type: msg.type,
-              text: msg.text,
-              kind: msg.kind, // kind 추가
+              text: msg.text
             }))
           );
         } else {

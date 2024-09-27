@@ -10,7 +10,6 @@ service.register('device/createKind', function(message) {
     const kindData = {
         id: DEVKIND,
         owner: 'xyz.rollforward.app.infomanage',
-        extends: [AREAKIND],
         schema: {
             type: 'object',
             properties: {
@@ -94,8 +93,6 @@ service.register('area/deleteKind', function(message) {
         }
     });
 });
-
-
 
 // 기기 정보 데이터 Create
 service.register('device/create', function(message) {
@@ -220,45 +217,52 @@ service.register('area/create', function(message) {
 
 // 구역 정보 데이터 Read
 service.register('area/read', function(message) {
-    const areaQuery  = {
+    const Aquery  = {
         from: AREAKIND,
         where: []
     };
-    
+
     if (message.payload.id) {
-        query.where.push({ prop: '_id', op: '=', val: message.payload.id });
+        Aquery.where.push({ prop: '_id', op: '=', val: message.payload.id });
     }
 
     if (message.payload.desc) {
-        query.where.push({ prop: 'desc', op: '=', val: message.payload.desc });
+        Aquery.where.push({ prop: 'desc', op: '=', val: message.payload.desc });
     }
 
     if (message.payload.name) {
-        query.where.push({ prop: 'name', op: '=', val: message.payload.name });
+        Aquery.where.push({ prop: 'name', op: '=', val: message.payload.name });
     }
-    
-    service.call('luna://com.webos.service.db/find', { query: areaQuery }, (areaResponse) => {
-        console.log(areaResponse);
-        if (areaResponse.payload.returnValue) {
-            console.log(areaResponse.payload.results);
-            const areas = areaResponse.payload.results.shift();
-            areas.sensorCount = 0;
-            areas.actuatorCount = 0;
 
-            const deviceCounts = areaResponse.payload.results.reduce((acc, device) => {
-                if (device.type === '센서') {
-                    acc.sensorCount++;
-                } else if (device.type === '작동기') {
-                    acc.actuatorCount++;
+    service.call('luna://com.webos.service.db/find', { query: Aquery }, (response) => {
+        if (response.payload.returnValue) {
+            const areas = [];
+            for (const result of response.payload.results) {
+                areas.push({"areaID":result._id, "sensorCount": 0, "actuatorCount": 0});
+            }
+
+            const Dquery  = {
+                from: DEVKIND,
+                where: []
+            };
+
+            service.call('luna://com.webos.service.db/find', { query: Dquery }, (response) => {  
+                for (const result of response.payload.results) {
+                    for(let i = 0; i < areas.length; i++) {
+                        if (areas[i].areaID == result.areaId){
+                            if (result.type === '센서') {
+                                areas[i].sensorCount++;
+                            } else if (result.type === '작동기') {
+                                areas[i].actuatorCount++;
+                            }
+                        }
+                    }
                 }
-                return acc;
-            }, { sensorCount: 0, actuatorCount: 0 });
-            areas.sensorCount = deviceCounts.sensorCount;
-            areas.actuatorCount = deviceCounts.actuatorCount;
-            message.respond({ returnValue: true, results: areas });
+                message.respond({ returnValue: true, results: areas });
+            });
 
         } else {
-            message.respond({ returnValue: false, results: areaResponse.error });
+            message.respond({ returnValue: false, results: response.error });
         }
     });
 });
@@ -296,15 +300,12 @@ service.register('area/delete', function(message) {
         where: [{ prop: 'areaId', op: '=', val: areaId }]
     };
 
-    service.call('luna://com.webos.service.db/find', { query: deviceQuery }, (deviceResponse) => {
-        console.log(deviceResponse.payload.results);
-        console.log(deviceResponse.payload.results.length);
+    service.call('luna://com.webos.service.db/find', { query: deviceQuery }, (response) => {
         if (deviceResponse.payload.results.length > 1) {
             message.respond({ returnValue: false, results: 'Failed to delete area becuase associated devices exists' });
         } else {
-            service.call('luna://com.webos.service.db/del', { ids: [areaId] }, (delAreaResponse) => {
-                console.log(delAreaResponse);
-                if (delAreaResponse.payload.returnValue) {
+            service.call('luna://com.webos.service.db/del', { ids: [areaId] }, (response) => {
+                if (response.payload.returnValue) {
                     message.respond({ returnValue: true, results: 'Area deleted successfully' });
                 } else {
                     message.respond({ returnValue: false, results: 'Failed to delete area' });

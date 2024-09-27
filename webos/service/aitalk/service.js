@@ -189,7 +189,6 @@ aitalk_service.register('createKind', function (message) {
             type: { type: 'string' },
             text: { type: 'string' },
             regdate: { type: 'string' }
-
         },
         required: ['type', 'text', 'regdate']
     },
@@ -198,15 +197,15 @@ aitalk_service.register('createKind', function (message) {
         { name: 'text', props: [{ name: 'text' }] },
         { name: 'regdate', props: [{ name: 'regdate' }] }
     ]
-};
+  };
 
-aitalk_service.call('luna://com.webos.service.db/putKind', kindData, (response) => {
-    if (response.payload.returnValue) {
-        message.respond({ returnValue: true });
-    } else {
-        message.respond({ returnValue: false, results: response.error });
-    }
-});
+  aitalk_service.call('luna://com.webos.service.db/putKind', kindData, (response) => {
+      if (response.payload.returnValue) {
+          message.respond({ returnValue: true });
+      } else {
+          message.respond({ returnValue: false, results: response.error });
+      }
+  });
 });
 
 // 세션 & 대화 데이터베이스 삭제 (임시)
