@@ -1,5 +1,10 @@
 {
   "api_url": "http://117.16.43.106:8000",
   "openai_api_key": "sk-SmBGj-VXiSNBevoCil_6P-AxHa2J10kDPFnuZFzuL8T3BlbkFJo32oLC5FOPt4zp8PQX0fcv9rbPKsIjcj2QSTY0-10A",
-  "openai_assistant_id": "asst_zIl9WSVkLJMglJ49rcFdlbhH"
+  "openai_assistant_id": "asst_zIl9WSVkLJMglJ49rcFdlbhH",
+  "openai_stt_model": "whisper-1",
+  "openai_tts": {
+    "model": "tts-1",
+    "voice": "alloy"
+  }
 }
