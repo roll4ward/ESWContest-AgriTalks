@@ -7,24 +7,37 @@ function getBridge() {
   }
   return bridge;
 }
+let sessionID;
 
 // 세션 생성 함수
 export const createSession = () => {
   return new Promise((resolve, reject) => {
     const bridge = getBridge();
-    bridge.call(
-      "luna://xyz.rollforward.app.aitalk/session/create",
-      {},
-      (response) => {
+    bridge.onservicecallback = function (msg) {
+      try {
+        const response = JSON.parse(msg);
+        console.log(response);
         if (response.returnValue) {
-          console.log("Session created successfully:", response.results);
-          resolve(response.results); // 생성된 세션 ID 반환
+          sessionID = response.results;
+          console.log("sessionID", sessionID);
+          resolve({
+            success: true,
+            result: response.results || "No result provided by DB.",
+          });
         } else {
-          console.error(`Error creating session: ${response.results}`);
-          reject(new Error(response.results)); // 에러 발생 시 reject
+          reject({
+            success: false,
+            error: response.results || "Unknown error occurred.",
+          });
         }
+      } catch (error) {
+        reject({
+          success: false,
+          error: `Error parsing response: ${error.message}`,
+        });
       }
-    );
+    };
+    bridge.call("luna://xyz.rollforward.app.aitalk/session/create", "{}");
   });
 };
 
@@ -32,18 +45,35 @@ export const createSession = () => {
 export const createConversation = (sessionId, text, type) => {
   return new Promise((resolve, reject) => {
     const bridge = getBridge();
-    bridge.call(
-      "luna://xyz.rollforward.app.aitalk/conversation/create",
-      { id: sessionId, text, type },
-      (response) => {
+    bridge.onservicecallback = function (msg) {
+      try {
+        const response = JSON.parse(msg);
+        console.log(response);
         if (response.returnValue) {
-          console.log("Conversation created successfully:", response.results);
-          resolve(response.results); // 생성된 대화 ID 반환
+          resolve({
+            success: true,
+            result: response.results || "No result provided by DB.",
+          });
         } else {
-          console.error(`Error creating conversation: ${response.results}`);
-          reject(new Error(response.results)); // 에러 발생 시 reject
+          reject({
+            success: false,
+            error: response.results || "Unknown error occurred.",
+          });
         }
+      } catch (error) {
+        reject({
+          success: false,
+          error: `Error parsing response: ${error.message}`,
+        });
       }
+    };
+    bridge.call("luna://xyz.rollforward.app.aitalk/conversation/create", 
+      // 여기서 sessionID는 전역변수임
+      JSON.stringify({
+        id: sessionID,
+        text: text,
+        type: type
+      })
     );
   });
 };
@@ -52,18 +82,33 @@ export const createConversation = (sessionId, text, type) => {
 export const readSession = (sessionId) => {
   return new Promise((resolve, reject) => {
     const bridge = getBridge();
-    bridge.call(
-      "luna://xyz.rollforward.app.aitalk/read",
-      { id: sessionId },
-      (response) => {
+    bridge.onservicecallback = function (msg) {
+      try {
+        const response = JSON.parse(msg);
+        console.log(response);
         if (response.returnValue) {
-          console.log("Session data retrieved successfully:", response.results);
-          resolve(response.results); // 세션 데이터 반환
+          resolve({
+            success: true,
+            result: response.results || "No result provided by DB.",
+          });
         } else {
-          console.error(`Error reading session: ${response.results}`);
-          reject(new Error(response.results)); // 에러 발생 시 reject
+          reject({
+            success: false,
+            error: response.results || "Unknown error occurred.",
+          });
         }
+      } catch (error) {
+        reject({
+          success: false,
+          error: `Error parsing response: ${error.message}`,
+        });
       }
+    };
+    bridge.call("luna://xyz.rollforward.app.aitalk/read",
+      // 여기서 sessionID는 전역변수임
+      JSON.stringify({
+        id: sessionID
+      })
     );
   });
 };
@@ -72,18 +117,33 @@ export const readSession = (sessionId) => {
 export const deleteConversation = (conversationId) => {
   return new Promise((resolve, reject) => {
     const bridge = getBridge();
-    bridge.call(
-      "luna://xyz.rollforward.app.aitalk/delete",
-      { id: conversationId },
-      (response) => {
+    bridge.onservicecallback = function (msg) {
+      try {
+        const response = JSON.parse(msg);
+        console.log(response);
         if (response.returnValue) {
-          console.log("Conversation deleted successfully");
-          resolve(response.results);
+          resolve({
+            success: true,
+            result: response.results || "No result provided by DB.",
+          });
         } else {
-          console.error(`Error deleting conversation: ${response.results}`);
-          reject(new Error(response.results)); // 에러 발생 시 reject
+          reject({
+            success: false,
+            error: response.results || "Unknown error occurred.",
+          });
         }
+      } catch (error) {
+        reject({
+          success: false,
+          error: `Error parsing response: ${error.message}`,
+        });
       }
+    };
+    bridge.call("luna://xyz.rollforward.app.aitalk/delete",
+      // 여기서 sessionID는 전역변수임
+      JSON.stringify({
+        id: sessionID
+      })
     );
   });
 };
@@ -95,16 +155,16 @@ export const createKind = () => {
     bridge.onservicecallback = function (msg) {
       try {
         const response = JSON.parse(msg);
-
+        console.log(response);
         if (response.returnValue) {
           resolve({
             success: true,
-            result: response.result || "No result provided by DB.",
+            result: response.results || "No result provided by DB.",
           });
         } else {
           reject({
             success: false,
-            error: response.errorText || "Unknown error occurred.",
+            error: response.results || "Unknown error occurred.",
           });
         }
       } catch (error) {
@@ -114,22 +174,7 @@ export const createKind = () => {
         });
       }
     };
-    bridge.call("xyz.rollforward.app.aitalk/createKind", "{}");
-    // bridge.call(
-    //   "luna://xyz.rollforward.app.aitalk/createKind",
-    //   JSON.stringify({}),
-    //   (response) => {
-    //     console.log("API Response:", response);
-
-    //     if (response.returnValue) {
-    //       console.log("Kind 생성 완료");
-    //       resolve(true); // 정상적으로 작동된 경우 true 반환
-    //     } else {
-    //       console.error("Kind 생성:", response.error);
-    //       reject(new Error(response.error || "Failed to create Kind")); // 에러 발생 시 reject
-    //     }
-    //   }
-    // );
+    bridge.call("luna://xyz.rollforward.app.aitalk/createKind", "{}");
   });
 };
 
@@ -137,18 +182,28 @@ export const createKind = () => {
 export const deleteKind = () => {
   return new Promise((resolve, reject) => {
     const bridge = getBridge();
-    bridge.call(
-      "luna://xyz.rollforward.app.aitalk/deleteKind",
-      {},
-      (response) => {
+    bridge.onservicecallback = function (msg) {
+      try {
+        const response = JSON.parse(msg);
+        console.log(response);
         if (response.returnValue) {
-          console.log("Kind deleted successfully");
-          resolve(response);
+          resolve({
+            success: true,
+            result: response.results || "No result provided by DB.",
+          });
         } else {
-          console.error(`Error deleting kind: ${response.error}`);
-          reject(new Error(response.error)); // 에러 발생 시 reject
+          reject({
+            success: false,
+            error: response.results || "Unknown error occurred.",
+          });
         }
+      } catch (error) {
+        reject({
+          success: false,
+          error: `Error parsing response: ${error.message}`,
+        });
       }
-    );
+    };
+    bridge.call("luna://xyz.rollforward.app.aitalk/deleteKind", "{}");
   });
 };
