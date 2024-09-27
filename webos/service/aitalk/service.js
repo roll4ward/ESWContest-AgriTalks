@@ -33,7 +33,34 @@ aitalk_service.register("ask", async function(msg) {
   } 
   console.log("thread_id", thread.id);
 
-  const threadMessages = await openai.beta.threads.messages.create(thread.id, { role: "user", content: prompt });
+  if (msg.payload.image_path) {
+    const img_file = await openai.files.create({
+      file: fs.createReadStream(msg.payload.image_path),
+      purpose: "assistants"
+    })
+    const threadMessages = await openai.beta.threads.messages.create(
+      thread.id, 
+      { 
+        role: "user", 
+        content: [
+          {
+            "type": "text",
+            "text": prompt  
+          },
+          {
+            "type": "image_file",
+            "image_file": {"file_id": img_file.id}
+          },
+        ]
+      });
+  } else {
+    const threadMessages = await openai.beta.threads.messages.create(
+      thread.id, 
+      { 
+        role: "user", 
+        content: prompt 
+      });
+  }
 
   let run = await openai.beta.threads.runs.createAndPoll(
       thread.id,
@@ -148,7 +175,36 @@ aitalk_service.register("ask_stream", async function(msg) {
   } 
   console.log("thread_id", thread.id);
 
-  const threadMessages = await openai.beta.threads.messages.create(thread.id, { role: "user", content: prompt });
+  if (msg.payload.image_path) {
+    // 예외 처리 추가
+
+    const img_file = await openai.files.create({
+      file: fs.createReadStream(msg.payload.image_path),
+      purpose: "assistants"
+    })
+    const threadMessages = await openai.beta.threads.messages.create(
+      thread.id, 
+      { 
+        role: "user", 
+        content: [
+          {
+            "type": "text",
+            "text": prompt  
+          },
+          {
+            "type": "image_file",
+            "image_file": {"file_id": img_file.id}
+          },
+        ]
+      });
+  } else {
+    const threadMessages = await openai.beta.threads.messages.create(
+      thread.id, 
+      { 
+        role: "user", 
+        content: prompt 
+      });
+  }
   await new Promise((resolve, reject) => {
     try {
       const stream = openai.beta.threads.runs.stream(thread.id, {
@@ -166,11 +222,11 @@ aitalk_service.register("ask_stream", async function(msg) {
       })
       .on('end', () => {
         console.log('\nStream has ended.');
-        resolve();
         msg.respond(new aitalk_response({
           chunks: "",
           isStreaming: false
         }))
+        resolve();
       })
     } catch (err) {
       console.error(err)
