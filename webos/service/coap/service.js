@@ -147,11 +147,11 @@ function storeSensorData(sensorData) {
     };
 
     service.call('luna://com.webos.service.db/put', { objects: [dataToStore] }, (response) => {
-        if (response.payload.returnValue) {
-            message.respond({ returnValue: true, results: response.payload.results[0].id});
-        } else {
-            message.respond({ returnValue: false, results: response.error});
-        }
+        // if (response.payload.returnValue) {
+        //     message.respond({ returnValue: true, results: response.payload.results[0].id});
+        // } else {
+        //     message.respond({ returnValue: false, results: response.error});
+        // }
     });
 }
 
