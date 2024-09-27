@@ -10,6 +10,7 @@
     "time.query",
     "activity.operation",
     "all",
-    "database.operation"
+    "database.operation",
+    "audio.operation"
   ]
 }

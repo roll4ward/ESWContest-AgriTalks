@@ -17,7 +17,7 @@ export default function ChatPage() {
 
   useEffect(() => {
     const initializeChat = async () => {
-      // speak();
+      speak();
       try {
         const loadedMessages = await readConversation(); // 세션 데이터 읽기
         if (loadedMessages && loadedMessages.result.length > 0) {
