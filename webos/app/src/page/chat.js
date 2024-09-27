@@ -8,14 +8,16 @@ import {
   readConversation
 } from "../database"; // WebOS API 호출 함수들
 
-import sendMessageToWebOS from "../api/aiService";
+import { sendMessageToWebOS, speak} from "../api/aiService";
 
 export default function ChatPage() {
   const [messages, setMessages] = useState([]);
   const [prompt, setPrompt] = useState("");
+  
 
   useEffect(() => {
     const initializeChat = async () => {
+      // speak();
       try {
         const loadedMessages = await readConversation(); // 세션 데이터 읽기
         if (loadedMessages && loadedMessages.result.length > 0) {
@@ -40,7 +42,6 @@ export default function ChatPage() {
     if (prompt.trim()) {
       const newMessages = [...messages, { type: "user", text: prompt }];
       setMessages(newMessages);
-
       try {
         // 사용자 메시지 저장
         await createConversation(prompt, "user"); // 세션 ID와 함께 kind 전달

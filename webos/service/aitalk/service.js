@@ -3,7 +3,7 @@ const config = require("./config.json")
 const fs = require("fs");
 
 const { aitalk_response, api_ask_parameters, error } = require("./dto");
-
+const CONVESKIND =  "xyz.rollforward.app.aitalk:1";
 // API URL의 Protocl에 따라 다른 모듈 import
 const http = config.api_url.startsWith("https") ? require("https") : require("http");
 
@@ -176,7 +176,14 @@ aitalk_service.register("ask_stream", async function(msg) {
       console.error(err)
     }
   })
-  
+});
+
+aitalk_service.register("vtv", async function(msg) {
+    if (!("store_path" in msg.payload)) {
+        msg.respond(new error('It requires store_path (e.g. {store_path: "/tmp/tts.mp3"}).'));
+        return;
+    }
+
 });
 
 // 세션 & 대화 정보 데이터베이스 생성 (임시)
