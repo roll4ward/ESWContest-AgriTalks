@@ -17,12 +17,7 @@
     "react-scripts": "^5.0.1",
     "styled-component": "^2.8.0",
     "styled-components": "^6.1.12",
-<<<<<<< HEAD
     "web-vitals": "^2.1.4"
-=======
-    "web-vitals": "^2.1.4",
-    "openai": "4.60.0"
->>>>>>> 5b6590643fa7ff769d990eae4ae1bb1c5185b38e
   },
   "scripts": {
     "start": "react-scripts start",
