@@ -70,7 +70,7 @@ export const Camera = () => {
 
 const Container = styled.div`
   display: flex;
-  width: 1920px;
+  width: 100%;
   height: 1080px;
   background-color: #d3d3d3;
   justify-content: flex-end;
