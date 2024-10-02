@@ -1,6 +1,6 @@
 import React from "react";
 import styled from "styled-components";
-import RobotIcon from "../icon/robot.svg";
+import RobotIcon from "../assets/icon/robot.svg";
 
 export default function MessageBox({ msgType, text }) {
   return (

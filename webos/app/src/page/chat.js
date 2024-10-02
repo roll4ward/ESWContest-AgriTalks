@@ -1,31 +1,81 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import MessageBox from "../component/MessageBox";
 import { Button, Form, InputGroup, Card } from "react-bootstrap";
-import { useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import styled from "styled-components";
+import {
+  createConversation,
+  readConversation
+} from "../database"; // WebOS API 호출 함수들
+
+import { sendMessageToWebOS, speak} from "../api/aiService";
 
 export default function ChatPage() {
-  const navigate = useNavigate();
-  const [messages, setMessages] = useState([
-    { type: "user", text: "LG, 현재 농장 상태를 보고해줘" },
-    {
-      type: "ai",
-      text: "2024년 8월 1일 기준, 광량은 ~~이고 습도는 ~~이고 온도는 ~~이고 수분량은 ~~~입니다. 광량은 ~~이고 습도는 ~~이고 온도는 ~~이고 수분량은 ~~~입니다. ",
-    },
-    { type: "user", text: "그렇구나. 알려줘서 고마워! 오늘의 날씨는 어때?" },
-    { type: "ai", text: "오늘의 날씨는 맑음입니다. 오후부터 비가 예상됩니다." },
-  ]);
-  const [input, setInput] = useState("");
+  const [messages, setMessages] = useState([]);
+  const [prompt, setPrompt] = useState("");
+  
 
-  const onClickCamera = () => {
-    navigate("/camera");
-  };
+  useEffect(() => {
+    const initializeChat = async () => {
+      speak();
+      try {
+        const loadedMessages = await readConversation(); // 세션 데이터 읽기
+        if (loadedMessages && loadedMessages.result.length > 0) {
+          setMessages(
+            loadedMessages.result.map((msg) => ({
+              type: msg.type,
+              text: msg.text
+            }))
+          );
+        } else {
+          console.log("이전에 대화 기록 없음");
+        }
+      } catch (error) {
+        console.error("Initialization error:", error);
+      }
+    };
 
-  const handleSendMessage = () => {
-    if (input.trim()) {
-      setMessages([...messages, { type: "user", text: input }]);
-      setInput("");
+    initializeChat();
+  }, []);
+
+  const handleSendMessage = async () => {
+    if (prompt.trim()) {
+      const newMessages = [...messages, { type: "user", text: prompt }];
+      setMessages(newMessages);
+      try {
+        // 사용자 메시지 저장
+        await createConversation(prompt, "user"); // 세션 ID와 함께 kind 전달
+        // AI 응답을 받는 부분 (WebOS AI 서비스와 통신)
+        const response = await sendMessageToWebOS(prompt);
+
+        if (response.success) {
+          const aiMessage = { type: "ai", text: response.result };
+          setMessages((prevMessages) => [...prevMessages, aiMessage]);
+
+          // AI 응답을 DB에 저장
+          await createConversation(response.result, "ai"); // 세션 ID와 함께 kind 전달
+        } else {
+          setMessages((prevMessages) => [
+            ...prevMessages,
+            {
+              type: "ai",
+              text: `Error-else success: ${
+                response.error || "No result from AI."
+              }`,
+            },
+          ]);
+        }
+      } catch (error) {
+        console.error("Error sending message:", error);
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          { type: "ai", text: `Error-catch: ${error}` },
+        ]);
+      }
+
+      setPrompt("");
+    } else {
+      console.warn("Input이 입력되지 않았습니다");
     }
   };
 
@@ -41,20 +91,16 @@ export default function ChatPage() {
           <InputGroup>
             <Form.Control
               placeholder="텍스트를 입력하세요."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
               style={{ height: "50px", fontSize: "1.5rem" }}
             />
             <Button
-              style={{ backgroundColor: "#448569", color: "#white" }}
+              style={{ backgroundColor: "#448569", color: "#fff" }}
               onClick={handleSendMessage}
             >
               ↑
             </Button>
-            <Button
-              style={{ backgroundColor: "#448569", color: "#white" }}
-              onClick={onClickCamera}
-            ></Button>
           </InputGroup>
         </CardFooter>
       </StyledCard>

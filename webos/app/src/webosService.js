@@ -1,4 +1,3 @@
-
 // webosService.js
 function createBridge() {
   return typeof WebOSServiceBridge !== "undefined"

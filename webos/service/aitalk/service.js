@@ -3,7 +3,7 @@ const config = require("./config.json")
 const fs = require("fs");
 
 const { aitalk_response, api_ask_parameters, error } = require("./dto");
-
+const CONVESKIND =  "xyz.rollforward.app.aitalk:1";
 // API URL의 Protocl에 따라 다른 모듈 import
 const http = config.api_url.startsWith("https") ? require("https") : require("http");
 
@@ -232,5 +232,97 @@ aitalk_service.register("ask_stream", async function(msg) {
       console.error(err)
     }
   })
+});
+
+aitalk_service.register("vtv", async function(msg) {
+    if (!("store_path" in msg.payload)) {
+        msg.respond(new error('It requires store_path (e.g. {store_path: "/tmp/tts.mp3"}).'));
+        return;
+    }
+
+});
+
+// 세션 & 대화 정보 데이터베이스 생성 (임시)
+aitalk_service.register('createKind', function (message) {
+  const kindData = {
+    id: CONVESKIND,
+    owner: 'xyz.rollforward.app.aitalk',
+    schema: {
+        type: 'object',
+        properties: {
+            _id: { type: 'string' },
+            type: { type: 'string' },
+            text: { type: 'string' },
+            regdate: { type: 'string' }
+        },
+        required: ['type', 'text', 'regdate']
+    },
+    indexes: [
+        { name: 'type', props: [{ name: 'type' }] },
+        { name: 'text', props: [{ name: 'text' }] },
+        { name: 'regdate', props: [{ name: 'regdate' }] }
+    ]
+  };
+
+  aitalk_service.call('luna://com.webos.service.db/putKind', kindData, (response) => {
+      if (response.payload.returnValue) {
+          message.respond({ returnValue: true });
+      } else {
+          message.respond({ returnValue: false, results: response.error });
+      }
+  });
+});
+
+// 세션 & 대화 데이터베이스 삭제 (임시)
+aitalk_service.register('deleteKind', function(message) {
+    aitalk_service.call('luna://com.webos.service.db/delKind', { id: CONVESKIND }, (response) => {
+        if (response.payload.returnValue) {
+          message.respond({ returnValue: true });
+        } else {
+            message.respond({ returnValue: false, results: response.error });
+        }
+    });
+});
+
+// 세션 데이터 Create
+aitalk_service.register('create', function(message) {
+  const dataToStore = {
+      _kind: CONVESKIND,
+      text: message.payload.text,
+      type: message.payload.type,
+      regdate: new Date().toISOString()
+  };
+
+  if (!dataToStore.type || !dataToStore.text) {
+      return message.respond({ returnValue: false, results: 'All fields are required.' });
+  } 
   
+  aitalk_service.call('luna://com.webos.service.db/put', { objects: [dataToStore] }, (response) => {
+      console.log(response);
+      if (response.payload.returnValue) {
+          message.respond({ returnValue: true, results: response.payload.results[0].id});
+      } else {
+          message.respond({ returnValue: false, results: response.error});
+      }
+  });
+});
+
+// 세션 데이터 Read
+aitalk_service.register('read', function(message) {
+  const query  = {
+      from: CONVESKIND,
+      where: []
+  };
+  
+  aitalk_service.call('luna://com.webos.service.db/find', { query: query }, (response) => {
+    if(response.payload.returnValue){
+      if (response.payload.results.length > 0) {
+          message.respond({ returnValue: true, results: response.payload.results });
+      } else {
+          message.respond({ returnValue: true, results: null });
+      }
+    }else{
+        message.respond({ returnValue: false, results: 'cannot found conversation' });
+    }
+  });
 });

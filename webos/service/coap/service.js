@@ -6,7 +6,7 @@ const service = new Service(pkg_info.name);
 const DB_KIND = 'xyz.rollforward.app.coap:1';
 let interval;
 
-// 데이터베이스 종류(kind) 생성
+// 센서 값 데이터베이스 생성 (임시)
 service.register('createKind', function(message) {
     const kindData = {
         id: DB_KIND,
@@ -15,30 +15,145 @@ service.register('createKind', function(message) {
             type: 'object',
             properties: {
                 _id: { type: 'string' },
-                name: {type: 'string'},
-                type: { type: 'string' },
-                desc: { type: 'string' },
-                time: { type: 'string' },
+                snum: { type: 'string' },
                 value: { type: 'number' },
-                unit: {type: 'string'},
+                time: { type: 'string' }
             },
-            required: ['name','type', 'time', 'value']
+            required: ['snum', 'time', 'value']
         },
         indexes: [
-            { name: 'name', props: [{ name: 'name' }] },
-            { name: 'type', props: [{ name: 'type' }] },
-            { name: 'time', props: [{ name: 'time' }] }
+            { name: 'snum', props: [{ name: 'snum' }] }
         ]
     };
 
     service.call('luna://com.webos.service.db/putKind', kindData, (response) => {
         if (response.payload.returnValue) {
-            message.respond({ returnValue: true});
+            message.respond({ returnValue: true, results: 'Kind created successfully'});
         } else {
             message.respond({ returnValue: false, error: response.error });
         }
     });
 });
+
+// 센서 값 데이터베이스 삭제 (임시)
+service.register('deleteKind', function(message) {
+    service.call('luna://com.webos.service.db/delKind', {id: DB_KIND}, (response) => {
+        if (response.payload.returnValue) {
+            message.respond({ returnValue: true, results: 'Kind deleted successfully'});
+        } else {
+            message.respond({ returnValue: false, error: response.error });
+        }
+    });
+});
+
+// 센서 값 데이터 Create (임시)
+service.register('create', function(message) {
+    const dataToStore = {
+        _kind: DB_KIND,
+        snum: "SER123456",
+        time: new Date().toISOString(),
+        value: 38.1
+    };
+
+    service.call('luna://com.webos.service.db/put', { objects: [dataToStore] }, (response) => {
+        console.log(response);
+        if (response.payload.returnValue) {
+            message.respond({ returnValue: true, results: response.payload.results[0].id});
+        } else {
+            message.respond({ returnValue: false, results: response.error});
+        }
+    });
+});
+
+// 센서 값 데이터 Update (임시)
+service.register('update', function(message) {
+    const updatedItem = {
+        _id: message.payload.id,
+        _kind: DB_KIND
+    };
+
+    if (message.payload.snum) {
+        updatedItem.snum = message.payload.snum;
+    }
+
+    if (message.payload.value) {
+        updatedItem.value = message.payload.value;
+    }
+
+    if (message.payload.time) {
+        updatedItem.time = message.payload.time;
+    }
+
+    service.call('luna://com.webos.service.db/merge', { objects: [updatedItem] }, (response) => {
+        console.log(response);
+        if (response.payload.returnValue) {
+            message.respond({ returnValue: true, results: 'Item updated successfully' });
+        } else {
+            message.respond({ returnValue: false, results: response.error });
+        }
+    });
+});
+
+// 센서 값 데이터 read
+service.register('read', function(message) {
+    const query = {
+        from: DB_KIND,
+        where: []
+    };
+
+    if (message.payload.id) {
+        query.where.push({ prop: '_id', op: '=', val: message.payload.id });
+    }
+
+    if (message.payload.snum) {
+        query.where.push({ prop: 'snum', op: '=', val: message.payload.snum });
+    }
+
+    service.call('luna://com.webos.service.db/find', { query: query }, (response) => {
+        if (response.payload.returnValue) {
+            message.respond({ returnValue: true, results: response.payload.results });
+        } else {
+            message.respond({ returnValue: false, results: response.error });
+        }
+    });
+});
+
+// 센서 값 데이터 Delete
+service.register('delete', function(message) {
+    const ids = [message.payload.id];
+    
+    if (!("id" in message.payload)) {
+        message.respond({ returnValue: false, results: 'id is required.' });
+    }
+
+    service.call('luna://com.webos.service.db/del', { ids: ids }, (response) => {
+        if (response.payload.returnValue) {
+            message.respond({ returnValue: true, results: 'Item deleted successfully' });
+        } else {
+            message.respond({ returnValue: false, results: response.error });
+        }
+    });
+});
+
+// CoAP 관련 함수
+
+// 센서 데이터 저장 함수
+function storeSensorData(sensorData) {
+    const dataToStore = {
+        _kind: DB_KIND,
+        snum: sensorData.snum,
+        value: sensorData.value,
+        time: new Date().toISOString()
+    };
+
+    service.call('luna://com.webos.service.db/put', { objects: [dataToStore] }, (response) => {
+        // if (response.payload.returnValue) {
+        //     message.respond({ returnValue: true, results: response.payload.results[0].id});
+        // } else {
+        //     message.respond({ returnValue: false, results: response.error});
+        // }
+    });
+}
 
 // CoAP 메시지 전송 및 데이터 저장 함수
 function sendCoapMessageAndStore(hostIP) {
@@ -62,37 +177,16 @@ function sendCoapMessageAndStore(hostIP) {
     req.end();
 }
 
-// 센서 데이터 저장 함수
-function storeSensorData(sensorData) {
-    const dataToStore = {
-        _kind: DB_KIND,
-        name: sensorData.name,
-        type: sensorData.type,
-        desc: sensorData.desc,
-        value: sensorData.value,
-        unit: "%",
-        time: new Date().toISOString()
-    };
-
-    service.call('luna://com.webos.service.db/put', { objects: [dataToStore] }, (response) => {
-        if (response.payload.returnValue) {
-            console.log('Sensor data stored successfully:', response.payload.results[0].id);
-        } else {
-            console.error('Failed to store sensor data:', response.error);
-        }
-    });
-}
-
 // 서비스 메소드: CoAP 메시지 전송 시작
-service.register("startSending", (msg) => {
+service.register("startSending", (message) => {
     if (!interval) {
-        interval = setInterval(() => sendCoapMessageAndStore(msg.payload.ip), msg.payload.interval * 1000);
-        msg.respond({
+        interval = setInterval(() => sendCoapMessageAndStore(message.payload.ip), message.payload.interval * 1000);
+        message.respond({
             returnValue: true,
             message: "Started sending CoAP messages and storing data"
         });
     } else {
-        msg.respond({
+        message.respond({
             returnValue: false,
             message: "Already sending CoAP messages and storing data"
         });
@@ -100,45 +194,18 @@ service.register("startSending", (msg) => {
 });
 
 // 서비스 메소드: CoAP 메시지 전송 중지
-service.register("stopSending", (msg) => {
+service.register("stopSending", (message) => {
     if (interval) {
         clearInterval(interval);
         interval = null;
-        msg.respond({
+        message.respond({
             returnValue: true,
             message: "Stopped sending CoAP messages and storing data"
         });
     } else {
-        msg.respond({
+        message.respond({
             returnValue: false,
             message: "Not currently sending CoAP messages"
         });
     }
-});
-
-// 센서 데이터 조회
-service.register('read', function(message) {
-    const query = {
-        from: DB_KIND,
-        where: []
-    };
-
-    if (message.payload.name) {
-        query.where.push({ prop: 'name', op: '=', val: message.payload.name });
-    }
-    if (message.payload.type) {
-        query.where.push({ prop: 'type', op: '=', val: message.payload.type });
-    }
-    if (message.payload.fromTime && message.payload.toTime) {
-        query.where.push({ prop: 'time', op: '>=', val: message.payload.fromTime });
-        query.where.push({ prop: 'time', op: '<=', val: message.payload.toTime });
-    }
-
-    service.call('luna://com.webos.service.db/find', { query: query }, (response) => {
-        if (response.payload.returnValue) {
-            message.respond({ returnValue: true, results: response.payload.results });
-        } else {
-            message.respond({ returnValue: false, results: response.error });
-        }
-    });
 });

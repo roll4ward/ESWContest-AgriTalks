@@ -12,5 +12,8 @@
   "dependencies": {
     "openai": "^4.60.0",
     "path": "^0.12.7"
-  }
+  },
+  "services": [
+    "com.webos.service.db"
+  ]
 }

@@ -1,0 +1,9 @@
+{
+  "id": "xyz.rollforward.app.infomanage",
+  "description": "A device infomanage service",
+  "services": [
+    {
+      "name": "xyz.rollforward.app.infomanage"
+    }
+  ]
+}
