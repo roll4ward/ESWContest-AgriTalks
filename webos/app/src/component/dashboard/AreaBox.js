@@ -1,6 +1,6 @@
 import styled from "styled-components";
 import { DeviceCountBox } from "./DeviceCountBox";
-import arrowRight from "../../icon/arrowRight.png";
+import arrowRight from "../../assets/icon/arrowRight.png";
 
 export const AreaBox = () => {
   return (

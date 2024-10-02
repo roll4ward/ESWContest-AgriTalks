@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import refresh from "../../icon/refresh.png";
+import refresh from "../../assets/icon/refresh.png";
 import { DeviceValueBox } from "./DeviceValueBox";
 
 export const DeviceMonitorBox = ({ isSensor, devices }) => {

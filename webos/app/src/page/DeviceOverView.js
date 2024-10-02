@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import add from "../icon/add.png";
+import add from "../assets/icon/add.png";
 import { DeviceMonitorBox } from "../component/controlDevices/DeviceMonitorBox";
 
 export const DeviceOverView = () => {
