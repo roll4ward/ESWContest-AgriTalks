@@ -28,10 +28,7 @@ export const Home = () => {
       </TextWrap>
 
       <ButtonConatiner>
-        <Button onClick={()=>{
-          console.log("clicked");
-          readAllAreas((result)=>{console.log(result)})
-        }}>
+        <Button>
           <img src={add} alt="" width={48} height={48} />
           {"구역 추가"}
         </Button>

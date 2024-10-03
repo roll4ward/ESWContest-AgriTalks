@@ -17,6 +17,7 @@ function App() {
           display: "flex",
           flexDirection: "row",
           height: "100vh",
+          width: "1920px",
           paddingTop: 45,
           paddingLeft: 50,
         }}
