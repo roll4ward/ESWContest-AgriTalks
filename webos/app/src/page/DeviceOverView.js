@@ -1,22 +1,23 @@
 import styled from "styled-components";
 import add from "../assets/icon/add.png";
 import { DeviceMonitorBox } from "../component/controlDevices/DeviceMonitorBox";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { readAllAreas } from "../api/infomanageService"
+import { readAllAreas, readDeviceswithArea } from "../api/infomanageService"
 
 export const DeviceOverView = () => {
-  const { areaID } = useParams();
-  const navigate = useNavigate();
+  const [areaID, setAreaID] = useState(useParams().areaID);
+  const [areas, setAreas] = useState([]);
+  const [devices, setDevices] = useState({sensors : [], actuators: []});
+  function Device(sensors, actuators) {
+    this.sensors = sensors;
+    this.actuators = actuators;
+  }
+
+
   const today = new Date();
 
   console.log("area ID : ", areaID);
-
-  const sensors = [
-    { id: 0, name: "센서1" },
-    { id: 1, name: "센서2" },
-  ];
-  const actuator = [];
 
   // 날짜 형식 포맷팅
   const year = today.getFullYear();
@@ -27,13 +28,21 @@ export const DeviceOverView = () => {
 
   const formattedDate = `${year}.${month}.${date} (${day})`; // 포맷된 날짜
 
-  const [areas, setAreas] = useState([]);
-
   useEffect(()=> {
     readAllAreas((result) => {
       setAreas(result.map(area => ({ name: area.name, areaID: area.areaID })));
     });
   }, []);
+
+  useEffect(() => {
+    readDeviceswithArea(areaID, (result)=> {
+      console.log(result);
+      setDevices(new Device(
+        result.filter(device => device.type === "sensor"),
+        result.filter(device => device.type === "actuator")
+      ));
+    })
+  }, [areaID]);
 
   return (
     <Container>
@@ -46,7 +55,7 @@ export const DeviceOverView = () => {
       </TitleWrapper>
 
       <EventWrapper>
-        <select name="area" style={{ width: 391, height: 80, fontSize: 40 }} onChange={(e) => {navigate(`/devices/${e.target.value}`)}}>
+        <select name="area" style={{ width: 391, height: 80, fontSize: 40 }} onChange={(e) => {setAreaID(e.target.value)}}>
           { areas.map((area)=>(<option value={area.areaID}>{area.name}</option>)) }
         </select>
         <Button>
@@ -57,10 +66,10 @@ export const DeviceOverView = () => {
 
       <DeviceMonitorWapprer>
         {/* 센서 */}
-        <DeviceMonitorBox isSensor devices={sensors} />
+        <DeviceMonitorBox isSensor devices={devices.sensors} />
 
         {/* 작동기 */}
-        <DeviceMonitorBox devices={actuator} />
+        <DeviceMonitorBox devices={devices.actuators} />
       </DeviceMonitorWapprer>
     </Container>
   );
