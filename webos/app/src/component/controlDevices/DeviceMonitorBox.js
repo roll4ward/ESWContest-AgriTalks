@@ -1,8 +1,10 @@
 import styled from "styled-components";
 import refresh from "../../assets/icon/refresh.png";
 import { DeviceValueBox } from "./DeviceValueBox";
+import { useNavigate } from "react-router-dom";
 
 export const DeviceMonitorBox = ({ isSensor, devices }) => {
+  const navigate = useNavigate();
   const currentTime = new Date().toLocaleTimeString("ko-KR", {
     hour: "2-digit",
     minute: "2-digit",
@@ -24,7 +26,7 @@ export const DeviceMonitorBox = ({ isSensor, devices }) => {
         {devices.length < 1 ? (
           <NoDataText>기기를 추가해 주세요</NoDataText>
         ) : (
-          devices.map((device, idx) => {
+          devices.map((device) => {
             return (
               <DeviceValueBox device={device} value={30} />
             );

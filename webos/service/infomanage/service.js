@@ -250,9 +250,9 @@ service.register('area/read', function(message) {
                 for (const result of response.payload.results) {
                     for(let i = 0; i < areas.length; i++) {
                         if (areas[i].areaID == result.areaId){
-                            if (result.type === '센서') {
+                            if (result.type === 'sensor') {
                                 areas[i].sensorCount++;
-                            } else if (result.type === '작동기') {
+                            } else if (result.type === 'actuator') {
                                 areas[i].actuatorCount++;
                             }
                         }

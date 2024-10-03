@@ -1,11 +1,13 @@
+import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 
 export const DeviceValueBox = ({ device, value }) => {
-  const { id, name } = device;
+  const navigate = useNavigate();
+  const { _id, name } = device;
 
   console.log("devices : ", device);
   return (
-    <Container>
+    <Container onClick={() => {navigate(`/detail/${_id}`)}}>
       <span style={{ fontSize: 55, color: "#4c4c4c", width: "100%", textOverflow: "ellipsis", overflow: "hidden"}}>{name}</span>
       <span style={{ fontSize: 80, color: "#4c4c4c", width: "100%", textOverflow: "ellipsis", overflow: "hidden"}}>{value}</span>
     </Container>

@@ -142,7 +142,7 @@ export function readDevicewithID(deviceID, callback) {
             return;
         }
 
-        if (callback) callback(msg.results);
+        if (callback) callback(msg.results[0]);
         console.log("callback called", callback);
     };
 

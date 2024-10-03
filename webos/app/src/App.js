@@ -6,6 +6,7 @@ import { HashRouter as Router, Routes, Route } from "react-router-dom";
 import ChatPage from "./page/chat";
 import { Camera } from "./page/Camera";
 import { Home } from "./page/Home";
+import DeviceDetailPage from "./page/DeviceDetailPage"
 import { DeviceOverView } from "./page/DeviceOverView";
 import { SideBar } from "./component/SideBar";
 
@@ -32,7 +33,6 @@ function App() {
           style={{
             flex: 1,
             overflowY: "auto", // 세로 스크롤 적용
-            maxHeight: "100vh", // 최대 높이 설정
           }}
         >
           <Routes>
@@ -40,6 +40,7 @@ function App() {
             <Route path="/chat" element={<ChatPage />} />
             <Route path="/camera" element={<Camera />} />
             <Route path="/devices/:areaID" element={<DeviceOverView />} />
+            <Route path="/detail/:deviceID" element={<DeviceDetailPage />} />
           </Routes>
         </div>
       </div>

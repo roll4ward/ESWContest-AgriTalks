@@ -48,6 +48,7 @@ export default function GraphContainer() {
 }
 
 const GraphWrap = styled.div`
+  height: 65vh;
   background-color: #f5f5f5;
   border-radius: 20px;
   display: flex;

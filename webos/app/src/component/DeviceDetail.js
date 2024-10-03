@@ -1,39 +1,41 @@
 import styled from "styled-components";
-import { useParams } from "react-router-dom";
 import RefreshIcon from "../assets/icon/Refresh.svg";
-import EditIcon from "../assets/icon/Edit.svg";
-export default function MachineDetail({ data }) {
-  const { id } = useParams();
+import { useEffect, useState } from "react";
+import { readDevicewithID } from "../api/infomanageService";
 
-  // id를 정수로 변환하여 데이터에서 검색
-  const machineData = data.find((machine) => machine.id === parseInt(id));
+export default function DeviceDetail({ deviceID }) {
+  const [deviceInfo, setDeviceInfo] = useState({ name : "기기", description : "기기설명"});
+  const [valueInfo, setValueInfo] = useState({ lastupdatetime : "마지막 시간", value : "기기값"});
 
-  // 데이터가 없는 경우 처리
-  if (!machineData) {
-    return <p>Data not found</p>;
-  }
-
+  useEffect(()=> {
+    readDevicewithID(deviceID, (result)=> {
+      console.log(result);
+      setDeviceInfo({
+        name: result.name,
+        description: result.desc
+      });
+    });
+  }, []);
+  
   return (
     <MainWrap>
       <InfoWrap>
         <StyledRow>
-          <StyledName>{machineData.name}</StyledName>
-          <StyledIcon src={EditIcon} />
+          <StyledName>{deviceInfo.name}</StyledName>
         </StyledRow>
         <StyledRow>
-          <StyledContent>{machineData.info}</StyledContent>
-          <StyledIcon src={EditIcon} />
+          <StyledContent>{deviceInfo.description}</StyledContent>
         </StyledRow>
       </InfoWrap>
       <ValueWrap>
         <StyledRow>
-          <div style={{ fontWeight: "600", color: "#717171" }}>
+          <div style={{ fontWeight: "600", color: "#717171", fontSize: "2rem" }}>
             마지막 업데이트 시간
           </div>
-          <StyledIcon src={RefreshIcon} alt="RefreshIcon" />
+          <StyledIcon src={RefreshIcon} alt="RefreshIcon"/>
         </StyledRow>
-        <div style={{ color: "#717171" }}>{machineData.lastupdatetime}</div>
-        <StyledValue>{machineData.value}</StyledValue>
+        <div style={{ color: "#717171", fontSize: "2rem" }}>{valueInfo.lastupdatetime}</div>
+        <StyledValue>{valueInfo.value}</StyledValue>
       </ValueWrap>
     </MainWrap>
   );
@@ -41,13 +43,15 @@ export default function MachineDetail({ data }) {
 
 const MainWrap = styled.div`
   display: flex;
-  justify-content: space-around;
+  justify-content: space-between;
+  margin-bottom: 20px;
 `;
 const InfoWrap = styled.div`
   display: flex;
   align-items: center;
   flex-direction: column;
   margin: 50px;
+  width: 40%;
 `;
 
 const ValueWrap = styled.div`
@@ -62,24 +66,29 @@ const ValueWrap = styled.div`
 
 const StyledRow = styled.div`
   display: flex;
-
   align-items: center;
+
+  & > * {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
 `;
 
 const StyledName = styled.div`
   color: #448569;
-  font-size: 35px;
+  font-size: 7.5rem;
   font-weight: 600;
   margin-bottom: 10px;
 `;
 
 const StyledValue = styled.div`
-  font-size: 50px;
+  font-size: 7.5rem;
   font-weight: 800;
 `;
 const StyledContent = styled.div`
   color: #717171;
-  font-size: 15px;
+  font-size: 2.5rem;
   word-wrap: break-word; /* 긴 단어가 있을 경우 자동 줄바꿈 */
   white-space: normal; /* 텍스트가 길어지면 자동으로 줄바꿈 */
   max-width: 300px; /* 너비 제한 */
@@ -90,8 +99,8 @@ const StyledContent = styled.div`
   overflow-y: auto; /* 세로로 스크롤 생성 */
 `;
 const StyledIcon = styled.img`
-  width: 15px;
-  height: 15px;
-  margin-left: 10px;
+  width: 2rem;
+  height: 2rem;
+  margin-left: 20px;
   cursor: pointer;
 `;
