@@ -38,7 +38,7 @@ export const Home = () => {
         <NoDataText>구역을 추가해 주세요</NoDataText>
       ) : (
         areas.map((area) => 
-          <AreaBox name={area.name} description={area.desc} />
+          <AreaBox areaInfo={area} />
         )
       )}
     </Container>

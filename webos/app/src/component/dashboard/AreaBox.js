@@ -2,15 +2,17 @@ import styled from "styled-components";
 import { DeviceCountBox } from "./DeviceCountBox";
 import arrowRight from "../../assets/icon/arrowRight.png";
 
-export const AreaBox = ({name, description}) => {
+export const AreaBox = ({areaInfo}) => {
+  const {name, description, sensorCount, actuatorCount} = areaInfo;
+  
   return (
     <Container>
       <AreaName>{name}</AreaName>
       <InputText>{description}</InputText>
 
       <DeviceWrap>
-        <DeviceCountBox isSensor />
-        <DeviceCountBox />
+        <DeviceCountBox count={sensorCount} isSensor />
+        <DeviceCountBox count={actuatorCount}/>
       </DeviceWrap>
 
       <ImageWrap>

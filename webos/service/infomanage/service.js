@@ -238,7 +238,7 @@ service.register('area/read', function(message) {
         if (response.payload.returnValue) {
             const areas = [];
             for (const result of response.payload.results) {
-                areas.push({"areaID":result._id, "sensorCount": 0, "actuatorCount": 0});
+                areas.push({"areaID":result._id, "name" : result.name, "desc" : result.desc,"sensorCount": 0, "actuatorCount": 0});
             }
 
             const Dquery  = {
