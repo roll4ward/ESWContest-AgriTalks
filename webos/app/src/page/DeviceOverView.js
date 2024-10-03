@@ -1,10 +1,13 @@
 import styled from "styled-components";
 import add from "../assets/icon/add.png";
 import { DeviceMonitorBox } from "../component/controlDevices/DeviceMonitorBox";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { readAllAreas } from "../api/infomanageService"
 
 export const DeviceOverView = () => {
   const { areaID } = useParams();
+  const navigate = useNavigate();
   const today = new Date();
 
   console.log("area ID : ", areaID);
@@ -24,6 +27,14 @@ export const DeviceOverView = () => {
 
   const formattedDate = `${year}.${month}.${date} (${day})`; // 포맷된 날짜
 
+  const [areas, setAreas] = useState([]);
+
+  useEffect(()=> {
+    readAllAreas((result) => {
+      setAreas(result.map(area => ({ name: area.name, areaID: area.areaID })));
+    });
+  }, []);
+
   return (
     <Container>
       <TitleWrapper>
@@ -35,8 +46,8 @@ export const DeviceOverView = () => {
       </TitleWrapper>
 
       <EventWrapper>
-        <select name="area" style={{ width: 391, height: 80, fontSize: 40 }}>
-          <option value={"0"}>하우스 1</option>
+        <select name="area" style={{ width: 391, height: 80, fontSize: 40 }} onChange={(e) => {navigate(`/devices/${e.target.value}`)}}>
+          { areas.map((area)=>(<option value={area.areaID}>{area.name}</option>)) }
         </select>
         <Button>
           <img src={add} alt="" width={48} height={48} />
