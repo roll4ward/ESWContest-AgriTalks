@@ -55,7 +55,9 @@ export const DeviceOverView = () => {
       </TitleWrapper>
 
       <EventWrapper>
-        <select name="area" style={{ width: 391, height: 80, fontSize: 40 }} onChange={(e) => {setAreaID(e.target.value)}}>
+        <select name="area" style={{ width: 391, height: 80, fontSize: 40 }}
+                onChange={(e) => {setAreaID(e.target.value)}}
+                value={areaID}>
           { areas.map((area)=>(<option value={area.areaID}>{area.name}</option>)) }
         </select>
         <Button>
