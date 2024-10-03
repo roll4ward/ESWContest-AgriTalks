@@ -32,6 +32,8 @@ const Container = styled.div`
   padding: 30px 40px 20px 40px;
   border-radius: 20px;
 
+  margin-top: 20px;
+
   &:active {
     opacity: 0.7;
   }

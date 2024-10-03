@@ -34,6 +34,7 @@ export const Home = () => {
         </Button>
       </ButtonConatiner>
 
+    <DataContainer>
       {areas.length < 1 ? (
         <NoDataText>구역을 추가해 주세요</NoDataText>
       ) : (
@@ -41,6 +42,7 @@ export const Home = () => {
           <AreaBox areaInfo={area} />
         )
       )}
+    </DataContainer>
     </Container>
   );
 };
@@ -103,6 +105,12 @@ const ButtonConatiner = styled.div`
   width: 100%;
   justify-content: flex-end;
 `;
+
+const DataContainer = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+`
 
 const NoDataText = styled.span`
   display: flex;
