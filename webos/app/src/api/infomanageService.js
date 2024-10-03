@@ -4,7 +4,7 @@
  * @param {*} method 
  * @returns 서비스의 URL
  */
-const getServiceURL = (service, method) => `luna://xyz.rollforward.app/${service}/$${method}`;
+const getServiceURL = (service, method) => `luna://xyz.rollforward.app.${service}/${method}`;
 
 /**
  *   모든 구역을 쿼리
@@ -13,12 +13,17 @@ const getServiceURL = (service, method) => `luna://xyz.rollforward.app/${service
 export function readAllAreas (callback) {
     let bridge = new WebOSServiceBridge();
     bridge.onservicecallback = (msg) => {
-        if (!msg.returnValue) return;
-
+        msg = JSON.parse(msg);
+        if (!msg.returnValue) {
+            console.log(`Service call failed : ${msg.results}`);
+            return;
+        }
         if (callback) callback(msg.results);
+        console.log("callback called", callback);
     };
 
     bridge.call(getServiceURL("infomanage", "area/read"), "{}");
+    console.log(`Service Called ${getServiceURL("infomanage", "area/read")}`);
 }
 
 /**
@@ -30,9 +35,14 @@ export function readAllAreas (callback) {
 export function createArea (name, description, callback) {
     let bridge = new WebOSServiceBridge();
     bridge.onservicecallback = (msg) => {
-        if (!msg.returnValue) return;
+        msg = JSON.parse(msg);
+        if (!msg.returnValue) {
+            console.log(`Service call failed : ${msg.results}`);
+            return;
+        }
 
         if (callback) callback(msg.results);
+        console.log("callback called", callback);
     };
 
     let query = {
@@ -53,9 +63,14 @@ export function createArea (name, description, callback) {
 export function updateAreaInfo(areaID, name, description, callback ) {
     let bridge = new WebOSServiceBridge();
     bridge.onservicecallback = (msg) => {
-        if (!msg.returnValue) return;
+        msg = JSON.parse(msg);
+        if (!msg.returnValue) {
+            console.log(`Service call failed : ${msg.results}`);
+            return;
+        }
 
         if (callback) callback(msg.results);
+        console.log("callback called", callback);
     };
 
     let query = {
@@ -65,6 +80,7 @@ export function updateAreaInfo(areaID, name, description, callback ) {
     }
 
     bridge.call(getServiceURL("infomanage", "area/update"), JSON.stringify(query));
+    console.log("call area/update");
 }
 
 /**
@@ -75,7 +91,9 @@ export function updateAreaInfo(areaID, name, description, callback ) {
 export function deleteArea(areaID, callback) {
     let bridge = new WebOSServiceBridge();
     bridge.onservicecallback = (msg) => {
+        msg = JSON.parse(msg);
         if (callback) callback(msg.returnValue);
+        console.log("callback called", callback);
     };
 
     let query = {
@@ -93,9 +111,14 @@ export function deleteArea(areaID, callback) {
 export function readDeviceswithArea(areaID, callback) {
     let bridge = new WebOSServiceBridge();
     bridge.onservicecallback = (msg) => {
-        if (!msg.returnValue) return;
+        msg = JSON.parse(msg);
+        if (!msg.returnValue) {
+            console.log(`Service call failed : ${msg.results}`);
+            return;
+        }
 
         if (callback) callback(msg.results);
+        console.log("callback called", callback);
     };
 
     let query = {
@@ -113,9 +136,14 @@ export function readDeviceswithArea(areaID, callback) {
 export function readDevicewithID(deviceID, callback) {
     let bridge = new WebOSServiceBridge();
     bridge.onservicecallback = (msg) => {
-        if (!msg.returnValue) return;
+        msg = JSON.parse(msg);
+        if (!msg.returnValue) {
+            console.log(`Service call failed : ${msg.results}`);
+            return;
+        }
 
         if (callback) callback(msg.results);
+        console.log("callback called", callback);
     };
 
     let query = {
@@ -135,9 +163,14 @@ export function readDevicewithID(deviceID, callback) {
 export function updateDeviceInfo(deviceID, name, description, callback ) {
     let bridge = new WebOSServiceBridge();
     bridge.onservicecallback = (msg) => {
-        if (!msg.returnValue) return;
+        msg = JSON.parse(msg);
+        if (!msg.returnValue) {
+            console.log(`Service call failed : ${msg.results}`);
+            return;
+        }
 
         if (callback) callback(msg.results);
+        console.log("callback called", callback);
     };
 
     let query = {
@@ -155,12 +188,17 @@ export function updateDeviceInfo(deviceID, name, description, callback ) {
  * @param { string } areaID 구역의 ID 
  * @param { (result : "Item updated successfully")=>void } callback 서비스 호출 후 처리할 콜백 함수
  */
-export function updateDeviceInfo(deviceID, name, description, callback ) {
+export function updateDeviceParentArea(deviceID, areaID, callback ) {
     let bridge = new WebOSServiceBridge();
     bridge.onservicecallback = (msg) => {
-        if (!msg.returnValue) return;
+        msg = JSON.parse(msg);
+        if (!msg.returnValue) {
+            console.log(`Service call failed : ${msg.results}`);
+            return;
+        }
 
         if (callback) callback(msg.results);
+        console.log("callback called", callback);
     };
 
     let query = {
@@ -179,7 +217,9 @@ export function updateDeviceInfo(deviceID, name, description, callback ) {
 export function deleteDevice(deviceID, callback) {
     let bridge = new WebOSServiceBridge();
     bridge.onservicecallback = (msg) => {
+        msg = JSON.parse(msg);
         if (callback) callback(msg.returnValue);
+        console.log("callback called", callback);
     };
 
     let query = {

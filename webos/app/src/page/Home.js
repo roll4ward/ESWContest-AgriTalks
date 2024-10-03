@@ -1,9 +1,18 @@
 import styled from "styled-components";
 import add from "../assets/icon/add.png";
 import { AreaBox } from "../component/dashboard/AreaBox";
+import { readAllAreas } from "../api/infomanageService";
+import { useEffect, useState } from "react";
 
 export const Home = () => {
-  const areas = [];
+  const [areas, setAreas] = useState([]);
+
+  useEffect(()=> {
+    readAllAreas((result) => {
+      console.log(result);
+      setAreas(result);
+    });
+  }, []);
 
   return (
     <Container>
@@ -19,7 +28,10 @@ export const Home = () => {
       </TextWrap>
 
       <ButtonConatiner>
-        <Button>
+        <Button onClick={()=>{
+          console.log("clicked");
+          readAllAreas((result)=>{console.log(result)})
+        }}>
           <img src={add} alt="" width={48} height={48} />
           {"구역 추가"}
         </Button>
@@ -28,9 +40,9 @@ export const Home = () => {
       {areas.length < 1 ? (
         <NoDataText>구역을 추가해 주세요</NoDataText>
       ) : (
-        areas.map((area, idx) => {
-          <AreaBox />;
-        })
+        areas.map((area) => 
+          <AreaBox name={area.name} description={area.desc} />
+        )
       )}
     </Container>
   );

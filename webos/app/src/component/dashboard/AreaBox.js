@@ -2,11 +2,11 @@ import styled from "styled-components";
 import { DeviceCountBox } from "./DeviceCountBox";
 import arrowRight from "../../assets/icon/arrowRight.png";
 
-export const AreaBox = () => {
+export const AreaBox = ({name, description}) => {
   return (
     <Container>
-      <AreaName>{"하우스 1호"}</AreaName>
-      <InputText>{"재배 : 포도"}</InputText>
+      <AreaName>{name}</AreaName>
+      <InputText>{description}</InputText>
 
       <DeviceWrap>
         <DeviceCountBox isSensor />
