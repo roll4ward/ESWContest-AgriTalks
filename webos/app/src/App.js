@@ -39,7 +39,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/chat" element={<ChatPage />} />
             <Route path="/camera" element={<Camera />} />
-            <Route path="/devices" element={<DeviceOverView />} />
+            <Route path="/devices/:areaID" element={<DeviceOverView />} />
           </Routes>
         </div>
       </div>

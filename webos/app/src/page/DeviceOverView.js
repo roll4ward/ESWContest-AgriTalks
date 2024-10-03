@@ -1,9 +1,13 @@
 import styled from "styled-components";
 import add from "../assets/icon/add.png";
 import { DeviceMonitorBox } from "../component/controlDevices/DeviceMonitorBox";
+import { useParams } from "react-router-dom";
 
 export const DeviceOverView = () => {
+  const { areaID } = useParams();
   const today = new Date();
+
+  console.log("area ID : ", areaID);
 
   const sensors = [
     { id: 0, name: "센서1" },
@@ -27,7 +31,6 @@ export const DeviceOverView = () => {
           {formattedDate}
           <span>서울시 강남구</span>
         </TopText>
-
         <Line />
       </TitleWrapper>
 

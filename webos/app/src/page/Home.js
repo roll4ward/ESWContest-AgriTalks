@@ -3,9 +3,11 @@ import add from "../assets/icon/add.png";
 import { AreaBox } from "../component/dashboard/AreaBox";
 import { readAllAreas } from "../api/infomanageService";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export const Home = () => {
   const [areas, setAreas] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(()=> {
     readAllAreas((result) => {

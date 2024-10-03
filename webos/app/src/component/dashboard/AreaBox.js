@@ -1,10 +1,14 @@
 import styled from "styled-components";
 import { DeviceCountBox } from "./DeviceCountBox";
 import arrowRight from "../../assets/icon/arrowRight.png";
+import { useNavigate } from "react-router-dom";
 
 export const AreaBox = ({areaInfo}) => {
-  const {name, description, sensorCount, actuatorCount} = areaInfo;
+  const {name, description, sensorCount, actuatorCount, areaID} = areaInfo;
+  const navigate = useNavigate();
   
+  console.log(`${name} : ${areaID}`);
+
   return (
     <Container>
       <AreaName>{name}</AreaName>
@@ -16,7 +20,7 @@ export const AreaBox = ({areaInfo}) => {
       </DeviceWrap>
 
       <ImageWrap>
-        <img src={arrowRight} alt="" width={80} height={80} />
+        <img src={arrowRight} alt="" width={80} height={80} onClick={()=> {navigate(`/devices/${areaID}`)}} />
       </ImageWrap>
     </Container>
   );
