@@ -6,5 +6,6 @@
   "openai_tts": {
     "model": "tts-1",
     "voice": "alloy"
-  }
+  },
+  "store_path": "/home/developer/media/tts.pcm"
 }

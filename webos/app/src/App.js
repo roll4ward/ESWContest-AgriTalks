@@ -36,8 +36,8 @@ function App() {
           }}
         >
           <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/chat" element={<ChatPage />} />
+            {/* <Route path="/" element={<Home />} /> */}
+            <Route path="/" element={<ChatPage />} />
             <Route path="/camera" element={<Camera />} />
             <Route path="/devices/:areaID" element={<DeviceOverView />} />
             <Route path="/detail/:deviceID" element={<DeviceDetailPage />} />

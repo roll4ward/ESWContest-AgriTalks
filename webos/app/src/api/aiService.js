@@ -71,8 +71,71 @@ export const sendMessageToWebOS = (prompt) => {
   });
 }
 
+export const sendMessageToTTS = (text) => {
+  return new Promise((resolve, reject) => {
+    const bridge =
+      typeof WebOSServiceBridge !== "undefined"
+        ? getBridge()
+        : {
+            // 웹OS 환경이 아닐 경우의 더미 객체
+            call: (service, params) => {
+              console.log(`Mock call to ${service} with params: ${params}`);
+              // 더미 응답으로 응답 처리
+              resolve({
+                success: true,
+                result: `Mock response for service: ${service}`,
+              });
+            },
+          };
+
+    if (typeof WebOSServiceBridge === "undefined") {
+      console.warn("WebOSServiceBridge is not defined, using mock bridge.");
+    }
+
+    const service = "luna://xyz.rollforward.app.aitalk/tts";
+
+    bridge.onservicecallback = function (msg) {
+      try {
+        const response = JSON.parse(msg);
+
+        if (response.returnValue) {
+          resolve({
+            success: true,
+            result: response.result || "No result provided by AI.",
+          });
+        } else {
+          reject({
+            success: false,
+            error: response.errorText || "Unknown error occurred.",
+          });
+        }
+      } catch (error) {
+        reject({
+          success: false,
+          error: `Error parsing response: ${error.message}`,
+        });
+      }
+    };
+
+    try {
+      const params = JSON.stringify({
+        text: text,
+      });
+
+      // console.log("Calling service with params:", params);
+      bridge.call(service, params); // 실제 호출
+    } catch (error) {
+      console.error("Service call failed:", error);
+      reject({
+        success: false,
+        error: `Service call failed: ${error.message}`,
+      });
+    }
+  });
+};
+
 export async function speak() {
- return new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     const bridge =
       typeof WebOSServiceBridge !== "undefined"
         ? getBridge()
@@ -119,11 +182,11 @@ export async function speak() {
 
     try {
       const params = JSON.stringify({
-        "fileName":"/tmp/media/tts.pcm",
-        "sink":"default1",
-        "sampleRate":48000 ,
-        "format":"PA_SAMPLE_S16LE",
-        "channels":1
+        fileName: "/home/developer/media/tts.pcm",
+        sink: "default2",
+        sampleRate: 32000,
+        format: "PA_SAMPLE_S16LE",
+        channels: 1,
       });
 
       console.log("Calling service with params:", params);
@@ -137,7 +200,6 @@ export async function speak() {
     }
   });
 }
-
 // /* global webOS */
 // export function sendMessageToWebOS(prompt, dryRun = false, images = []) {
 //   return new Promise((resolve, reject) => {

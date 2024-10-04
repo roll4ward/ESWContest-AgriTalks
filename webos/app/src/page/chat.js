@@ -1,30 +1,28 @@
+// ChatPage.js
 import React, { useState, useEffect } from "react";
 import MessageBox from "../component/MessageBox";
 import { Button, Form, InputGroup, Card } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import styled from "styled-components";
-import {
-  createConversation,
-  readConversation
-} from "../database"; // WebOS API 호출 함수들
-
-import { sendMessageToWebOS, speak} from "../api/aiService";
+import { createConversation, readConversation } from "../database"; // WebOS API 호출 함수들
+import { sendMessageToWebOS, sendMessageToTTS, speak } from "../api/aiService";
+import RecordModal from "../component/modal/RecorderModal";
+import { FaMicrophone } from "react-icons/fa"; // 마이크 아이콘 추가
 
 export default function ChatPage() {
   const [messages, setMessages] = useState([]);
   const [prompt, setPrompt] = useState("");
-  
+  const [showRecordModal, setShowRecordModal] = useState(false);
 
   useEffect(() => {
     const initializeChat = async () => {
-      speak();
       try {
         const loadedMessages = await readConversation(); // 세션 데이터 읽기
         if (loadedMessages && loadedMessages.result.length > 0) {
           setMessages(
             loadedMessages.result.map((msg) => ({
               type: msg.type,
-              text: msg.text
+              text: msg.text,
             }))
           );
         } else {
@@ -53,6 +51,8 @@ export default function ChatPage() {
           setMessages((prevMessages) => [...prevMessages, aiMessage]);
 
           // AI 응답을 DB에 저장
+          await sendMessageToTTS(response.result);
+          await speak();
           await createConversation(response.result, "ai"); // 세션 ID와 함께 kind 전달
         } else {
           setMessages((prevMessages) => [
@@ -79,6 +79,10 @@ export default function ChatPage() {
     }
   };
 
+  const handleRecordModalClose = () => {
+    setShowRecordModal(false);
+  };
+
   return (
     <Container>
       <StyledCard>
@@ -101,32 +105,47 @@ export default function ChatPage() {
             >
               ↑
             </Button>
+
+            <Button
+              style={{ backgroundColor: "grey", color: "#fff" }}
+              onClick={() => setShowRecordModal(true)}
+            >
+              <FaMicrophone />
+            </Button>
           </InputGroup>
         </CardFooter>
       </StyledCard>
+      <RecordModal
+        show={showRecordModal}
+        handleClose={handleRecordModalClose}
+      />
     </Container>
   );
 }
 
+// 전체 컨테이너 스타일
 const Container = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100vh;
-  padding: 0 20px;
 `;
 
+// 카드 스타일
 const StyledCard = styled(Card)`
-  width: 80%;
-  max-width: 1400px;
-  background-color: #f5f5f5;
-`;
-
-const CardBody = styled(Card.Body)`
+  width: 600px;
   height: 80vh;
-  overflow-y: scroll;
+  display: flex;
+  flex-direction: column;
 `;
 
+// 카드 본문 스타일
+const CardBody = styled(Card.Body)`
+  overflow-y: auto;
+  flex-grow: 1;
+`;
+
+// 카드 푸터 스타일
 const CardFooter = styled(Card.Footer)`
-  padding: 15px;
+  background-color: #f8f9fa;
 `;

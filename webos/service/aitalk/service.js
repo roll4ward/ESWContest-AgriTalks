@@ -1,6 +1,7 @@
 const pkg_info = require("./package.json");
 const config = require("./config.json")
 const fs = require("fs");
+const { exec } = require("child_process");
 
 const { aitalk_response, api_ask_parameters, error } = require("./dto");
 const CONVESKIND =  "xyz.rollforward.app.aitalk:1";
@@ -132,17 +133,13 @@ aitalk_service.register("stt", async function(msg) {
   ))
 });
 
-aitalk_service.register("tts", async function(msg) {
+aitalk_service.register("tts", async function (msg) {
   // 0. check msg contains "tts"
 
-  console.log(msg)
+  console.log(msg);
 
   if (!("text" in msg.payload)) {
     msg.respond(new error('It requires text (e.g. {text: "Hello world"}).'));
-    return;
-  }
-  if (!("store_path" in msg.payload)) {
-    msg.respond(new error('It requires store_path (e.g. {store_path: "/tmp/tts.mp3"}).'));
     return;
   }
 
@@ -150,31 +147,39 @@ aitalk_service.register("tts", async function(msg) {
     model: config.openai_tts.model,
     voice: config.openai_tts.voice,
     input: msg.payload.text,
+    response_format: "pcm",
   });
-  console.log("mp3 file will be stored to " + msg.payload.store_path);
+
+  console.log("audio file will be stored to " + config.store_path);
   const buffer = Buffer.from(await mp3.arrayBuffer());
-  await fs.promises.writeFile(msg.payload.store_path, buffer);
-  console.log("TTS done.")
+  await fs.promises.writeFile(config.store_path, buffer);
+  console.log("TTS done.");
+
+  exec("python3 /home/developer/audioCon.py " + config.store_path + " 24000 " + config.store_path + " 32000",(err, stdout, stderr) => {
+      if (err) {
+        console.error(`Error during conversion: ${stderr}`);
+      } else {
+        console.log(`MP3 saved as: ${mp3File}`);
+      }
+    }
+  );
 
   msg.respond(new aitalk_response({
-    store_path: msg.payload.store_path,
+      store_path: config.store_path,
   }));
 });
 
-aitalk_service.register("ask_stream", async function(msg) {
-  if (!("prompt" in msg.payload)) 
-  {
-    msg.respond(new error('prompt is required.'));
+aitalk_service.register("ask_stream", async function (msg) {
+  if (!("prompt" in msg.payload)) {
+    msg.respond(new error("prompt is required."));
     return;
   }
   const prompt = msg.payload.prompt;
 
-  if (thread == null) 
-  {
-    thread = await openai.beta.threads.create();    
-  } 
+  if (thread == null) {
+    thread = await openai.beta.threads.create();
+  }
   console.log("thread_id", thread.id);
-
   if (msg.payload.image_path) {
     // 예외 처리 추가
 
@@ -208,38 +213,37 @@ aitalk_service.register("ask_stream", async function(msg) {
   await new Promise((resolve, reject) => {
     try {
       const stream = openai.beta.threads.runs.stream(thread.id, {
-        assistant_id: config.openai_assistant_id
-      })
-      .on('textCreated', (text) => {
-        console.log(text)
-      })
-      .on('textDelta', (textDelta, snapshot) => {
-        console.log(snapshot)
-        msg.respond(new aitalk_response({
-          chunks: snapshot,
-          is_streaming: true
-        }))
-      })
-      .on('end', () => {
-        console.log('\nStream has ended.');
-        msg.respond(new aitalk_response({
-          chunks: "",
-          isStreaming: false
-        }))
-        resolve();
-      })
+          assistant_id: config.openai_assistant_id
+        })
+        .on('textCreated', (text) => {
+          console.log(text);
+        })
+        .on('textDelta', (textDelta, snapshot) => {
+          console.log(snapshot);
+          msg.respond(new aitalk_response({
+              chunks: snapshot,
+              is_streaming: true
+          }));
+        })
+        .on('end', () => {
+          console.log('\nStream has ended.');
+          msg.respond(new aitalk_response({
+              chunks: "",
+              isStreaming: false
+          }));
+          resolve();
+        });
     } catch (err) {
-      console.error(err)
+      console.error(err);
     }
-  })
+  });
 });
 
-aitalk_service.register("vtv", async function(msg) {
-    if (!("store_path" in msg.payload)) {
-        msg.respond(new error('It requires store_path (e.g. {store_path: "/tmp/tts.mp3"}).'));
-        return;
-    }
-
+aitalk_service.register("vtv", async function (msg) {
+  if (!("store_path" in msg.payload)) {
+    msg.respond(new error('It requires store_path (e.g. {store_path: "/tmp/tts.mp3"}).'));
+    return;
+  }
 });
 
 // 세션 & 대화 정보 데이터베이스 생성 (임시)
