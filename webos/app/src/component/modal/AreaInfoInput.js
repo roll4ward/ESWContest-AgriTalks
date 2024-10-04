@@ -4,7 +4,7 @@ import { useRef } from "react"
 import { createToast } from "../../api/toast";
 
 
-export const AreaInfoInput = ({show, setShow, onSubmit, title}) => {
+export const AreaInfoInput = ({show, setShow, onSubmit, title, target}) => {
     const name = useRef({
         value: ""
     });
@@ -26,9 +26,9 @@ export const AreaInfoInput = ({show, setShow, onSubmit, title}) => {
         <ModalBase show={show}>
             <Container>
                 <Title>{title}</Title>
-                <Label>구역 이름</Label>
+                <Label>{`${target} 이름`}</Label>
                 <Input ref={name}></Input>
-                <Label>구역 설명</Label>
+                <Label>{`${target} 설명`}</Label>
                 <Input ref={description}></Input>
                 <ButtonWrap>
                     <Button onClick={()=>{setShow(false)}}>취소</Button>

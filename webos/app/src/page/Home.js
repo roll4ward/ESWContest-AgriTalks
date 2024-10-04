@@ -56,7 +56,7 @@ export const Home = () => {
     <Container>
       <AreaInfoInput setShow={setAreaModalShow}
                      show={areaModalShow} onSubmit={onAreaCreate}
-                     title={"구역 추가"}/>
+                     title={"구역 추가"} target={"구역"}/>
       <TextWrap>
         <Title>{"안녕하세요,"}</Title>
         <SubTitleWrap>

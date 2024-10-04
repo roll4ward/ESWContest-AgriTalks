@@ -24,7 +24,7 @@ export const AreaBox = ({areaInfo, onEdit, onDelete}) => {
                    onDelete={()=>{onDelete(areaID)}} />
       <AreaInfoInput show={areaModalShow} onSubmit={onEdit}
                      setShow={setAreaModalShow}
-                     title={"구역 수정"}/>
+                     title={"구역 수정"} target={"구역"}/>
       <AreaName>{name}</AreaName>
       <InputText>{description}</InputText>
 
@@ -83,6 +83,7 @@ const DeviceWrap = styled.div`
 `;
 
 const ButtonWrap = styled.div`
+  margin-top: 20px;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
