@@ -133,18 +133,21 @@ service.register('read/latest', function(message) {
     service.call('luna://com.webos.service.db/find', { query: query }, (response) => {
         if (response.payload.returnValue) {
             let result = response.payload.results;
-
+            console.log(result);
             if (result.length < 1) message.respond({returnValue: true, results: "No Data"});
 
             result.sort((a, b) => {
-                const dateA = new Date(Date.parse(a));
-                const dateB = new Date(Date.parse(b));
+                const dateA = new Date(Date.parse(a.time));
+                const dateB = new Date(Date.parse(b.time));
 
-                if (dateA < dateB) return 1;
-                if (dateA > dateB) return -1;
+                if (dateA > dateB) return 1;
+                if (dateA < dateB) return -1;
                 return 0;
             });
+            result.reverse();
 
+            console.log(result);
+            
             message.respond({ returnValue: true, results: result[0] });
         } else {
             message.respond({ returnValue: false, results: response.error });
