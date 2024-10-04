@@ -1,24 +1,41 @@
 import styled from "styled-components"
 import { ModalBase } from "./ModalBase"
-import { useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { createToast } from "../../api/toast";
+import { readAllAreas } from "../../api/infomanageService";
 
 
-export const AreaInfoInput = ({show, setShow, onSubmit, title, areaName, areaDescription}) => {
+export const DeviceInfoInput = ({show, setShow, onSubmit, title,
+                                deviceName, deviceDescription, deviceArea}) => {
     const name = useRef({
-        value: areaName ? areaName : ""
+        value: deviceName ? deviceName : ""
     });
     const description = useRef({
-        value: areaDescription ? areaDescription : ""
+        value: deviceDescription ? deviceDescription : ""
     });
+    const area = useRef({
+        value: deviceArea ? deviceArea : ""
+    });
+    const [areas, setAreas] = useState([]);
+
+    useEffect(()=> {
+        readAllAreas((result) => {
+            setAreas(result.map(area => ({ name: area.name, areaID: area.areaID })));
+          })
+    }, []);
 
     function onSubmitHandler() {
         if (!name.current.value) {
-            createToast(`구역 이름을 입력해주세요!`);
+            createToast(`기기 이름을 입력해주세요!`);
             return;
         }
 
-        onSubmit(name.current.value, description.current.value);
+        if (!area.current.value) {
+            createToast(`구역을 선택해주세요!`);
+            return;
+        }
+
+        onSubmit(name.current.value, description.current.value, area.current.value);
         setShow(false);
     }
 
@@ -26,10 +43,15 @@ export const AreaInfoInput = ({show, setShow, onSubmit, title, areaName, areaDes
         <ModalBase show={show}>
             <Container>
                 <Title>{title}</Title>
-                <Label>{`구역 이름`}</Label>
-                <Input defaultValue={areaName} ref={name}></Input>
-                <Label>{`구역 설명`}</Label>
-                <Input defaultValue={areaDescription} ref={description}></Input>
+                <Label>{`기기 이름`}</Label>
+                <Input defaultValue={deviceName} ref={name}></Input>
+                <Label>{`기기 설명`}</Label>
+                <Input defaultValue={deviceDescription} ref={description}></Input>
+                <Label>{`구역`}</Label>
+                <select name = "area" style = {{ width: "100%", height: "95px", fontSize: "50px", marginBottom: "20px" }}
+                        defaultValue={deviceArea} ref = {area}>
+                    { areas.map((area)=>(<option value={area.areaID}>{area.name}</option>)) }
+                </select>
                 <ButtonWrap>
                     <Button onClick={()=>{setShow(false)}}>취소</Button>
                     <Button primary onClick={onSubmitHandler}>확인</Button>
@@ -65,7 +87,7 @@ const Input = styled.input`
     border-color: #448569;
     font-size: 50px;
     height: 95px;
-    margin-bottom: 45px;
+    margin-bottom: 20px;
 `;
 
 const ButtonWrap = styled.div`

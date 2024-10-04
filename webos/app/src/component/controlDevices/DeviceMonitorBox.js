@@ -2,7 +2,7 @@ import styled from "styled-components";
 import refresh from "../../assets/icon/refresh.png";
 import { DeviceValueBox } from "./DeviceValueBox";
 import { useEffect, useState } from "react";
-import { deleteDevice, readDeviceswithArea, updateDeviceInfo } from "../../api/infomanageService";
+import { deleteDevice, readDeviceswithArea, updateDeviceInfo, updateDeviceParentArea } from "../../api/infomanageService";
 import { createToast } from "../../api/toast";
 
 export const DeviceMonitorBox = ({ isSensor, areaID }) => {
@@ -27,13 +27,16 @@ export const DeviceMonitorBox = ({ isSensor, areaID }) => {
     })
   }
 
-  function onDeviceEdit(deviceID, name, description) {
+  function onDeviceEdit(deviceID, name, description, area) {
     if(!name) return;
     updateDeviceInfo(deviceID, name, description, (result) => {
       console.log("Device updated : ", result);
-      createToast("기기 정보가 수정되었습니다.");
-      loadDevices();
-    })
+      updateDeviceParentArea(deviceID, area, (result) => {
+        console.log(result);
+        createToast("기기 정보가 수정되었습니다.");
+        loadDevices();
+      })
+    });
   }
 
   function onDeviceDelete(deviceID) {

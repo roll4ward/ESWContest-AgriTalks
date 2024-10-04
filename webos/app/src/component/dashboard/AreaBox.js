@@ -9,7 +9,7 @@ import { CheckDelete } from "../modal/CheckDelete";
 import { AreaInfoInput } from "../modal/AreaInfoInput";
 
 export const AreaBox = ({areaInfo, onEdit, onDelete}) => {
-  const {name, description, sensorCount, actuatorCount, areaID} = areaInfo;
+  const {name, desc, sensorCount, actuatorCount, areaID} = areaInfo;
   const navigate = useNavigate();
   const [showDelete, setShowDelete] = useState(false);
   const [areaModalShow, setAreaModalShow] = useState(false);
@@ -23,9 +23,10 @@ export const AreaBox = ({areaInfo, onEdit, onDelete}) => {
                    onDelete={()=>{onDelete(areaID)}} />
       <AreaInfoInput show={areaModalShow} onSubmit={onEdit}
                      setShow={setAreaModalShow}
-                     title={"구역 수정"} target={"구역"}/>
+                     title={"구역 수정"}
+                     areaName={name} areaDescription={desc}/>
       <AreaName>{name}</AreaName>
-      <InputText>{description}</InputText>
+      <InputText>{desc}</InputText>
 
       <DeviceWrap>
         <DeviceCountBox count={sensorCount} isSensor />
@@ -61,12 +62,12 @@ const Container = styled.div`
   }
 `;
 
-const AreaName = styled.p`
+const AreaName = styled.div`
   font-size: 64px;
   font-weight: 600;
 `;
 
-const InputText = styled.p`
+const InputText = styled.div`
   font-size: 40px;
   display: flex;
   overflow: hidden;

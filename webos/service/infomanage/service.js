@@ -301,7 +301,7 @@ service.register('area/delete', function(message) {
     };
 
     service.call('luna://com.webos.service.db/find', { query: deviceQuery }, (response) => {
-        if (response.payload.results.length > 1) {
+        if (response.payload.results.length > 0) {
             message.respond({ returnValue: false, results: 'Failed to delete area becuase associated devices exists' });
         } else {
             service.call('luna://com.webos.service.db/del', { ids: [areaId] }, (response) => {

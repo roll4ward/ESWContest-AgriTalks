@@ -5,12 +5,12 @@ import { readLatestValue } from "../../api/coapService";
 import edit from "../../assets/icon/edit.svg"
 import trash from "../../assets/icon/trash.svg"
 import arrowRight from "../../assets/icon/arrowRight.png";
-import { AreaInfoInput } from "../modal/AreaInfoInput";
 import { CheckDelete } from "../modal/CheckDelete";
+import { DeviceInfoInput } from "../modal/DeviceInfoInput";
 
 export const DeviceValueBox = ({ device, onEdit, onDelete }) => {
   const navigate = useNavigate();
-  const { _id, name, unit } = device;
+  const { _id, name, unit, areaId, desc } = device;
   const [value, setValue] = useState("X");
   const [showDelete, setShowDelete] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
@@ -27,9 +27,11 @@ export const DeviceValueBox = ({ device, onEdit, onDelete }) => {
       <CheckDelete show = {showDelete}
                    setShow={setShowDelete}
                    onDelete={()=>{onDelete(_id)}} />
-      <AreaInfoInput show={showEdit} onSubmit={onEdit}
+      <DeviceInfoInput show={showEdit} onSubmit={onEdit}
                      setShow={setShowEdit}
-                     title={"기기 수정"} target={"기기"}/>
+                     title={"기기 수정"}
+                     deviceName={name} deviceDescription={desc}
+                     deviceArea={areaId}/>
       <RowWrapper>
         <Title>{name}</Title>
         <img src={arrowRight} width={80} height={80} onClick={() => {navigate(`/detail/${_id}`)}}/>
