@@ -14,6 +14,7 @@ export const Home = () => {
   }, []);
 
   function onAreaCreate(name, description) {
+    if(!name) return;
     createArea(name, description, (result) => {
       console.log("Area Created : ", result);
       loadAllAreas();

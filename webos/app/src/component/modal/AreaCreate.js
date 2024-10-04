@@ -1,6 +1,7 @@
 import styled from "styled-components"
 import { ModalBase } from "./ModalBase"
 import { useRef } from "react"
+import { createToast } from "../../api/toast";
 
 
 export const AreaCreate = ({show, setShow, onCreate}) => {
@@ -10,6 +11,16 @@ export const AreaCreate = ({show, setShow, onCreate}) => {
     const description = useRef({
         value: ""
     });
+
+    function onSubmit() {
+        if (!name.current.value) {
+            createToast("구역 이름을 입력해주세요!");
+            return;
+        }
+
+        onCreate(name.current.value, description.current.value);
+        setShow(false);
+    }
 
     return (
         <ModalBase show={show}>
@@ -21,7 +32,7 @@ export const AreaCreate = ({show, setShow, onCreate}) => {
                 <Input ref={description}></Input>
                 <ButtonWrap>
                     <Button onClick={()=>{setShow(false)}}>취소</Button>
-                    <Button primary onClick={()=>{onCreate(name.current.value, description.current.value); setShow(false);}}>확인</Button>
+                    <Button primary onClick={onSubmit}>확인</Button>
                 </ButtonWrap>
             </Container>
         </ModalBase>
@@ -34,6 +45,7 @@ const Container = styled.div`
     display: flex;
     flex-direction: column;
     justify-content: center;
+    padding: 0 15px;
 `;
 
 const Title = styled.div`
