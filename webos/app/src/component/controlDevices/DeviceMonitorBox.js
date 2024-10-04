@@ -28,7 +28,7 @@ export const DeviceMonitorBox = ({ isSensor, devices }) => {
         ) : (
           devices.map((device) => {
             return (
-              <DeviceValueBox device={device} value={30} />
+              <DeviceValueBox device={device} />
             );
           })
         )}

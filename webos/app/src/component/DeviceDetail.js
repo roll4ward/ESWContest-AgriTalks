@@ -2,19 +2,37 @@ import styled from "styled-components";
 import RefreshIcon from "../assets/icon/Refresh.svg";
 import { useEffect, useState } from "react";
 import { readDevicewithID } from "../api/infomanageService";
+import { readLatestValue } from "../api/coapService";
 
 export default function DeviceDetail({ deviceID }) {
-  const [deviceInfo, setDeviceInfo] = useState({ name : "기기", description : "기기설명"});
-  const [valueInfo, setValueInfo] = useState({ lastupdatetime : "마지막 시간", value : "기기값"});
+  const [deviceInfo, setDeviceInfo] = useState({ name : "기기", description : "기기설명", unit : ""});
+  const [valueInfo, setValueInfo] = useState({ lastupdatetime : "측정 값 없음", value : "X"});
 
   useEffect(()=> {
     readDevicewithID(deviceID, (result)=> {
       console.log(result);
       setDeviceInfo({
         name: result.name,
-        description: result.desc
+        description: result.desc,
+        unit: result.unit
       });
     });
+    readLatestValue(deviceID, (result) => {
+      let time = new Date(Date.parse(result.time));
+      const formatter = new Intl.DateTimeFormat('ko-KR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        hour12: false,
+      });
+
+      setValueInfo({
+        value: result.value,
+        lastupdatetime: formatter.format(time)
+      })
+    })
   }, []);
   
   return (
@@ -35,7 +53,7 @@ export default function DeviceDetail({ deviceID }) {
           <StyledIcon src={RefreshIcon} alt="RefreshIcon"/>
         </StyledRow>
         <div style={{ color: "#717171", fontSize: "2rem" }}>{valueInfo.lastupdatetime}</div>
-        <StyledValue>{valueInfo.value}</StyledValue>
+        <StyledValue>{valueInfo.value}{valueInfo.value === "X" ? "" : deviceInfo.unit}</StyledValue>
       </ValueWrap>
     </MainWrap>
   );

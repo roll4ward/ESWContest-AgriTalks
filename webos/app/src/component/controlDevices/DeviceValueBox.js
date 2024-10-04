@@ -1,9 +1,18 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
+import { readLatestValue } from "../../api/coapService";
 
-export const DeviceValueBox = ({ device, value }) => {
+export const DeviceValueBox = ({ device }) => {
   const navigate = useNavigate();
-  const { _id, name } = device;
+  const { _id, name, unit } = device;
+  const [value, setValue] = useState("X");
+
+  useEffect(()=> {
+    readLatestValue(_id, (result) => {
+      setValue(`${result.value}${unit}`);
+    })
+  }, []);
 
   console.log("devices : ", device);
   return (

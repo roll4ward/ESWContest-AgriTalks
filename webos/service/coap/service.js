@@ -134,7 +134,7 @@ service.register('read/latest', function(message) {
         if (response.payload.returnValue) {
             let result = response.payload.results;
             console.log(result);
-            if (result.length < 1) message.respond({returnValue: true, results: "No Data"});
+            if (result.length < 1) message.respond({returnValue: false, results: "No Data"});
 
             result.sort((a, b) => {
                 const dateA = new Date(Date.parse(a.time));
