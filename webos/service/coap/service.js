@@ -15,14 +15,14 @@ service.register('createKind', function(message) {
             type: 'object',
             properties: {
                 _id: { type: 'string' },
-                snum: { type: 'string' },
+                deviceId: { type: 'string' },
                 value: { type: 'number' },
                 time: { type: 'string' }
             },
-            required: ['snum', 'time', 'value']
+            required: ['deviceId', 'time', 'value']
         },
         indexes: [
-            { name: 'snum', props: [{ name: 'snum' }] }
+            { name: 'deviceId', props: [{ name: 'deviceId' }] }
         ]
     };
 
@@ -50,7 +50,7 @@ service.register('deleteKind', function(message) {
 service.register('create', function(message) {
     const dataToStore = {
         _kind: DB_KIND,
-        snum: "SER123456",
+        deviceId: "SER123456",
         time: new Date().toISOString(),
         value: 38.1
     };
@@ -72,8 +72,8 @@ service.register('update', function(message) {
         _kind: DB_KIND
     };
 
-    if (message.payload.snum) {
-        updatedItem.snum = message.payload.snum;
+    if (message.payload.deviceId) {
+        updatedItem.deviceId = message.payload.deviceId;
     }
 
     if (message.payload.value) {
@@ -105,13 +105,44 @@ service.register('read', function(message) {
         query.where.push({ prop: '_id', op: '=', val: message.payload.id });
     }
 
-    if (message.payload.snum) {
-        query.where.push({ prop: 'snum', op: '=', val: message.payload.snum });
+    if (message.payload.deviceId) {
+        query.where.push({ prop: 'deviceId', op: '=', val: message.payload.deviceId });
     }
 
     service.call('luna://com.webos.service.db/find', { query: query }, (response) => {
         if (response.payload.returnValue) {
             message.respond({ returnValue: true, results: response.payload.results });
+        } else {
+            message.respond({ returnValue: false, results: response.error });
+        }
+    });
+});
+
+// 가장 최근에 측정된 값 read
+service.register('read/latest', function(message) {
+    const query = {
+        from: DB_KIND,
+        where: []
+    };
+
+    if (!message.payload.deviceId) {
+        message.respond({ returnValue: false, results: "deviceId is required."});
+    }
+    query.where.push({ prop: 'deviceId', op: '=', val: message.payload.deviceId });
+
+    service.call('luna://com.webos.service.db/find', { query: query }, (response) => {
+        if (response.payload.returnValue) {
+            let result = response.payload.results;
+            result.sort((a, b) => {
+                const dateA = new Date(Date.parse(a));
+                const dateB = new Date(Date.parse(b));
+
+                if (dateA < dateB) return 1;
+                if (dateA > dateB) return -1;
+                return 0;
+            });
+
+            message.respond({ returnValue: true, results: result[0] });
         } else {
             message.respond({ returnValue: false, results: response.error });
         }
@@ -141,7 +172,7 @@ service.register('delete', function(message) {
 function storeSensorData(sensorData) {
     const dataToStore = {
         _kind: DB_KIND,
-        snum: sensorData.snum,
+        deviceId: sensorData.deviceId,
         value: sensorData.value,
         time: new Date().toISOString()
     };
