@@ -5,22 +5,12 @@ import actuator from "../../assets/icon/actuator.png";
 export const DeviceCountBox = ({ isSensor, count }) => {
   return (
     <Container>
-      <Title>{isSensor ? "센서" : "작동기"}</Title>
-
-      <CountWrap>
-        <img
-          src={isSensor ? sensor : actuator}
-          alt=""
-          width={109}
-          height={109}
-        />
-        {/* <img src={actuator} alt="" width={109} height={109} /> */}
-
+        <Title>{isSensor ? "센서" : "작동기"}</Title>
         <Count>
           {count}
           <span>개</span>
         </Count>
-      </CountWrap>
+
     </Container>
   );
 };
@@ -39,20 +29,19 @@ const Container = styled.div`
   flex-direction: column;
   gap: 20px;
 `;
-const Title = styled.p`
-  display: flex;
-  justify-contents: flex-start;
-  font-size: 50px;
-`;
 
-const CountWrap = styled.div`
+const Title = styled.div`
   display: flex;
   flex-direction: row;
+  width: 100%;
+  align-items: center;
   flex-wrap: wrap;
   gap: 10px;
+  font-size: 70px;
 `;
 
 const Count = styled.p`
+  text-align: right;
   font-size: 100px;
   color: #448569;
 

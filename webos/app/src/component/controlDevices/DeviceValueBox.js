@@ -26,7 +26,7 @@ export const DeviceValueBox = ({ device }) => {
 const Container = styled.div`
   display: flex;
   flex-direction: column;
-  width: 305px;
+  width: 100%;
   height: 220px;
   background-color: #fff;
   border-radius: 40px;
