@@ -1,249 +1,164 @@
-/* global WebOSServiceBridge */
-let bridge;
+/**
+ * 서비스와 메소드에 매칭되는 URL을 생성
+ * @param {*} service 
+ * @param {*} method 
+ * @returns 서비스의 URL
+ */
+const getServiceURL = (service, method) => `luna://xyz.rollforward.app.${service}/${method}`;
 
-function getBridge() {
-  if (!bridge) {
-    bridge = new WebOSServiceBridge();
+/**
+ * ai에게 질문을 함
+ * @param {string} prompt 질문할 text
+ * @param {*} callback 쿼리한 결과를 처리할 콜백 함수
+ */
+export function askToAi(prompt, callback) {
+  let bridge = new WebOSServiceBridge();
+  bridge.onservicecallback = (msg) => {
+      msg = JSON.parse(msg);
+      if(!msg.returnValue) {
+          console.log(`ask Service call failed : ${msg.result}`);
+          return;
+      }
+  
+      if(callback) callback(msg.result);
   }
-  return bridge;
+
+  let query = {
+    prompt: prompt
+  };
+
+  bridge.call(getServiceURL("aitalk", "ask"), JSON.stringify(query));
 }
 
-export const sendMessageToWebOS = (prompt) => {
-  return new Promise((resolve, reject) => {
-    const bridge =
-      typeof WebOSServiceBridge !== "undefined"
-        ? getBridge()
-        : {
-            // 웹OS 환경이 아닐 경우의 더미 객체
-            call: (service, params) => {
-              console.log(`Mock call to ${service} with params: ${params}`);
-              // 더미 응답으로 응답 처리
-              resolve({
-                success: true,
-                result: `Mock response for service: ${service}`,
-              });
-            },
-          };
-
-    if (typeof WebOSServiceBridge === "undefined") {
-      console.warn("WebOSServiceBridge is not defined, using mock bridge.");
-    }
-
-    const service = "luna://xyz.rollforward.app.aitalk/ask";
-
-    bridge.onservicecallback = function (msg) {
-      try {
-        const response = JSON.parse(msg);
-
-        if (response.returnValue) {
-          resolve({
-            success: true,
-            result: response.result || "No result provided by AI.",
-          });
-        } else {
-          reject({
-            success: false,
-            error: response.errorText || "Unknown error occurred.",
-          });
-        }
-      } catch (error) {
-        reject({
-          success: false,
-          error: `Error parsing response: ${error.message}`,
-        });
+/**
+ * ai에게 스트림으로 질문을 함
+ * @param {string} prompt 질문할 text
+ * @param {*} callback 쿼리한 결과를 처리할 콜백 함수
+ */
+export function askToAiStream(prompt, callback) {
+  let bridge = new WebOSServiceBridge();
+  bridge.onservicecallback = (msg) => {
+      msg = JSON.parse(msg);
+      if(!msg.returnValue) {
+          console.log(`ask_stream Service call failed : ${msg.result}`);
+          return;
       }
-    };
+  
+      if(callback) callback(msg.result);
+  }
 
-    try {
-      const params = JSON.stringify({
-        prompt: prompt,
-      });
+  let query = {
+    prompt: prompt,
+    subscribe: true
+  };
 
-      console.log("Calling service with params:", params);
-      bridge.call(service, params); // 실제 호출
-    } catch (error) {
-      console.error("Service call failed:", error);
-      reject({
-        success: false,
-        error: `Service call failed: ${error.message}`,
-      });
-    }
-  });
+  bridge.call(getServiceURL("aitalk", "ask_stream"), JSON.stringify(query));
 }
 
-export async function speak() {
- return new Promise((resolve, reject) => {
-    const bridge =
-      typeof WebOSServiceBridge !== "undefined"
-        ? getBridge()
-        : {
-            // 웹OS 환경이 아닐 경우의 더미 객체
-            call: (service, params) => {
-              console.log(`Mock call to ${service} with params: ${params}`);
-              // 더미 응답으로 응답 처리
-              resolve({
-                success: true,
-                result: `Mock response for service: ${service}`,
-              });
-            },
-          };
-
-    if (typeof WebOSServiceBridge === "undefined") {
-      console.warn("WebOSServiceBridge is not defined, using mock bridge.");
-    }
-
-    const service = "luna://com.webos.service.audio/playSound";
-
-    bridge.onservicecallback = function (msg) {
-      try {
-        const response = JSON.parse(msg);
-
-        if (response.returnValue) {
-          resolve({
-            success: true,
-            result: response.result || "No result provided by AI.",
-          });
-        } else {
-          reject({
-            success: false,
-            error: response.errorText || "Unknown error occurred.",
-          });
-        }
-      } catch (error) {
-        reject({
-          success: false,
-          error: `Error parsing response: ${error.message}`,
-        });
+/**
+ * text를 음성파일 PCM으로 변환하고 자동으로 저장
+ * @param {string} prompt 변환 할 text
+ * @param {*} callback 쿼리한 결과를 처리할 콜백 함수
+ */
+export function TTS(text, callback) {
+  let bridge = new WebOSServiceBridge();
+  bridge.onservicecallback = (msg) => {
+      msg = JSON.parse(msg);
+      if(!msg.returnValue) {
+          console.log(`TTS Service call failed : ${msg.result}`);
+          return;
       }
-    };
 
-    try {
-      const params = JSON.stringify({
-        "fileName":"/tmp/media/tts.pcm",
-        "sink":"default1",
-        "sampleRate":48000 ,
-        "format":"PA_SAMPLE_S16LE",
-        "channels":1
-      });
+      if(callback) callback();
+  }
 
-      console.log("Calling service with params:", params);
-      bridge.call(service, params); // 실제 호출
-    } catch (error) {
-      console.error("Service call failed:", error);
-      reject({
-        success: false,
-        error: `Service call failed: ${error.message}`,
-      });
-    }
-  });
+  let query = {
+    text: text
+  };
+
+  bridge.call(getServiceURL("aitalk", "tts"), JSON.stringify(query));
 }
 
-// /* global webOS */
-// export function sendMessageToWebOS(prompt, dryRun = false, images = []) {
-//   return new Promise((resolve, reject) => {
-//     // 웹 환경에서는 webOS 객체가 존재하지 않으므로, 이를 확인합니다.
-//     if (typeof webOS === "undefined" || typeof webOS.service === "undefined") {
-//       reject({
-//         success: false,
-//         error: "webOS service is not available in this environment.",
-//       });
-//       return;
-//     }
+/**
+ * text를 음성파일 PCM으로 변환하고 자동으로 저장
+ */
+export function speak() {
+  let bridge = new WebOSServiceBridge();
+  bridge.onservicecallback = (msg) => {
+      msg = JSON.parse(msg);
+      if(!msg.returnValue) {
+          console.log(`speak Service call failed : ${msg.result}`);
+          return;
+      }
+  }
 
-//     const service = "luna://xyz.rollforward.app.aitalk";
+  const service = "luna://com.webos.service.audio/playSound";
+  let query = {
+    fileName: "/home/developer/media/tts.pcm",
+    sink: "default2",
+    sampleRate: 32000,
+    format: "PA_SAMPLE_S16LE",
+    channels: 1
+  };
 
-//     // 서비스 호출
-//     webOS.service.request(service, {
-//       method: "talk",
-//       parameters: {
-//         prompt: prompt,
-//         dryRun: dryRun,
-//         images: images,
-//       },
-//       onSuccess: function (response) {
-//         if (response.returnValue) {
-//           resolve({ success: true, result: response.result });
-//         } else {
-//           reject({ success: false, error: response.errorText });
-//         }
-//       },
-//       onFailure: function (error) {
-//         // 실패 응답 처리
-//         reject({
-//           success: false,
-//           error: `Service call failed: ${error.message}`,
-//         });
-//       },
-//     });
-//   });
-// }
+  bridge.call(service, JSON.stringify(query));
+}
 
-// export function sendMessageToWebOS(prompt, dryRun = false, images = []) {
-//   return new Promise((resolve, reject) => {
-//     const service = "luna://xyz.rollforward.app.aitalk";
+/**
+ * text로 새로운 대화를 생성
+ * @param { string } text 대화내용 이름
+ * @param { string } type user or ai
+ */
+export function createConversation(text, type) {
+  let bridge = new WebOSServiceBridge();
+  bridge.onservicecallback = (msg) => {
+      msg = JSON.parse(msg);
+      if (!msg.returnValue) {
+          console.log(`createConversation Service call failed : ${msg.result}`);
+          return;
+      }
+  };
 
-//     // 서비스 호출
+  let query = {
+      text : text,
+      type : type
+  }
+  bridge.call(getServiceURL("aitalk", "create"), JSON.stringify(query));
+}
 
-//     webOS.service.request(service, {
-//       method: "talk",
-//       parameters: {
-//         prompt: prompt,
-//         dryRun: dryRun,
-//         images: images,
-//       },
-//       onSuccess: function (response) {
-//         if (response.returnValue) {
-//           resolve({ success: true, result: response.result });
-//         } else {
-//           reject({ success: false, error: response.errorText });
-//         }
-//       },
-//       onFailure: function (error) {
-//         // 실패 응답 처리
-//         reject({
-//           success: false,
-//           error: `Service call failed: ${error.message}`,
-//         });
-//       },
-//     });
-//   });
-// }
+/**
+ * 모든 대화내용을 쿼리
+ * @param { (result : string)=>void } callback 서비스 호출 후 처리할 콜백 함수
+ */
+export function readAllConversation (callback) {
+  let bridge = new WebOSServiceBridge();
+  bridge.onservicecallback = (msg) => {
+      msg = JSON.parse(msg);
+      if (!msg.returnValue) {
+          console.log(`Service call failed : ${msg.result}`);
+          return null;
+      }
+      if (callback) callback(msg.result);
+  };
 
-// import WebOSServiceBridge from "@procot/webostv";
+  bridge.call(getServiceURL("aitalk", "read"), "{}");
+}
 
-// export function sendMessageToWebOS(prompt, dryRun = false, images = []) {
-//   return new Promise((resolve, reject) => {
-//     if (typeof WebOSServiceBridge === "undefined") {
-//       reject({ success: false, error: "WebOSServiceBridge is not defined." });
-//       return;
-//     }
+/**
+ * 모든 대화내용을 삭제
+ * @param { (result : string)=>void } callback 서비스 호출 후 처리할 콜백 함수
+ */
+export function deleteAllConversation (callback) {
+  let bridge = new WebOSServiceBridge();
+  bridge.onservicecallback = (msg) => {
+      msg = JSON.parse(msg);
+      if (!msg.returnValue) {
+          console.log(`Service call failed : ${msg.result}`);
+          return;
+      }
+      if (callback) callback(msg.result);
+      console.log("callback called", callback);
+  };
 
-//     // WebOSServiceBridge가 객체라면 생성자 없이 바로 사용
-//     const bridge = WebOSServiceBridge;
-
-//     bridge.onservicecallback = function (msg) {
-//       try {
-//         const response = JSON.parse(msg);
-//         if (response.returnValue) {
-//           resolve({ success: true, result: response.result });
-//         } else {
-//           reject({ success: false, error: response.errorText });
-//         }
-//       } catch (error) {
-//         reject({
-//           success: false,
-//           error: `Error parsing response: ${error.message}`,
-//         });
-//       }
-//     };
-
-//     const params = JSON.stringify({
-//       prompt: prompt,
-//       dryRun: dryRun,
-//       images: images,
-//     });
-
-//     // 서비스 호출
-//     bridge.call("luna://xyz.rollforward.app.aitalk/", params);
-//   });
-// }
+  bridge.call(getServiceURL("aitalk", "delete"), "{}");
+}

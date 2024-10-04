@@ -1,82 +1,62 @@
+// ChatPage.js
 import React, { useState, useEffect } from "react";
 import MessageBox from "../component/MessageBox";
 import { Button, Form, InputGroup, Card } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import styled from "styled-components";
-import {
-  createConversation,
-  readConversation
-} from "../database"; // WebOS API 호출 함수들
-
-import { sendMessageToWebOS, speak} from "../api/aiService";
+import { askToAi, askToAiStream, TTS, speak, createConversation, readAllConversation, deleteAllConversation } from "../api/aiService";
+import RecordModal from "../component/modal/RecorderModal";
+import { FaMicrophone } from "react-icons/fa"; // 마이크 아이콘 추가
 
 export default function ChatPage() {
   const [messages, setMessages] = useState([]);
   const [prompt, setPrompt] = useState("");
-  
+  const [showRecordModal, setShowRecordModal] = useState(false);
 
   useEffect(() => {
-    const initializeChat = async () => {
-      speak();
-      try {
-        const loadedMessages = await readConversation(); // 세션 데이터 읽기
-        if (loadedMessages && loadedMessages.result.length > 0) {
-          setMessages(
-            loadedMessages.result.map((msg) => ({
-              type: msg.type,
-              text: msg.text
-            }))
-          );
-        } else {
+    const initializeChat = () => {
+      readAllConversation((result)=> {
+        if(result){
+          setMessages(result.map((msg) => ({ type: msg.type, text: msg.text})));
+        }else{
           console.log("이전에 대화 기록 없음");
         }
-      } catch (error) {
-        console.error("Initialization error:", error);
-      }
+      });
     };
-
     initializeChat();
   }, []);
 
-  const handleSendMessage = async () => {
-    if (prompt.trim()) {
-      const newMessages = [...messages, { type: "user", text: prompt }];
-      setMessages(newMessages);
-      try {
-        // 사용자 메시지 저장
-        await createConversation(prompt, "user"); // 세션 ID와 함께 kind 전달
-        // AI 응답을 받는 부분 (WebOS AI 서비스와 통신)
-        const response = await sendMessageToWebOS(prompt);
-
-        if (response.success) {
-          const aiMessage = { type: "ai", text: response.result };
-          setMessages((prevMessages) => [...prevMessages, aiMessage]);
-
-          // AI 응답을 DB에 저장
-          await createConversation(response.result, "ai"); // 세션 ID와 함께 kind 전달
-        } else {
-          setMessages((prevMessages) => [
-            ...prevMessages,
-            {
-              type: "ai",
-              text: `Error-else success: ${
-                response.error || "No result from AI."
-              }`,
-            },
-          ]);
-        }
-      } catch (error) {
-        console.error("Error sending message:", error);
-        setMessages((prevMessages) => [
-          ...prevMessages,
-          { type: "ai", text: `Error-catch: ${error}` },
-        ]);
-      }
-
-      setPrompt("");
-    } else {
-      console.warn("Input이 입력되지 않았습니다");
+  const handleSendMessage = () => {
+    if (prompt == "") {
+      return;
     }
+
+    const newMessages = [...messages, { type: "user", text: prompt }];
+    setMessages(newMessages);
+    // 사용자 메시지 저장
+    createConversation(prompt, "user"); // 세션 ID와 함께 kind 전달
+    setPrompt("");
+    // AI 응답을 받는 부분 (WebOS AI 서비스와 통신)
+    
+    setMessages((prevMessages) => [...prevMessages,{type: "ai",text: "..."}]);
+    var aiMessage = { type: "ai", text: "" };
+
+    askToAiStream(prompt, (askResult)=> {
+      if(!askResult.is_streaming){
+        createConversation(aiMessage.text, "ai"); // 세션 ID와 함께 kind 전달
+        TTS(aiMessage.text, ()=> { speak(); });
+      }else{
+        aiMessage.text = askResult.chunks;
+        setMessages((prevMessages) => {
+          const updatedMessages = prevMessages.slice(0, -1);
+          return([...updatedMessages, aiMessage]);
+        });
+      }
+    });
+  };
+
+  const handleRecordModalClose = () => {
+    setShowRecordModal(false);
   };
 
   return (
@@ -101,32 +81,49 @@ export default function ChatPage() {
             >
               ↑
             </Button>
+
+            <Button
+              style={{ backgroundColor: "grey", color: "#fff" }}
+              onClick={() => setShowRecordModal(true)}
+            >
+              <FaMicrophone />
+            </Button>
           </InputGroup>
         </CardFooter>
       </StyledCard>
+      <RecordModal
+        show={showRecordModal}
+        handleClose={handleRecordModalClose}
+      />
     </Container>
   );
 }
-
+// display: flex;
+  // justify-content: center;
+  // align-items: center;
+  // height: 100vh;
+// 전체 컨테이너 스타일
 const Container = styled.div`
   display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  padding: 0 20px;
+  justify-content: space-between;
+  margin-bottom: 20px;
 `;
 
+// 카드 스타일
 const StyledCard = styled(Card)`
-  width: 80%;
-  max-width: 1400px;
-  background-color: #f5f5f5;
+  width: 100%;
+  height: 988px;
+  display: flex;
+  flex-direction: column;
 `;
 
+// 카드 본문 스타일
 const CardBody = styled(Card.Body)`
-  height: 80vh;
-  overflow-y: scroll;
+  overflow-y: auto;
+  flex-grow: 1;
 `;
 
+// 카드 푸터 스타일
 const CardFooter = styled(Card.Footer)`
-  padding: 15px;
+  background-color: #f8f9fa;
 `;
