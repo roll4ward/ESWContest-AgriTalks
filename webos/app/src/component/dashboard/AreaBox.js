@@ -1,16 +1,30 @@
 import styled from "styled-components";
 import { DeviceCountBox } from "./DeviceCountBox";
 import arrowRight from "../../assets/icon/arrowRight.png";
+import edit from "../../assets/icon/edit.svg"
+import trash from "../../assets/icon/trash.svg"
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { CheckDelete } from "../modal/CheckDelete";
+import { updateAreaInfo } from "../../api/infomanageService";
+import { AreaInfoInput } from "../modal/AreaInfoInput";
 
-export const AreaBox = ({areaInfo}) => {
+export const AreaBox = ({areaInfo, onEdit, onDelete}) => {
   const {name, description, sensorCount, actuatorCount, areaID} = areaInfo;
   const navigate = useNavigate();
-  
+  const [showDelete, setShowDelete] = useState(false);
+  const [areaModalShow, setAreaModalShow] = useState(false);
+
   console.log(`${name} : ${areaID}`);
 
   return (
     <Container>
+      <CheckDelete show = {showDelete}
+                   setShow={setShowDelete}
+                   onDelete={()=>{onDelete(areaID)}} />
+      <AreaInfoInput show={areaModalShow} onSubmit={onEdit}
+                     setShow={setAreaModalShow}
+                     title={"구역 수정"}/>
       <AreaName>{name}</AreaName>
       <InputText>{description}</InputText>
 
@@ -19,9 +33,14 @@ export const AreaBox = ({areaInfo}) => {
         <DeviceCountBox count={actuatorCount}/>
       </DeviceWrap>
 
-      <ImageWrap>
-        <img src={arrowRight} alt="" width={80} height={80} onClick={()=> {navigate(`/devices/${areaID}`)}} />
-      </ImageWrap>
+      <ButtonWrap>
+        <InfoEditWrap>
+          <img src={edit} width={60} height={60} onClick={()=> {setAreaModalShow(true);}} />
+          <img src={trash} width={60} height={60} onClick={()=> {setShowDelete(true);}} />
+        </InfoEditWrap>
+        <img src={arrowRight} width={80} height={80} onClick={()=> {navigate(`/devices/${areaID}`)}} />
+      </ButtonWrap>
+      
     </Container>
   );
 };
@@ -63,8 +82,18 @@ const DeviceWrap = styled.div`
   padding: 20px 0px;
 `;
 
-const ImageWrap = styled.div`
+const ButtonWrap = styled.div`
   display: flex;
-  align-self: flex-end;
-  paddingtop: ;
+  flex-direction: row;
+  justify-content: space-between;
+`;
+
+const InfoEditWrap = styled.div`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+
+  & >  * {
+    margin-left : 30px;
+  }
 `;

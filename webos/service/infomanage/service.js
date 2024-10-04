@@ -201,8 +201,8 @@ service.register('area/create', function(message) {
         desc: message.payload.desc
     };
     
-    if (!dataToStore.name || !dataToStore.desc) {
-        return message.respond({ returnValue: false, results: 'All fields are required.' });
+    if (!dataToStore.name) {
+        return message.respond({ returnValue: false, results: 'name is required.' });
     }
 
 
@@ -301,7 +301,7 @@ service.register('area/delete', function(message) {
     };
 
     service.call('luna://com.webos.service.db/find', { query: deviceQuery }, (response) => {
-        if (deviceResponse.payload.results.length > 1) {
+        if (response.payload.results.length > 1) {
             message.respond({ returnValue: false, results: 'Failed to delete area becuase associated devices exists' });
         } else {
             service.call('luna://com.webos.service.db/del', { ids: [areaId] }, (response) => {

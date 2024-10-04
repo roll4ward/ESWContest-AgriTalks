@@ -1,13 +1,14 @@
 import styled from "styled-components";
 import add from "../assets/icon/add.png";
 import { AreaBox } from "../component/dashboard/AreaBox";
-import { createArea, readAllAreas } from "../api/infomanageService";
+import { createArea, deleteArea, readAllAreas, updateAreaInfo } from "../api/infomanageService";
 import { useEffect, useState } from "react";
-import { AreaCreate } from "../component/modal/AreaCreate";
+import { AreaInfoInput } from "../component/modal/AreaInfoInput";
+import { createToast } from "../api/toast";
 
 export const Home = () => {
   const [areas, setAreas] = useState([]);
-  const [areaAddShow, setAreaAddShow] = useState(false)
+  const [areaModalShow, setAreaModalShow] = useState(false)
 
   useEffect(()=> {
     loadAllAreas();
@@ -17,9 +18,31 @@ export const Home = () => {
     if(!name) return;
     createArea(name, description, (result) => {
       console.log("Area Created : ", result);
+      createToast("구역이 생성되었습니다.");
       loadAllAreas();
     })
     console.log(`${name} : ${description} Create`);
+  }
+
+  function onAreaEdit(areaID, name, description) {
+    if(!name) return;
+    updateAreaInfo(areaID, name, description, (result) => {
+      console.log("Area updated : ", result);
+      createToast("구역 정보가 수정되었습니다.");
+      loadAllAreas();
+    })
+  }
+
+  function onAreaDelete(areaID) {
+    deleteArea(areaID, (result) => {
+      if (!result) {
+        createToast("구역에 속한 기기가 있어 구역을 삭제할 수 없습니다.");
+        return;
+      }
+
+      createToast("구역이 삭제되었습니다.");
+      loadAllAreas();
+    })
   }
 
   function loadAllAreas() {
@@ -31,7 +54,9 @@ export const Home = () => {
 
   return (
     <Container>
-      <AreaCreate setShow={setAreaAddShow} show={areaAddShow} onCreate={onAreaCreate}/>
+      <AreaInfoInput setShow={setAreaModalShow}
+                     show={areaModalShow} onSubmit={onAreaCreate}
+                     title={"구역 추가"}/>
       <TextWrap>
         <Title>{"안녕하세요,"}</Title>
         <SubTitleWrap>
@@ -44,7 +69,7 @@ export const Home = () => {
       </TextWrap>
 
       <ButtonConatiner>
-        <Button onClick={()=>{setAreaAddShow(true)}}>
+        <Button onClick={()=>{setAreaModalShow(true)}}>
           <img src={add} alt="" width={48} height={48} />
           {"구역 추가"}
         </Button>
@@ -55,7 +80,7 @@ export const Home = () => {
         <NoDataText>구역을 추가해 주세요</NoDataText>
       ) : (
         areas.map((area) => 
-          <AreaBox areaInfo={area} />
+          <AreaBox areaInfo={area} onDelete={onAreaDelete} onEdit={onAreaEdit.bind(null, area.areaID)}/>
         )
       )}
     </DataContainer>

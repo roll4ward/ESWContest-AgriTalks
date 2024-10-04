@@ -92,6 +92,7 @@ export function deleteArea(areaID, callback) {
     let bridge = new WebOSServiceBridge();
     bridge.onservicecallback = (msg) => {
         msg = JSON.parse(msg);
+        console.log(msg);
         if (callback) callback(msg.returnValue);
         console.log("callback called", callback);
     };

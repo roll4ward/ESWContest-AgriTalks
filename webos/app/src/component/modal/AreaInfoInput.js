@@ -4,7 +4,7 @@ import { useRef } from "react"
 import { createToast } from "../../api/toast";
 
 
-export const AreaCreate = ({show, setShow, onCreate}) => {
+export const AreaInfoInput = ({show, setShow, onSubmit, title}) => {
     const name = useRef({
         value: ""
     });
@@ -12,27 +12,27 @@ export const AreaCreate = ({show, setShow, onCreate}) => {
         value: ""
     });
 
-    function onSubmit() {
+    function onSubmitHandler() {
         if (!name.current.value) {
             createToast("구역 이름을 입력해주세요!");
             return;
         }
 
-        onCreate(name.current.value, description.current.value);
+        onSubmit(name.current.value, description.current.value);
         setShow(false);
     }
 
     return (
         <ModalBase show={show}>
             <Container>
-                <Title>구역 추가</Title>
+                <Title>{title}</Title>
                 <Label>구역 이름</Label>
                 <Input ref={name}></Input>
                 <Label>구역 설명</Label>
                 <Input ref={description}></Input>
                 <ButtonWrap>
                     <Button onClick={()=>{setShow(false)}}>취소</Button>
-                    <Button primary onClick={onSubmit}>확인</Button>
+                    <Button primary onClick={onSubmitHandler}>확인</Button>
                 </ButtonWrap>
             </Container>
         </ModalBase>
@@ -69,7 +69,7 @@ const Input = styled.input`
 `;
 
 const ButtonWrap = styled.div`
-    width: 100%,
+    width: 100%;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -78,7 +78,7 @@ const ButtonWrap = styled.div`
 const Button = styled.button`
     border-radius: 10px;
     border: 0;
-    width: 50%;
+    width: 48%;
     height: 95px;
     font-size: 50px;
     text-align: center;
