@@ -14,7 +14,7 @@ export const AreaInfoInput = ({show, setShow, onSubmit, title, target}) => {
 
     function onSubmitHandler() {
         if (!name.current.value) {
-            createToast("구역 이름을 입력해주세요!");
+            createToast(`${target} 이름을 입력해주세요!`);
             return;
         }
 

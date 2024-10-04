@@ -8,12 +8,6 @@ import { readAllAreas, readDeviceswithArea } from "../api/infomanageService"
 export const DeviceOverView = () => {
   const [areaID, setAreaID] = useState(useParams().areaID);
   const [areas, setAreas] = useState([]);
-  const [devices, setDevices] = useState({sensors : [], actuators: []});
-  function Device(sensors, actuators) {
-    this.sensors = sensors;
-    this.actuators = actuators;
-  }
-
 
   const today = new Date();
 
@@ -33,16 +27,6 @@ export const DeviceOverView = () => {
       setAreas(result.map(area => ({ name: area.name, areaID: area.areaID })));
     });
   }, []);
-
-  useEffect(() => {
-    readDeviceswithArea(areaID, (result)=> {
-      console.log(result);
-      setDevices(new Device(
-        result.filter(device => device.type === "sensor"),
-        result.filter(device => device.type === "actuator")
-      ));
-    })
-  }, [areaID]);
 
   return (
     <Container>
@@ -68,10 +52,10 @@ export const DeviceOverView = () => {
 
       <DeviceMonitorWapprer>
         {/* 센서 */}
-        <DeviceMonitorBox isSensor devices={devices.sensors} />
+        <DeviceMonitorBox isSensor areaID={areaID} />
 
         {/* 작동기 */}
-        <DeviceMonitorBox devices={devices.actuators} />
+        <DeviceMonitorBox areaID={areaID} />
       </DeviceMonitorWapprer>
     </Container>
   );

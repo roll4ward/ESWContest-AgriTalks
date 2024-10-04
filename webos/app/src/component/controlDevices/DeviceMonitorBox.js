@@ -1,15 +1,53 @@
 import styled from "styled-components";
 import refresh from "../../assets/icon/refresh.png";
 import { DeviceValueBox } from "./DeviceValueBox";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { deleteDevice, readDeviceswithArea, updateDeviceInfo } from "../../api/infomanageService";
+import { createToast } from "../../api/toast";
 
-export const DeviceMonitorBox = ({ isSensor, devices }) => {
-  const navigate = useNavigate();
+export const DeviceMonitorBox = ({ isSensor, areaID }) => {
   const currentTime = new Date().toLocaleTimeString("ko-KR", {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
   });
+  const [devices, setDevices] = useState([]);
+
+  useEffect(() => {
+    loadDevices();
+  }, [areaID]);
+
+  function loadDevices() {
+    readDeviceswithArea(areaID, (result)=> {
+      console.log(result);
+      setDevices( isSensor ? 
+        result.filter(device => device.type === "sensor") :
+        result.filter(device => device.type === "actuator")
+      );
+    })
+  }
+
+  function onDeviceEdit(deviceID, name, description) {
+    if(!name) return;
+    updateDeviceInfo(deviceID, name, description, (result) => {
+      console.log("Device updated : ", result);
+      createToast("기기 정보가 수정되었습니다.");
+      loadDevices();
+    })
+  }
+
+  function onDeviceDelete(deviceID) {
+    deleteDevice(deviceID, (result)=>{
+      if (!result) {
+        createToast("기기 삭제를 실패했습니다.");
+        return;
+      }
+
+      createToast("기기가 삭제되었습니다.");
+      loadDevices();
+    })
+  }
+
   console.log("devices : ", devices);
   return (
     <Container>
@@ -28,7 +66,9 @@ export const DeviceMonitorBox = ({ isSensor, devices }) => {
         ) : (
           devices.map((device) => {
             return (
-              <DeviceValueBox device={device} />
+              <DeviceValueBox device={device}
+                onDelete={onDeviceDelete}
+                onEdit={onDeviceEdit.bind(null, device._id)} />
             );
           })
         )}
