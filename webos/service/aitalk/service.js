@@ -158,6 +158,7 @@ aitalk_service.register("tts", async function (msg) {
     voice: config.openai_tts.voice,
     input: msg.payload.text,
     response_format: "pcm",
+    speed:1.2
   });
 
   console.log("audio file will be stored to " + config.store_path);
