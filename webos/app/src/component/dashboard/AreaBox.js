@@ -6,7 +6,6 @@ import trash from "../../assets/icon/trash.svg"
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { CheckDelete } from "../modal/CheckDelete";
-import { updateAreaInfo } from "../../api/infomanageService";
 import { AreaInfoInput } from "../modal/AreaInfoInput";
 
 export const AreaBox = ({areaInfo, onEdit, onDelete}) => {

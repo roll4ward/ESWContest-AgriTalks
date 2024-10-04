@@ -5,7 +5,15 @@
  * @returns 서비스의 URL
  */
 const getServiceURL = (service, method) => `luna://xyz.rollforward.app.${service}/${method}`;
-
+console.log(typeof WebOSServiceBridge);
+if (typeof WebOSServiceBridge === "undefined") {
+    globalThis.WebOSServiceBridge = function() {
+        this.onservicecallback = function(){};
+        this.call = (service, params) => {
+            console.log(`Service ${service} is called : ${params}`);
+        }
+    }
+}
 /**
  * 해당 기기의 모든 측정값을 읽어옴
  * @param {string} deviceID 값을 조회할 기기의 ID

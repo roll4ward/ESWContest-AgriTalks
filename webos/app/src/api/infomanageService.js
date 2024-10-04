@@ -5,6 +5,16 @@
  * @returns 서비스의 URL
  */
 const getServiceURL = (service, method) => `luna://xyz.rollforward.app.${service}/${method}`;
+console.log(typeof WebOSServiceBridge);
+if (typeof WebOSServiceBridge === "undefined") {
+    globalThis.WebOSServiceBridge = function() {
+        this.onservicecallback = function(){};
+        this.call = (service, params) => {
+            this.onservicecallback()
+            console.log(`Service ${service} is called : ${params}`);
+        }
+    }
+}
 
 /**
  *   모든 구역을 쿼리
