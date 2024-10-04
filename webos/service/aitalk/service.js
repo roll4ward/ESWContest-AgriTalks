@@ -159,14 +159,10 @@ aitalk_service.register("tts", async function (msg) {
       if (err) {
         console.error(`Error during conversion: ${stderr}`);
       } else {
-        console.log(`MP3 saved as: ${mp3File}`);
+        msg.respond(new aitalk_response({ store_path: config.store_path}));
       }
     }
   );
-
-  msg.respond(new aitalk_response({
-      store_path: config.store_path,
-  }));
 });
 
 aitalk_service.register("ask_stream", async function (msg) {
@@ -239,13 +235,6 @@ aitalk_service.register("ask_stream", async function (msg) {
   });
 });
 
-aitalk_service.register("vtv", async function (msg) {
-  if (!("store_path" in msg.payload)) {
-    msg.respond(new error('It requires store_path (e.g. {store_path: "/tmp/tts.mp3"}).'));
-    return;
-  }
-});
-
 // 세션 & 대화 정보 데이터베이스 생성 (임시)
 aitalk_service.register('createKind', function (message) {
   const kindData = {
@@ -272,7 +261,7 @@ aitalk_service.register('createKind', function (message) {
       if (response.payload.returnValue) {
           message.respond({ returnValue: true });
       } else {
-          message.respond({ returnValue: false, results: response.error });
+          message.respond({ returnValue: false, result: response.error });
       }
   });
 });
@@ -283,7 +272,7 @@ aitalk_service.register('deleteKind', function(message) {
         if (response.payload.returnValue) {
           message.respond({ returnValue: true });
         } else {
-            message.respond({ returnValue: false, results: response.error });
+            message.respond({ returnValue: false, result: response.error });
         }
     });
 });
@@ -298,15 +287,15 @@ aitalk_service.register('create', function(message) {
   };
 
   if (!dataToStore.type || !dataToStore.text) {
-      return message.respond({ returnValue: false, results: 'All fields are required.' });
+      return message.respond({ returnValue: false, result: 'All fields are required.' });
   } 
   
   aitalk_service.call('luna://com.webos.service.db/put', { objects: [dataToStore] }, (response) => {
       console.log(response);
       if (response.payload.returnValue) {
-          message.respond({ returnValue: true, results: response.payload.results[0].id});
+          message.respond({ returnValue: true, result: response.payload.results[0].id});
       } else {
-          message.respond({ returnValue: false, results: response.error});
+          message.respond({ returnValue: false, result: response.error});
       }
   });
 });
@@ -321,12 +310,44 @@ aitalk_service.register('read', function(message) {
   aitalk_service.call('luna://com.webos.service.db/find', { query: query }, (response) => {
     if(response.payload.returnValue){
       if (response.payload.results.length > 0) {
-          message.respond({ returnValue: true, results: response.payload.results });
+          message.respond({ returnValue: true, result: response.payload.results });
       } else {
-          message.respond({ returnValue: true, results: null });
+          message.respond({ returnValue: true, result: null });
       }
     }else{
-        message.respond({ returnValue: false, results: 'cannot found conversation' });
+        message.respond({ returnValue: false, result: 'cannot found conversation' });
+    }
+  });
+});
+
+// 세션 데이터 delete
+aitalk_service.register('delete', function(message) {
+  const query  = {
+      from: CONVESKIND,
+      where: []
+  };
+  
+  aitalk_service.call('luna://com.webos.service.db/find', { query: query }, (response) => {
+    if(response.payload.returnValue){
+      if (response.payload.results.length > 0) {
+        const ids = [];
+
+        for (const result of response.payload.results) {
+          ids.push(result._id);
+        }
+
+        aitalk_service.call('luna://com.webos.service.db/del', { ids: ids }, (response) => {
+          if (response.payload.returnValue) {
+              message.respond({ returnValue: true, result: 'Item deleted successfully' });
+          } else {
+              message.respond({ returnValue: false, result: response.error });
+          }
+        });
+      } else {
+          message.respond({ returnValue: true, result: null });
+      }
+    }else{
+        message.respond({ returnValue: false, result: 'cannot found conversation' });
     }
   });
 });

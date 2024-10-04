@@ -4,8 +4,7 @@ import MessageBox from "../component/MessageBox";
 import { Button, Form, InputGroup, Card } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import styled from "styled-components";
-import { createConversation, readConversation } from "../database"; // WebOS API 호출 함수들
-import { sendMessageToWebOS, sendMessageToTTS, speak } from "../api/aiService";
+import { askToAi, TTS, speak, createConversation, readAllConversation, deleteAllConversation } from "../api/aiService";
 import RecordModal from "../component/modal/RecorderModal";
 import { FaMicrophone } from "react-icons/fa"; // 마이크 아이콘 추가
 
@@ -15,68 +14,39 @@ export default function ChatPage() {
   const [showRecordModal, setShowRecordModal] = useState(false);
 
   useEffect(() => {
-    const initializeChat = async () => {
-      try {
-        const loadedMessages = await readConversation(); // 세션 데이터 읽기
-        if (loadedMessages && loadedMessages.result.length > 0) {
-          setMessages(
-            loadedMessages.result.map((msg) => ({
-              type: msg.type,
-              text: msg.text,
-            }))
-          );
-        } else {
+    const initializeChat = () => {
+      readAllConversation((result)=> {
+        if(result){
+          setMessages(result.map((msg) => ({ type: msg.type, text: msg.text})));
+        }else{
           console.log("이전에 대화 기록 없음");
         }
-      } catch (error) {
-        console.error("Initialization error:", error);
-      }
+      });
     };
-
     initializeChat();
   }, []);
 
-  const handleSendMessage = async () => {
-    if (prompt.trim()) {
-      const newMessages = [...messages, { type: "user", text: prompt }];
-      setMessages(newMessages);
-      try {
-        // 사용자 메시지 저장
-        await createConversation(prompt, "user"); // 세션 ID와 함께 kind 전달
-        // AI 응답을 받는 부분 (WebOS AI 서비스와 통신)
-        const response = await sendMessageToWebOS(prompt);
-
-        if (response.success) {
-          const aiMessage = { type: "ai", text: response.result };
-          setMessages((prevMessages) => [...prevMessages, aiMessage]);
-
-          // AI 응답을 DB에 저장
-          await sendMessageToTTS(response.result);
-          await speak();
-          await createConversation(response.result, "ai"); // 세션 ID와 함께 kind 전달
-        } else {
-          setMessages((prevMessages) => [
-            ...prevMessages,
-            {
-              type: "ai",
-              text: `Error-else success: ${
-                response.error || "No result from AI."
-              }`,
-            },
-          ]);
-        }
-      } catch (error) {
-        console.error("Error sending message:", error);
-        setMessages((prevMessages) => [
-          ...prevMessages,
-          { type: "ai", text: `Error-catch: ${error}` },
-        ]);
-      }
-
-      setPrompt("");
-    } else {
-      console.warn("Input이 입력되지 않았습니다");
+  const handleSendMessage = () => {
+    if (prompt == "") {
+      return;
     }
+
+    const newMessages = [...messages, { type: "user", text: prompt }];
+    setMessages(newMessages);
+    // 사용자 메시지 저장
+    createConversation(prompt, "user"); // 세션 ID와 함께 kind 전달
+    setPrompt("");
+    // AI 응답을 받는 부분 (WebOS AI 서비스와 통신)
+    askToAi(prompt, (askResult)=> {
+      const aiMessage = { type: "ai", text: askResult };
+      setMessages((prevMessages) => [...prevMessages, aiMessage]);
+      createConversation(askResult, "ai"); // 세션 ID와 함께 kind 전달
+
+      TTS(askResult, ()=> {
+        speak();
+      });
+
+    });
   };
 
   const handleRecordModalClose = () => {
