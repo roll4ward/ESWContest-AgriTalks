@@ -92,19 +92,21 @@ export default function ChatPage() {
     </Container>
   );
 }
-
+// display: flex;
+  // justify-content: center;
+  // align-items: center;
+  // height: 100vh;
 // 전체 컨테이너 스타일
 const Container = styled.div`
   display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
+  justify-content: space-between;
+  margin-bottom: 20px;
 `;
 
 // 카드 스타일
 const StyledCard = styled(Card)`
-  width: 600px;
-  height: 80vh;
+  width: 100%;
+  height: 988px;
   display: flex;
   flex-direction: column;
 `;
