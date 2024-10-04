@@ -1,21 +1,36 @@
 import styled from "styled-components";
 import add from "../assets/icon/add.png";
 import { AreaBox } from "../component/dashboard/AreaBox";
-import { readAllAreas } from "../api/infomanageService";
+import { createArea, readAllAreas } from "../api/infomanageService";
 import { useEffect, useState } from "react";
+import { AreaCreate } from "../component/modal/AreaCreate";
 
 export const Home = () => {
   const [areas, setAreas] = useState([]);
+  const [areaAddShow, setAreaAddShow] = useState(false)
 
   useEffect(()=> {
+    loadAllAreas();
+  }, []);
+
+  function onAreaCreate(name, description) {
+    createArea(name, description, (result) => {
+      console.log("Area Created : ", result);
+      loadAllAreas();
+    })
+    console.log(`${name} : ${description} Create`);
+  }
+
+  function loadAllAreas() {
     readAllAreas((result) => {
       console.log(result);
       setAreas(result);
     });
-  }, []);
+  }
 
   return (
     <Container>
+      <AreaCreate setShow={setAreaAddShow} show={areaAddShow} onCreate={onAreaCreate}/>
       <TextWrap>
         <Title>{"안녕하세요,"}</Title>
         <SubTitleWrap>
@@ -28,7 +43,7 @@ export const Home = () => {
       </TextWrap>
 
       <ButtonConatiner>
-        <Button>
+        <Button onClick={()=>{setAreaAddShow(true)}}>
           <img src={add} alt="" width={48} height={48} />
           {"구역 추가"}
         </Button>
