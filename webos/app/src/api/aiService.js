@@ -95,7 +95,7 @@ export function speak() {
   const service = "luna://com.webos.service.audio/playSound";
   let query = {
     fileName: "/home/developer/media/tts.pcm",
-    sink: "default2",
+    sink: "default1",
     sampleRate: 32000,
     format: "PA_SAMPLE_S16LE",
     channels: 1
