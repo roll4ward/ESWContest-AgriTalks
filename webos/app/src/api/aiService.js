@@ -16,7 +16,7 @@ export function askToAi(prompt, callback) {
   bridge.onservicecallback = (msg) => {
       msg = JSON.parse(msg);
       if(!msg.returnValue) {
-          console.log(`Service call failed : ${msg.result}`);
+          console.log(`ask Service call failed : ${msg.result}`);
           return;
       }
   
@@ -31,6 +31,31 @@ export function askToAi(prompt, callback) {
 }
 
 /**
+ * ai에게 스트림으로 질문을 함
+ * @param {string} prompt 질문할 text
+ * @param {*} callback 쿼리한 결과를 처리할 콜백 함수
+ */
+export function askToAiStream(prompt, callback) {
+  let bridge = new WebOSServiceBridge();
+  bridge.onservicecallback = (msg) => {
+      msg = JSON.parse(msg);
+      if(!msg.returnValue) {
+          console.log(`ask_stream Service call failed : ${msg.result}`);
+          return;
+      }
+  
+      if(callback) callback(msg.result);
+  }
+
+  let query = {
+    prompt: prompt,
+    subscribe: true
+  };
+
+  bridge.call(getServiceURL("aitalk", "ask_stream"), JSON.stringify(query));
+}
+
+/**
  * text를 음성파일 PCM으로 변환하고 자동으로 저장
  * @param {string} prompt 변환 할 text
  * @param {*} callback 쿼리한 결과를 처리할 콜백 함수
@@ -40,7 +65,7 @@ export function TTS(text, callback) {
   bridge.onservicecallback = (msg) => {
       msg = JSON.parse(msg);
       if(!msg.returnValue) {
-          console.log(`Service call failed : ${msg.result}`);
+          console.log(`TTS Service call failed : ${msg.result}`);
           return;
       }
 
@@ -62,7 +87,7 @@ export function speak() {
   bridge.onservicecallback = (msg) => {
       msg = JSON.parse(msg);
       if(!msg.returnValue) {
-          console.log(`Service call failed : ${msg.result}`);
+          console.log(`speak Service call failed : ${msg.result}`);
           return;
       }
   }
@@ -89,7 +114,7 @@ export function createConversation(text, type) {
   bridge.onservicecallback = (msg) => {
       msg = JSON.parse(msg);
       if (!msg.returnValue) {
-          console.log(`Service call failed : ${msg.result}`);
+          console.log(`createConversation Service call failed : ${msg.result}`);
           return;
       }
   };
@@ -98,7 +123,6 @@ export function createConversation(text, type) {
       text : text,
       type : type
   }
-
   bridge.call(getServiceURL("aitalk", "create"), JSON.stringify(query));
 }
 

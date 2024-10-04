@@ -4,7 +4,7 @@ import MessageBox from "../component/MessageBox";
 import { Button, Form, InputGroup, Card } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import styled from "styled-components";
-import { askToAi, TTS, speak, createConversation, readAllConversation, deleteAllConversation } from "../api/aiService";
+import { askToAi, askToAiStream, TTS, speak, createConversation, readAllConversation, deleteAllConversation } from "../api/aiService";
 import RecordModal from "../component/modal/RecorderModal";
 import { FaMicrophone } from "react-icons/fa"; // 마이크 아이콘 추가
 
@@ -37,15 +37,21 @@ export default function ChatPage() {
     createConversation(prompt, "user"); // 세션 ID와 함께 kind 전달
     setPrompt("");
     // AI 응답을 받는 부분 (WebOS AI 서비스와 통신)
-    askToAi(prompt, (askResult)=> {
-      const aiMessage = { type: "ai", text: askResult };
-      setMessages((prevMessages) => [...prevMessages, aiMessage]);
-      createConversation(askResult, "ai"); // 세션 ID와 함께 kind 전달
+    
+    setMessages((prevMessages) => [...prevMessages,{type: "ai",text: "..."}]);
+    var aiMessage = { type: "ai", text: "" };
 
-      TTS(askResult, ()=> {
-        speak();
-      });
-
+    askToAiStream(prompt, (askResult)=> {
+      if(!askResult.is_streaming){
+        createConversation(aiMessage.text, "ai"); // 세션 ID와 함께 kind 전달
+        TTS(aiMessage.text, ()=> { speak(); });
+      }else{
+        aiMessage.text = askResult.chunks;
+        setMessages((prevMessages) => {
+          const updatedMessages = prevMessages.slice(0, -1);
+          return([...updatedMessages, aiMessage]);
+        });
+      }
     });
   };
 

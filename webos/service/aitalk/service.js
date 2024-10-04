@@ -18,7 +18,6 @@ var thread = null;
 const aitalk_service = new Service(pkg_info.name);
 
 
-
 // aitalk method
 aitalk_service.register("ask", async function(msg) { 
   if (!("prompt" in msg.payload)) 
@@ -35,25 +34,34 @@ aitalk_service.register("ask", async function(msg) {
   console.log("thread_id", thread.id);
 
   if (msg.payload.image_path) {
-    const img_file = await openai.files.create({
-      file: fs.createReadStream(msg.payload.image_path),
-      purpose: "assistants"
-    })
-    const threadMessages = await openai.beta.threads.messages.create(
-      thread.id, 
-      { 
-        role: "user", 
-        content: [
-          {
-            "type": "text",
-            "text": prompt  
-          },
-          {
-            "type": "image_file",
-            "image_file": {"file_id": img_file.id}
-          },
-        ]
-      });
+    if (msg.payload.image_path) {
+      const img_file = await openai.files.create({
+        file: fs.createReadStream(msg.payload.image_path),
+        purpose: "assistants"
+      })
+      const threadMessages = await openai.beta.threads.messages.create(
+        thread.id, 
+        { 
+          role: "user", 
+          content: [
+            {
+              "type": "text",
+              "text": prompt  
+            },
+            {
+              "type": "image_file",
+              "image_file": {"file_id": img_file.id}
+            },
+          ]
+        });
+    } else {
+      const threadMessages = await openai.beta.threads.messages.create(
+        thread.id, 
+        { 
+          role: "user", 
+          content: prompt 
+        });
+    }
   } else {
     const threadMessages = await openai.beta.threads.messages.create(
       thread.id, 
@@ -71,7 +79,9 @@ aitalk_service.register("ask", async function(msg) {
       run.thread_id
   );
 
-  msg.respond(new aitalk_response(messages.data[0].content[0].text.value))
+  let answer = messages.data[0].content[0].text.value;
+  answer = answer.replace(/【\d+:\d+†[^】]+】/g, "");
+  msg.respond(new aitalk_response(answer))
 });
 
 aitalk_service.register("voice_ask", async function(msg) {
@@ -101,7 +111,7 @@ aitalk_service.register("voice_ask", async function(msg) {
     console.log("This is ask call in voice call service")
     msg.respond(new aitalk_response({
       voice_prompt: voice_prompt,
-      answer: m2.payload.result    
+      answer: m2.payload.result.replace(/【\d+:\d+†[^】]+】/g, "")
     }))
   })
 });
@@ -165,17 +175,20 @@ aitalk_service.register("tts", async function (msg) {
   );
 });
 
-aitalk_service.register("ask_stream", async function (msg) {
-  if (!("prompt" in msg.payload)) {
-    msg.respond(new error("prompt is required."));
+aitalk_service.register("ask_stream", async function(msg) {
+  if (!("prompt" in msg.payload)) 
+  {
+    msg.respond(new error('prompt is required.'));
     return;
   }
   const prompt = msg.payload.prompt;
 
-  if (thread == null) {
-    thread = await openai.beta.threads.create();
-  }
+  if (thread == null) 
+  {
+    thread = await openai.beta.threads.create();    
+  } 
   console.log("thread_id", thread.id);
+
   if (msg.payload.image_path) {
     // 예외 처리 추가
 
@@ -206,33 +219,126 @@ aitalk_service.register("ask_stream", async function (msg) {
         content: prompt 
       });
   }
+  return new Promise((resolve, reject) => {
+    try {
+      const stream = openai.beta.threads.runs.stream(thread.id, {
+        assistant_id: config.openai_assistant_id
+      })
+      .on('textCreated', (text) => {
+        console.log(text)
+      })
+      .on('textDelta', (textDelta, snapshot) => {
+        msg.respond(new aitalk_response({
+          chunks: snapshot.value.replace(/【\d+:\d+†[^】]+】/g, ""),
+          is_streaming: true
+        }))
+      })
+      .on('end', () => {
+        console.log('\nStream has ended.');
+        msg.respond(new aitalk_response({
+          chunks: "",
+          isStreaming: false
+        }))
+        resolve();
+      })
+    } catch (err) {
+      console.error(err)
+      reject()
+    }
+  })
+});
+
+aitalk_service.register("briefing", async function(msg) {
+  ////////////////////////////////////////////////
+  // Briefing 기능 구현
+  //  - GPT에게 아래와 같이 입력을 줌.
+  //    1. prompt
+  //      - str (e.g. "Hello! 너 토마토 좋아해?")
+  //    2. images
+  //      - 이미지의 경로 (e.g. /home/developer/media/tmp.png, etc.) 
+  //    3. sensor values file
+  //      - pdf 파일
+  //      - prompt 안에 같이 삽입
+  ////////////////////////////////////////////////
+
+  if (!("prompt" in msg.payload)) 
+  { // prompt를 포함하지 않으면 raise error
+    msg.respond(new error('prompt is required.' + JSON.stringify(msg)));
+    return;
+  }
+  const prompt = msg.payload.prompt;
+
+  if (thread == null) 
+  { // 사용자가 처음 사용하면 새로운 thread를 생성해서 gloabl 변수로 선언
+    thread = await openai.beta.threads.create();    
+  } 
+  console.log("thread_id", thread.id);
+
+  // 2. 이미지는 이미지의 경로를 입력으로 주면 알아서 업로드 함.
+  const img_file = await openai.files.create({
+    file: fs.createReadStream(msg.payload.image_path),
+    purpose: "assistants"
+  })
+
+  /////////////////////////////////////////////////////////////////////////
+  // 3. 센서 값들을 담은 파일을 csv로 전달하려고 했으나 현재 안되는 상태.
+  // const cvs_file = await openai.files.create({
+  //   file: fs.createReadStream(msg.payload.csv_path),
+  //   purpose: "assistants"
+  // })
+
+  const sensor_values_data = await fs.readFileSync(msg.payload.csv_path? msg.payload.csv_path: 'test_sensor_values.csv', 'utf-8');
+  ////////////////////////////////////////////////////////////////////////
+  const threadMessages = await openai.beta.threads.messages.create(
+    thread.id, 
+    { 
+      role: "user", 
+      content: [
+        {
+          "type": "text",
+          // 센서 값들을 prompt 안에 삽입하여 GPT에게 전달.
+          "text": "아래 \"센서 값 정보들\"과 주어진 이미지를 바탕으로 브리핑 해줘.\n센서 값 정보들 (csv 파일의 형식):\n: "+sensor_values_data
+        },
+        {
+          "type": "image_file",
+          "image_file": {"file_id": img_file.id}
+        },
+      ],
+      // attachment: {
+      //   "file_id": cvs_file.id,
+      //   "tools": "code_interpreter"
+      // }
+    });
+
   await new Promise((resolve, reject) => {
     try {
       const stream = openai.beta.threads.runs.stream(thread.id, {
-          assistant_id: config.openai_assistant_id
-        })
-        .on('textCreated', (text) => {
-          console.log(text);
-        })
-        .on('textDelta', (textDelta, snapshot) => {
-          console.log(snapshot);
-          msg.respond(new aitalk_response({
-              chunks: snapshot,
-              is_streaming: true
-          }));
-        })
-        .on('end', () => {
-          console.log('\nStream has ended.');
-          msg.respond(new aitalk_response({
-              chunks: "",
-              isStreaming: false
-          }));
-          resolve();
-        });
+        assistant_id: config.openai_assistant_id
+      })
+      .on('textCreated', (text) => {
+        console.log(text)
+      })
+      .on('textDelta', (textDelta, snapshot) => {
+        console.log(snapshot)
+        msg.respond(new aitalk_response({
+          chunks: snapshot.replace(/【\d+:\d+†[^】]+】/g, ""),
+          is_streaming: true
+        }))
+      })
+      .on('end', () => {
+        console.log('\nStream has ended.');
+        msg.respond(new aitalk_response({
+          chunks: "",
+          isStreaming: false
+        }))
+        resolve();
+      })
     } catch (err) {
-      console.error(err);
+      console.error("Promise 구 내에서 발생한 에러: "+err)
     }
-  });
+  })
+
+  msg.respond(new aitalk_response("streaming.."))
 });
 
 // 세션 & 대화 정보 데이터베이스 생성 (임시)
