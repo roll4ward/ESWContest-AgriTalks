@@ -29,7 +29,8 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "webos-pack": "ares-package -o ipk build",
-    "info-update": "cp webos/* build/"
+    "info-update": "cp webos/* build/",
+    "prepare-tts": "ares-push ./audioCon.py /home/developer && ares-shell -r 'mkdir /home/developer/media'"
   },
   "eslintConfig": {
     "extends": [

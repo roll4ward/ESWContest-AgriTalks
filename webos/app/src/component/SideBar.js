@@ -1,5 +1,6 @@
 import styled from "styled-components";
 import arrowRight from "../assets/icon/arrowLeft.png";
+import chat from "../assets/icon/chat.png";
 import { useNavigate } from "react-router-dom";
 
 export const SideBar = () => {
@@ -7,6 +8,7 @@ export const SideBar = () => {
   return (
   <Container>
     <img src={arrowRight} alt="" width={80} height={80} onClick={()=> {navigate(-1)}} />
+    <img src={chat} alt="" width={80} height={80} onClick={()=> {navigate("chat")}} />
   </Container>);
 };
 
