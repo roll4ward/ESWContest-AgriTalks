@@ -5,7 +5,7 @@ import { Button, Form, InputGroup, Card } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import styled from "styled-components";
 import { askToAi, askToAiStream, TTS, speak, createConversation, readAllConversation, deleteAllConversation } from "../api/aiService";
-import { readAllImages } from "../api/imageService";
+import { readAllImages, startCameraPreview, stopCameraPreview, captureImage } from "../api/imageService";
 import RecordModal from "../component/modal/RecorderModal";
 import { FaMicrophone } from "react-icons/fa"; // 마이크 아이콘 추가
 
@@ -70,7 +70,6 @@ export default function ChatPage() {
           console.log("저장된 이미지 없음");
         }
       });
-
     };
     initializeChat();
   }, []);
