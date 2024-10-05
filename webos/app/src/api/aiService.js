@@ -135,7 +135,7 @@ export function readAllConversation (callback) {
   bridge.onservicecallback = (msg) => {
       msg = JSON.parse(msg);
       if (!msg.returnValue) {
-          console.log(`Service call failed : ${msg.result}`);
+          console.log(`readAllConversation Service call failed : ${msg.result}`);
           return null;
       }
       if (callback) callback(msg.result);
@@ -153,11 +153,10 @@ export function deleteAllConversation (callback) {
   bridge.onservicecallback = (msg) => {
       msg = JSON.parse(msg);
       if (!msg.returnValue) {
-          console.log(`Service call failed : ${msg.result}`);
+          console.log(`delete conversation Service call failed : ${msg.result}`);
           return;
       }
       if (callback) callback(msg.result);
-      console.log("callback called", callback);
   };
 
   bridge.call(getServiceURL("aitalk", "delete"), "{}");

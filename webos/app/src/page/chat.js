@@ -5,6 +5,7 @@ import { Button, Form, InputGroup, Card } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import styled from "styled-components";
 import { askToAi, askToAiStream, TTS, speak, createConversation, readAllConversation, deleteAllConversation } from "../api/aiService";
+import { readAllImages } from "../api/imageService";
 import RecordModal from "../component/modal/RecorderModal";
 import { FaMicrophone } from "react-icons/fa"; // 마이크 아이콘 추가
 
@@ -12,6 +13,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState([]);
   const [prompt, setPrompt] = useState("");
   const [showRecordModal, setShowRecordModal] = useState(false);
+  const [images, setImages] = useState([]);
 
   useEffect(() => {
     const initializeChat = () => {
@@ -22,26 +24,41 @@ export default function ChatPage() {
           console.log("이전에 대화 기록 없음");
         }
       });
+
+      // 초기 이미지 목록 업데이트 함수
+      readAllImages((result)=> {
+        if(result){
+          console.log(result)
+          setImages(result);
+        }else{
+          console.log("저장된 이미지 없음");
+        }
+      });
+
     };
     initializeChat();
   }, []);
 
   const handleSendMessage = () => {
+
+    // 질문창이 공백이면 return
     if (prompt == "") {
       return;
     }
 
+    // 사용자 메시지 저장
     const newMessages = [...messages, { type: "user", text: prompt }];
     setMessages(newMessages);
-    // 사용자 메시지 저장
     createConversation(prompt, "user"); // 세션 ID와 함께 kind 전달
     setPrompt("");
-    // AI 응답을 받는 부분 (WebOS AI 서비스와 통신)
-    
+
+    // ai의 대답창을 우선 "..."으로 초기화
     setMessages((prevMessages) => [...prevMessages,{type: "ai",text: "..."}]);
     var aiMessage = { type: "ai", text: "" };
-
+    
+    // 스트림 질문 전송 함수
     askToAiStream(prompt, (askResult)=> {
+      // 스트림의 마지막 토큰이 수신되면 ai의 대답 전문을 저장 및 tts & speak
       if(!askResult.is_streaming){
         createConversation(aiMessage.text, "ai"); // 세션 ID와 함께 kind 전달
         TTS(aiMessage.text, ()=> { speak(); });
@@ -98,11 +115,10 @@ export default function ChatPage() {
     </Container>
   );
 }
-// display: flex;
-  // justify-content: center;
-  // align-items: center;
-  // height: 100vh;
+
 // 전체 컨테이너 스타일
+// last modifier geonha
+// comment: 화면이 작다해서 비율을 맞췄습니다!
 const Container = styled.div`
   display: flex;
   justify-content: space-between;
