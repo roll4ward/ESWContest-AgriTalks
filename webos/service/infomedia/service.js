@@ -3,6 +3,7 @@ const Service = require('webos-service');
 
 const service = new Service(pkg_info.name);
 let cameraHandle = null;
+let recorderId = null;
 
 // 저장된 이미지 경로 리스트 전체 쿼리
 service.register('image/readAll', function(message) {
@@ -130,6 +131,136 @@ service.register('camera/captureImage', function(message) {
     service.call('luna://com.webos.service.camera2/startCapture', query, (response) => {
         if (response.payload.returnValue) {
             message.respond({ returnValue: true, result: filepath });
+        } else {
+            message.respond({ returnValue: false, result: response.payload.errorText });
+        }
+    });
+});
+
+// record 객체 초기화 함수
+function initRecord(){
+    service.call('luna://com.webos.service.audio/listSupportedDevices', {}, (response) => {
+        if (response.payload.returnValue) {
+            service.call('luna://com.webos.service.mediarecorder/open', {audio: true}, (response) => {
+                if (response.payload.returnValue) {
+                    recorderId = response.payload.recorderId;
+                    console.log(recorderId);
+
+                    const fomat = {
+                        recorderId: recorderId,
+                        codec:"AAC",
+                        bitRate:192000,
+                        sampleRate:48000,
+                        channelCount:2
+                    }
+                    service.call('luna://com.webos.service.mediarecorder/setAudioFormat', fomat, (response) => {
+                        console.log(response);
+                        if (response.payload.returnValue) {
+                            console.log("Setting format success");
+                        }
+                    });
+
+                    const output = {
+                        recorderId: recorderId,
+                        path : "/media/internal/"
+                    }
+                    service.call('luna://com.webos.service.mediarecorder/setOutputFile', output, (response) => {
+                        console.log(response);
+                        if (response.payload.returnValue) {
+                            console.log("Setting output path success");
+                        }
+                    });
+
+                    const outputFomat = {
+                        recorderId: recorderId,
+                        format:"M4A"
+                    }
+                    service.call('luna://com.webos.service.mediarecorder/setOutputFormat', outputFomat, (response) => {
+                        console.log(response);
+                        if (response.payload.returnValue) {
+                            console.log("Setting format M4A success");
+                        }
+                    });
+                }
+            });
+        }
+        else{
+            console.log("Does not support audio input.")
+        }
+    });
+}
+
+initRecord();
+
+// 녹음 시작 서비스
+service.register('record/start', function(message) {
+    if (!recorderId) {
+        return message.respond({ returnValue: false, result: "Recorder not initialized" });
+    }
+
+    service.call('luna://com.webos.service.mediarecorder/start', {recorderId: recorderId}, (response) => {
+        if (response.payload.returnValue) {
+            message.respond({ returnValue: true, result: "Start recording..." });
+        } else {
+            message.respond({ returnValue: false, result: response.payload.errorText });
+        }
+    });
+});
+
+// 녹음 종료 서비스
+service.register('record/stop', function(message) {
+    if (!recorderId) {
+        return message.respond({ returnValue: false, result: "Recorder not initialized" });
+    }
+
+    service.call('luna://com.webos.service.mediarecorder/stop', {recorderId: recorderId}, (response) => {
+        if (response.payload.returnValue) {
+            message.respond({ returnValue: true, result: response.payload.path });
+        } else {
+            message.respond({ returnValue: false, result: response.payload.errorText });
+        }
+    });
+});
+
+// 녹음 중지 서비스
+service.register('record/pause', function(message) {
+    if (!recorderId) {
+        return message.respond({ returnValue: false, result: "Recorder not initialized" });
+    }
+
+    service.call('luna://com.webos.service.mediarecorder/pause', {recorderId: recorderId}, (response) => {
+        if (response.payload.returnValue) {
+            message.respond({ returnValue: true, result: "Stop recording" });
+        } else {
+            message.respond({ returnValue: false, result: response.payload.errorText });
+        }
+    });
+});
+
+// 녹음 재개 서비스
+service.register('record/resume', function(message) {
+    if (!recorderId) {
+        return message.respond({ returnValue: false, result: "Recorder not initialized" });
+    }
+
+    service.call('luna://com.webos.service.mediarecorder/resume', {recorderId: recorderId}, (response) => {
+        if (response.payload.returnValue) {
+            message.respond({ returnValue: true, result: "Restart recording" });
+        } else {
+            message.respond({ returnValue: false, result: response.payload.errorText });
+        }
+    });
+});
+
+// 녹음 중단 서비스
+service.register('record/stop', function(message) {
+    if (!recorderId) {
+        return message.respond({ returnValue: false, result: "Recorder not initialized" });
+    }
+
+    service.call('luna://com.webos.service.mediarecorder/stop', {recorderId: recorderId}, (response) => {
+        if (response.payload.returnValue) {
+            message.respond({ returnValue: true, result: "Exit record" });
         } else {
             message.respond({ returnValue: false, result: response.payload.errorText });
         }

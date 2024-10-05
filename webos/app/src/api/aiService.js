@@ -92,6 +92,30 @@ export function TTS(text, callback) {
 }
 
 /**
+ * m4a 음성파일을 text로 변환하고 반환
+ * @param {string} prompt 변환 할 음성파일
+ * @param {*} callback 쿼리한 결과를 처리할 콜백 함수
+ */
+export function STT(text, callback) {
+  let bridge = new WebOSServiceBridge();
+  bridge.onservicecallback = (msg) => {
+      msg = JSON.parse(msg);
+      if(!msg.returnValue) {
+          console.log(`STT Service call failed : ${msg.result}`);
+          return;
+      }
+
+      if(callback) callback();
+  }
+
+  let query = {
+    voice_path: text
+  };
+
+  bridge.call(getServiceURL("aitalk", "stt"), JSON.stringify(query));
+}
+
+/**
  * text를 음성파일 PCM으로 변환하고 자동으로 저장
  */
 export function speak() {

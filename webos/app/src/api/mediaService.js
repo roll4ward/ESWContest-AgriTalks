@@ -74,3 +74,77 @@ export function captureImage(callback) {
     }
     bridge.call(getServiceURL("infomedia", "camera/captureImage"), "{}");
 }
+
+
+/**
+ * 녹음 시작
+ * @param {*} callback 녹음 시작 결과를 처리할 콜백 함수
+ */
+export function startRecord(callback) {
+    let bridge = new WebOSServiceBridge();
+    bridge.onservicecallback = (msg) => {
+        msg = JSON.parse(msg);
+        if(!msg.returnValue) {
+            console.log(` Service call failed : ${msg.result}`);
+            return;
+        }
+        
+        if(callback) callback(msg.result);
+    }
+    bridge.call(getServiceURL("infomedia", "record/start"), "{}");
+}
+
+/**
+ * 녹음 중지
+ * @param {*} callback 녹음 중지 결과를 처리할 콜백 함수
+ */
+export function pauseRecord(callback) {
+    let bridge = new WebOSServiceBridge();
+    bridge.onservicecallback = (msg) => {
+        msg = JSON.parse(msg);
+        if(!msg.returnValue) {
+            console.log(`pauseRecord Service call failed : ${msg.result}`);
+            return;
+        }
+        
+        if(callback) callback(msg.result);
+    }
+    bridge.call(getServiceURL("infomedia", "record/pause"), "{}");
+}
+
+/**
+ * 녹음 재개
+ * @param {*} callback 녹음 재개 결과를 처리할 콜백 함수
+ */
+export function resumeRecord(callback) {
+    let bridge = new WebOSServiceBridge();
+    bridge.onservicecallback = (msg) => {
+        msg = JSON.parse(msg);
+        if(!msg.returnValue) {
+            console.log(`resumeRecord Service call failed : ${msg.result}`);
+            return;
+        }
+        
+        if(callback) callback(msg.result);
+    }
+    bridge.call(getServiceURL("infomedia", "record/resume"), "{}");
+}
+
+/**
+ * 녹음 중단
+ * @param {*} callback 녹음 중단 결과를 처리할 콜백 함수
+ */
+export function stopRecord(callback) {
+    let bridge = new WebOSServiceBridge();
+    bridge.onservicecallback = (msg) => {
+        msg = JSON.parse(msg);
+        if(!msg.returnValue) {
+            console.log(`stopRecord Service call failed : ${msg.result}`);
+            return;
+        }
+        
+        if(callback) callback(msg.result);
+    }
+    bridge.call(getServiceURL("infomedia", "record/stop"), "{}");
+}
+
