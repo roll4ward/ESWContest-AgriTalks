@@ -1,7 +1,7 @@
 import React from "react";
 import { Button } from "react-bootstrap";
 import styled from "styled-components";
-import cameraIcon from "../assets/icon/cameraIcon.png";
+import cameraIcon from "../assets/icon/cameraIcon.svg";
 
 export const Camera = () => {
   const getCameraList = () => {
