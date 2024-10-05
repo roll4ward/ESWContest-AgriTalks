@@ -16,8 +16,8 @@ export default function ChatPage() {
   const [images, setImages] = useState([]);
 
   // 태스트를 위한 image path 예시
-  var selectImage = "/media/multimedia/images/tomato2.jpg";
-  // var selectImage = null
+  // var selectImage = "/media/multimedia/images/tomato2.jpg";
+  var selectImage = null
 //  만약 이미지 load를 성공하면 다음과 같이 데이터가 들어옴 (이미지가 들어있어야함)
 //   [
 //     {
