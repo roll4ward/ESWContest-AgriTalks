@@ -11,10 +11,42 @@ export const SideBar = () => {
   return (
     <Container>
       <MeunContainer>
-        <img src={home} width={70} height={60} alt="" />
-        <img src={chat} width={70} height={60} alt="" />
-        <img src={control} width={70} height={60} alt="" />
-        <img src={setting} width={70} height={60} alt="" />
+        <img
+          src={home}
+          width={70}
+          height={60}
+          alt=""
+          onClick={() => {
+            navigate("/");
+          }}
+        />
+        <img
+          src={chat}
+          width={70}
+          height={60}
+          alt=""
+          onClick={() => {
+            navigate("/chat");
+          }}
+        />
+        <img
+          src={control}
+          width={70}
+          height={60}
+          alt=""
+          onClick={() => {
+            navigate("/devices");
+          }}
+        />
+        <img
+          src={setting}
+          width={70}
+          height={60}
+          alt=""
+          onClick={() => {
+            navigate("setting");
+          }}
+        />
       </MeunContainer>
       <img
         src={arrowRight}
