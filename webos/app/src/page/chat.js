@@ -15,6 +15,42 @@ export default function ChatPage() {
   const [showRecordModal, setShowRecordModal] = useState(false);
   const [images, setImages] = useState([]);
 
+  // 태스트를 위한 image path 예시
+  var selectImage = "/media/multimedia/images/tomato2.jpg";
+  // var selectImage = null
+//  만약 이미지 load를 성공하면 다음과 같이 데이터가 들어옴 (이미지가 들어있어야함)
+//   [
+//     {
+//         "width": 612,
+//         "last_modified_date": "Sat Oct  5 02:48:17 2024 GMT",
+//         "dirty": false,
+//         "file_path": "file:///media/multimedia/images/tomato.jpg",
+//         "height": 547,
+//         "file_size": 32502,
+//         "title": "tomato.jpg",
+//         "uri": "storage:///media/multimedia/media/multimedia/images/tomato.jpg"
+//     },
+//     {
+//         "width": 612,
+//         "last_modified_date": "Sat Oct  5 03:28:39 2024 GMT",
+//         "dirty": false,
+//         "file_path": "file:///media/multimedia/images/tomato1.jpg",
+//         "height": 547,
+//         "file_size": 32502,
+//         "title": "tomato1.jpg",
+//         "uri": "storage:///media/multimedia/media/multimedia/images/tomato1.jpg"
+//     },
+//     {
+//         "width": 612,
+//         "last_modified_date": "Sat Oct  5 03:34:26 2024 GMT",
+//         "dirty": false,
+//         "file_path": "file:///media/multimedia/images/tomato2.jpg",
+//         "height": 547,
+//         "file_size": 32502,
+//         "title": "tomato2.jpg",
+//         "uri": "storage:///media/multimedia/media/multimedia/images/tomato2.jpg"
+//     }
+// ]
   useEffect(() => {
     const initializeChat = () => {
       readAllConversation((result)=> {
@@ -49,7 +85,7 @@ export default function ChatPage() {
     // 사용자 메시지 저장
     const newMessages = [...messages, { type: "user", text: prompt }];
     setMessages(newMessages);
-    createConversation(prompt, "user"); // 세션 ID와 함께 kind 전달
+    createConversation(prompt, "user");
     setPrompt("");
 
     // ai의 대답창을 우선 "..."으로 초기화
@@ -57,10 +93,10 @@ export default function ChatPage() {
     var aiMessage = { type: "ai", text: "" };
     
     // 스트림 질문 전송 함수
-    askToAiStream(prompt, (askResult)=> {
+    askToAiStream(prompt, selectImage, (askResult)=> {
       // 스트림의 마지막 토큰이 수신되면 ai의 대답 전문을 저장 및 tts & speak
       if(!askResult.is_streaming){
-        createConversation(aiMessage.text, "ai"); // 세션 ID와 함께 kind 전달
+        createConversation(aiMessage.text, "ai");
         TTS(aiMessage.text, ()=> { speak(); });
       }else{
         aiMessage.text = askResult.chunks;
