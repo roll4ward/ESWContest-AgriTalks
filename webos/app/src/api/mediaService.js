@@ -24,6 +24,26 @@ export function readAllImages(callback) {
   bridge.call(getServiceURL("infomedia", "image/readAll"), "{}");
 }
 
+
+/**
+ * 카메라 초기화
+ * @param {*} callback 미리보기 결과를 처리할 콜백 함수
+ */
+export function initCamera(callback) {
+    let bridge = new WebOSServiceBridge();
+    bridge.onservicecallback = (msg) => {
+        msg = JSON.parse(msg);
+        if(!msg.returnValue) {
+            console.log(`initCamera Service call failed : ${msg.result}`);
+            if(callback) callback(null);
+            return;
+        }
+
+        if(callback) callback(msg.result);
+    }
+    bridge.call(getServiceURL("infomedia", "camera/init"), "{}");
+}
+
 /**
  * 카메라 미리보기 재생
  * @param {*} callback 미리보기 결과를 처리할 콜백 함수
@@ -39,13 +59,18 @@ export function startCameraPreview(callback) {
 
         if(callback) callback(msg.result);
     }
-    bridge.call(getServiceURL("infomedia", "camera/startPreview"), "{}");
+
+    let query = {
+        cameraHandle: handle
+    };
+
+    bridge.call(getServiceURL("infomedia", "camera/startPreview"), JSON.stringify(query));
 }
 
 /**
  * 카메라 미리보기 정지 함수
  */
-export function stopCameraPreview() {
+export function stopCameraPreview(handle) {
     let bridge = new WebOSServiceBridge();
     bridge.onservicecallback = (msg) => {
         msg = JSON.parse(msg);
@@ -54,14 +79,19 @@ export function stopCameraPreview() {
             return;
         }
     }
-    bridge.call(getServiceURL("infomedia", "camera/stopPreview"), "{}");
+
+    let query = {
+        cameraHandle: handle
+    };
+
+    bridge.call(getServiceURL("infomedia", "camera/stopPreview"), JSON.stringify(query));
 }
 
 /**
  * 카메라 미리보기 재생
  * @param {*} callback 미리보기 결과를 처리할 콜백 함수
  */
-export function captureImage(callback) {
+export function captureImage(handle, callback) {
     let bridge = new WebOSServiceBridge();
     bridge.onservicecallback = (msg) => {
         msg = JSON.parse(msg);
@@ -72,33 +102,60 @@ export function captureImage(callback) {
         
         if(callback) callback(msg.result);
     }
-    bridge.call(getServiceURL("infomedia", "camera/captureImage"), "{}");
+
+    let query = {
+        cameraHandle: handle
+    };
+
+    bridge.call(getServiceURL("infomedia", "camera/captureImage"), JSON.stringify(query));
 }
 
-
 /**
- * 녹음 시작
- * @param {*} callback 녹음 시작 결과를 처리할 콜백 함수
+ * 녹음기 초기화 * @param {*} callback 녹음 시작 결과를 처리할 콜백 함수
  */
-export function startRecord(callback) {
+export function initRecord(callback) {
     let bridge = new WebOSServiceBridge();
     bridge.onservicecallback = (msg) => {
         msg = JSON.parse(msg);
         if(!msg.returnValue) {
-            console.log(` Service call failed : ${msg.result}`);
+            console.log(`initRecord Service call failed : ${msg.result}`);
+            if(callback) callback(null);
             return;
         }
         
         if(callback) callback(msg.result);
     }
-    bridge.call(getServiceURL("infomedia", "record/start"), "{}");
+    bridge.call(getServiceURL("infomedia", "record/init"), "{}");
+}
+
+/**
+ * 녹음 시작
+ * @param {*} callback 녹음 시작 결과를 처리할 콜백 함수
+ */
+export function startRecord(id, callback) {
+    let bridge = new WebOSServiceBridge();
+    bridge.onservicecallback = (msg) => {
+        msg = JSON.parse(msg);
+        if(!msg.returnValue) {
+            console.log(`startRecord Service call failed : ${msg.result}`);
+            return;
+        }
+        
+        if(callback) callback(msg.result);
+    }
+        
+    let query = {
+        recorderId: id
+    };
+
+    bridge.call(getServiceURL("infomedia", "record/start"), JSON.stringify(query));
 }
 
 /**
  * 녹음 중지
  * @param {*} callback 녹음 중지 결과를 처리할 콜백 함수
  */
-export function pauseRecord(callback) {
+export function pauseRecord(id, callback) {
     let bridge = new WebOSServiceBridge();
     bridge.onservicecallback = (msg) => {
         msg = JSON.parse(msg);
@@ -109,14 +166,19 @@ export function pauseRecord(callback) {
         
         if(callback) callback(msg.result);
     }
-    bridge.call(getServiceURL("infomedia", "record/pause"), "{}");
+        
+    let query = {
+        recorderId: id
+    };
+
+    bridge.call(getServiceURL("infomedia", "record/pause"), JSON.stringify(query));
 }
 
 /**
  * 녹음 재개
  * @param {*} callback 녹음 재개 결과를 처리할 콜백 함수
  */
-export function resumeRecord(callback) {
+export function resumeRecord(id, callback) {
     let bridge = new WebOSServiceBridge();
     bridge.onservicecallback = (msg) => {
         msg = JSON.parse(msg);
@@ -127,14 +189,19 @@ export function resumeRecord(callback) {
         
         if(callback) callback(msg.result);
     }
-    bridge.call(getServiceURL("infomedia", "record/resume"), "{}");
+        
+    let query = {
+        recorderId: id
+    };
+
+    bridge.call(getServiceURL("infomedia", "record/resume"), JSON.stringify(query));
 }
 
 /**
  * 녹음 중단
  * @param {*} callback 녹음 중단 결과를 처리할 콜백 함수
  */
-export function stopRecord(callback) {
+export function stopRecord(id, callback) {
     let bridge = new WebOSServiceBridge();
     bridge.onservicecallback = (msg) => {
         msg = JSON.parse(msg);
@@ -145,6 +212,11 @@ export function stopRecord(callback) {
         
         if(callback) callback(msg.result);
     }
-    bridge.call(getServiceURL("infomedia", "record/stop"), "{}");
+    
+    let query = {
+        recorderId: id
+    };
+
+    bridge.call(getServiceURL("infomedia", "record/stop"), JSON.stringify(query));
 }
 

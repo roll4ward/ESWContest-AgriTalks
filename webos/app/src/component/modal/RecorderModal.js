@@ -2,7 +2,9 @@ import React, { useState, useEffect } from "react";
 import { Button, Modal } from "react-bootstrap";
 import styled, { keyframes } from "styled-components";
 import { FaMicrophone, FaStop } from "react-icons/fa";
-export default function RecorderModal({ show, handleClose }) {
+import { startRecord, pauseRecord, resumeRecord, stopRecord } from "../../api/mediaService";
+export default function RecorderModal({ show, handleClose, recorderId }) {
+  const [rId, setRId] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordedAudio, setRecordedAudio] = useState(null);
   const [seconds, setSeconds] = useState(0);
@@ -18,26 +20,41 @@ export default function RecorderModal({ show, handleClose }) {
     return () => clearInterval(interval);
   }, [isRecording, seconds]);
   useEffect(() => {
+    // 래코드 id 저장
+    if(recorderId) setRId(recorderId);
     // 모달이 열릴 때마다 상태 초기화
     if (show) {
       setIsRecording(false);
       setRecordedAudio(null);
       setSeconds(0);
     }
-  }, [show]);
+  }, [show, recorderId]);
   const handleToggleRecording = () => {
     if (isRecording) {
       setIsRecording(false);
-      setRecordedAudio("dummy-audio-file");
+      stopRecord(rId, (result)=> {
+        if(result){
+          setRecordedAudio(result);
+        }else{
+          console.log("녹음 종료 실패");
+        }
+      });
+
     } else {
       setSeconds(0);
-      setRecordedAudio(null);
+      startRecord(rId, (result)=> {
+        if(!result){
+          console.log("녹음 시작 실패");
+        }
+      });
       setIsRecording(true);
     }
   };
   const handleSendAudio = () => {
     if (recordedAudio) {
-      handleClose();
+      handleClose(recordedAudio);
+    }else{
+      handleClose(null);
     }
   };
   return (

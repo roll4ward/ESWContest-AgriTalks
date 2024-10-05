@@ -23,16 +23,12 @@ export function askToAi(prompt, image_path, callback) {
   
       if(callback) callback(msg.result);
   }
-  
-  console.log(image_path);
 
   let query = {
     prompt: prompt
   };
 
   if(image_path) query.image_path = image_path
-  
-  console.log(query);
 
   bridge.call(getServiceURL("aitalk", "ask"), JSON.stringify(query));
 }
@@ -55,7 +51,6 @@ export function askToAiStream(prompt, image_path, callback) {
       if(callback) callback(msg.result);
   }
 
-  console.log(image_path);
   let query = {
     prompt: prompt,
     subscribe: true
@@ -63,7 +58,6 @@ export function askToAiStream(prompt, image_path, callback) {
 
   if(image_path) query.image_path = image_path
   
-  console.log(query);
   bridge.call(getServiceURL("aitalk", "ask_stream"), JSON.stringify(query));
 }
 
@@ -105,13 +99,11 @@ export function STT(text, callback) {
           return;
       }
 
-      if(callback) callback();
+      if(callback) callback(msg.result.voice_prompt);
   }
-
   let query = {
     voice_path: text
   };
-
   bridge.call(getServiceURL("aitalk", "stt"), JSON.stringify(query));
 }
 

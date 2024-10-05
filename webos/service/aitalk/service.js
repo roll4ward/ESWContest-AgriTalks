@@ -141,6 +141,14 @@ aitalk_service.register("stt", async function(msg) {
   msg.respond(new aitalk_response(
     {voice_prompt: voice_prompt}
   ))
+
+  // 다 사용한 파일 삭제 추가 -geonha
+  try {
+    fs.unlinkSync(msg.payload.voice_path);
+    console.log(`File ${msg.payload.voice_path} has been deleted.`);
+  } catch (err) {
+    console.error(`Error deleting file ${msg.payload.voice_path}: ${err}`);
+  }
 });
 
 aitalk_service.register("tts", async function (msg) {
@@ -158,7 +166,7 @@ aitalk_service.register("tts", async function (msg) {
     voice: config.openai_tts.voice,
     input: msg.payload.text,
     response_format: "pcm",
-    speed:1.2
+    speed: 1.2
   });
 
   console.log("audio file will be stored to " + config.store_path);

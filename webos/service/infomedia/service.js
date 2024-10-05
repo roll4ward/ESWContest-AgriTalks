@@ -2,8 +2,6 @@ const pkg_info = require("./package.json");
 const Service = require('webos-service');
 
 const service = new Service(pkg_info.name);
-let cameraHandle = null;
-let recorderId = null;
 
 // 저장된 이미지 경로 리스트 전체 쿼리
 service.register('image/readAll', function(message) {
@@ -23,9 +21,8 @@ service.register('image/readAll', function(message) {
 });
 
 // 카메라는 두번 등록되면 안됨 따라서 서비스에서 한번 호출하고 handle을 계속 global하게 가지고있게 하기 위함
-function initCamera(){
+service.register('camera/init', function(message) {
     service.call('luna://com.webos.service.camera2/getCameraList', {}, (Cresponse) => {
-        console.log("initCamera 실행");
         if (Cresponse.payload.returnValue) {
             if (Cresponse.payload.deviceList.length > 0){
                 const Hquery = coap.request({
@@ -47,34 +44,32 @@ function initCamera(){
                             }
                         });
                         service.call('luna://com.webos.service.camera2/setFormat', Fquery, (Fresponse) => {
-                            console.log(Fresponse);
                             if (Fresponse.payload.returnValue) {
-                                console.log("camera Setting Success");
+                                message.respond({ returnValue: true, result: cameraHandle });
                             }else{
-                                console.log("camera Setting Fail");
+                                message.respond({ returnValue: false, result: "camera Setting Fail" });
                             }
                         });
                     }else{
-                        console.log("there is no camera1");
+                        message.respond({ returnValue: false, result: "there is no camera1" });
                     }
                 });
             }else{
-                console.log("there is no camera2");
+                message.respond({ returnValue: false, result: "there is no camera2" });
             }
         }else{
-            console.log("fail init camera");
+            message.respond({ returnValue: false, result: "fail init camera" });
         }
     });
-}
-initCamera();
+});
 
 service.register('camera/startPreview', function(message) {
-    if (!cameraHandle) {
-        return message.respond({ returnValue: false, errorText: "Camera not initialized" });
+    if (!message.payload.cameraHandle) {
+        return message.respond({ returnValue: false, result: "cameraHandle required" });
     }
 
     const query = {
-        handle: cameraHandle,
+        handle: message.payload.cameraHandle,
         params: {
             type:"sharedmemory",
             "source":"0"
@@ -93,12 +88,12 @@ service.register('camera/startPreview', function(message) {
 
 // 카메라 미리보기 종료 서비스
 service.register('camera/stopPreview', function(message) {
-    if (!cameraHandle) {
-        return message.respond({ returnValue: false, result: "Preview not started" });
+    if (!message.payload.cameraHandle) {
+        return message.respond({ returnValue: false, result: "cameraHandle required" });
     }
 
     const query = {
-        handle: cameraHandle
+        handle: message.payload.cameraHandle
     };
 
     service.call('luna://com.webos.service.camera2/stopPreview', query, (response) => {
@@ -112,8 +107,8 @@ service.register('camera/stopPreview', function(message) {
 
 // 정지영상 촬영 및 저장 서비스
 service.register('camera/captureImage', function(message) {
-    if (!cameraHandle) {
-        return message.respond({ returnValue: false, result: "Camera not initialized" });
+    if (!message.payload.cameraHandle) {
+        return message.respond({ returnValue: false, result: "cameraHandle required" });
     }
     const filepath = '/media/multimedia/images/';
 
@@ -138,12 +133,13 @@ service.register('camera/captureImage', function(message) {
 });
 
 // record 객체 초기화 함수
-function initRecord(){
+service.register('record/init', function(message) {
+    
     service.call('luna://com.webos.service.audio/listSupportedDevices', {}, (response) => {
         if (response.payload.returnValue) {
             service.call('luna://com.webos.service.mediarecorder/open', {audio: true}, (response) => {
                 if (response.payload.returnValue) {
-                    recorderId = response.payload.recorderId;
+                    const recorderId = response.payload.recorderId;
                     console.log(recorderId);
 
                     const fomat = {
@@ -154,7 +150,6 @@ function initRecord(){
                         channelCount:2
                     }
                     service.call('luna://com.webos.service.mediarecorder/setAudioFormat', fomat, (response) => {
-                        console.log(response);
                         if (response.payload.returnValue) {
                             console.log("Setting format success");
                         }
@@ -165,7 +160,6 @@ function initRecord(){
                         path : "/media/internal/"
                     }
                     service.call('luna://com.webos.service.mediarecorder/setOutputFile', output, (response) => {
-                        console.log(response);
                         if (response.payload.returnValue) {
                             console.log("Setting output path success");
                         }
@@ -176,11 +170,11 @@ function initRecord(){
                         format:"M4A"
                     }
                     service.call('luna://com.webos.service.mediarecorder/setOutputFormat', outputFomat, (response) => {
-                        console.log(response);
                         if (response.payload.returnValue) {
                             console.log("Setting format M4A success");
                         }
                     });
+                    message.respond({ returnValue: true, result: recorderId });
                 }
             });
         }
@@ -188,17 +182,15 @@ function initRecord(){
             console.log("Does not support audio input.")
         }
     });
-}
-
-initRecord();
+});
 
 // 녹음 시작 서비스
 service.register('record/start', function(message) {
-    if (!recorderId) {
-        return message.respond({ returnValue: false, result: "Recorder not initialized" });
+    if (!message.payload.recorderId) {
+        return message.respond({ returnValue: false, result: "recorderId required" });
     }
 
-    service.call('luna://com.webos.service.mediarecorder/start', {recorderId: recorderId}, (response) => {
+    service.call('luna://com.webos.service.mediarecorder/start', {recorderId: message.payload.recorderId}, (response) => {
         if (response.payload.returnValue) {
             message.respond({ returnValue: true, result: "Start recording..." });
         } else {
@@ -209,11 +201,11 @@ service.register('record/start', function(message) {
 
 // 녹음 종료 서비스
 service.register('record/stop', function(message) {
-    if (!recorderId) {
-        return message.respond({ returnValue: false, result: "Recorder not initialized" });
+    if (!message.payload.recorderId) {
+        return message.respond({ returnValue: false, result: "recorderId required" });
     }
 
-    service.call('luna://com.webos.service.mediarecorder/stop', {recorderId: recorderId}, (response) => {
+    service.call('luna://com.webos.service.mediarecorder/stop', {recorderId: message.payload.recorderId}, (response) => {
         if (response.payload.returnValue) {
             message.respond({ returnValue: true, result: response.payload.path });
         } else {
@@ -224,11 +216,11 @@ service.register('record/stop', function(message) {
 
 // 녹음 중지 서비스
 service.register('record/pause', function(message) {
-    if (!recorderId) {
-        return message.respond({ returnValue: false, result: "Recorder not initialized" });
+    if (!message.payload.recorderId) {
+        return message.respond({ returnValue: false, result: "recorderId required" });
     }
 
-    service.call('luna://com.webos.service.mediarecorder/pause', {recorderId: recorderId}, (response) => {
+    service.call('luna://com.webos.service.mediarecorder/pause', {recorderId: message.payload.recorderId}, (response) => {
         if (response.payload.returnValue) {
             message.respond({ returnValue: true, result: "Stop recording" });
         } else {
@@ -239,11 +231,11 @@ service.register('record/pause', function(message) {
 
 // 녹음 재개 서비스
 service.register('record/resume', function(message) {
-    if (!recorderId) {
-        return message.respond({ returnValue: false, result: "Recorder not initialized" });
+    if (!message.payload.recorderId) {
+        return message.respond({ returnValue: false, result: "recorderId required" });
     }
 
-    service.call('luna://com.webos.service.mediarecorder/resume', {recorderId: recorderId}, (response) => {
+    service.call('luna://com.webos.service.mediarecorder/resume', {recorderId: message.payload.recorderId}, (response) => {
         if (response.payload.returnValue) {
             message.respond({ returnValue: true, result: "Restart recording" });
         } else {
@@ -254,11 +246,11 @@ service.register('record/resume', function(message) {
 
 // 녹음 중단 서비스
 service.register('record/stop', function(message) {
-    if (!recorderId) {
-        return message.respond({ returnValue: false, result: "Recorder not initialized" });
+    if (!message.payload.recorderId) {
+        return message.respond({ returnValue: false, result: "recorderId required" });
     }
 
-    service.call('luna://com.webos.service.mediarecorder/stop', {recorderId: recorderId}, (response) => {
+    service.call('luna://com.webos.service.mediarecorder/stop', {recorderId: message.payload.recorderId}, (response) => {
         if (response.payload.returnValue) {
             message.respond({ returnValue: true, result: "Exit record" });
         } else {

@@ -4,8 +4,8 @@ import MessageBox from "../component/MessageBox";
 import { Button, Form, InputGroup, Card } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import styled from "styled-components";
-import { askToAi, askToAiStream, TTS, speak, createConversation, readAllConversation, deleteAllConversation } from "../api/aiService";
-import { readAllImages, startCameraPreview, stopCameraPreview, captureImage } from "../api/mediaService";
+import { askToAi, askToAiStream, TTS, STT, speak, createConversation, readAllConversation, deleteAllConversation } from "../api/aiService";
+import { readAllImages, startCameraPreview, stopCameraPreview, captureImage, initRecord,  initCamera} from "../api/mediaService";
 import RecordModal from "../component/modal/RecorderModal";
 import { FaMicrophone } from "react-icons/fa"; // 마이크 아이콘 추가
 
@@ -14,6 +14,9 @@ export default function ChatPage() {
   const [prompt, setPrompt] = useState("");
   const [showRecordModal, setShowRecordModal] = useState(false);
   const [images, setImages] = useState([]);
+
+  const [recorderId, setRecorderId] = useState(null);
+  const [cameraHandle, setCameraHandle] = useState(null);
 
   // 태스트를 위한 image path 예시
   // var selectImage = "/media/multimedia/images/tomato2.jpg";
@@ -64,12 +67,19 @@ export default function ChatPage() {
       // 초기 이미지 목록 업데이트 함수
       readAllImages((result)=> {
         if(result){
-          console.log(result)
           setImages(result);
         }else{
           console.log("저장된 이미지 없음");
         }
       });
+
+      if(!cameraHandle){
+        initCamera((result)=> { setCameraHandle(result); });
+      }
+
+      if(!recorderId){
+        initRecord((result)=> { setRecorderId(result); });
+      }
     };
     initializeChat();
   }, []);
@@ -89,7 +99,7 @@ export default function ChatPage() {
 
     // ai의 대답창을 우선 "..."으로 초기화
     setMessages((prevMessages) => [...prevMessages,{type: "ai",text: "..."}]);
-    var aiMessage = { type: "ai", text: "" };
+    let aiMessage = { type: "ai", text: "" };
     
     // 스트림 질문 전송 함수
     askToAiStream(prompt, selectImage, (askResult)=> {
@@ -107,8 +117,36 @@ export default function ChatPage() {
     });
   };
 
-  const handleRecordModalClose = () => {
+  const handleRecordModalClose = (audio) => {
     setShowRecordModal(false);
+    if (audio) {
+      STT(audio, (result) => {
+
+        // 사용자 메시지 저장
+        const newMessages = [...messages, { type: "user", text: result }];
+        setMessages(newMessages);
+        createConversation(result, "user");
+
+        // ai의 대답창을 우선 "..."으로 초기화
+        setMessages((prevMessages) => [...prevMessages,{type: "ai",text: "..."}]);
+        let aiMessage = { type: "ai", text: "" };
+
+        // 스트림 질문 전송 함수
+        askToAiStream(result, selectImage, (askResult)=> {
+          // 스트림의 마지막 토큰이 수신되면 ai의 대답 전문을 저장 및 tts & speak
+          if(!askResult.is_streaming){
+            createConversation(aiMessage.text, "ai");
+            TTS(aiMessage.text, ()=> { speak(); });
+          }else{
+            aiMessage.text = askResult.chunks;
+            setMessages((prevMessages) => {
+              const updatedMessages = prevMessages.slice(0, -1);
+              return([...updatedMessages, aiMessage]);
+            });
+          }
+        });
+      });
+    }
   };
 
   return (
@@ -146,6 +184,7 @@ export default function ChatPage() {
       <RecordModal
         show={showRecordModal}
         handleClose={handleRecordModalClose}
+        recorderId={recorderId} 
       />
     </Container>
   );
