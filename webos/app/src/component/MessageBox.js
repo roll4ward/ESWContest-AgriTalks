@@ -27,13 +27,13 @@ const MsgText = styled.p`
   border-radius: 10px;
   max-width: 60%;
   word-break: break-word;
-  font-size: 1.3rem;
+  font-size: 50px;
   margin-left: ${({ msgType }) => (msgType === "user" ? "0" : "10px")};
   margin-right: ${({ msgType }) => (msgType === "user" ? "10px" : "0")};
 `;
 
 const StyledRobotIcon = styled.img`
-  width: 40px;
-  height: 40px;
+  width: 80px;
+  height: 80px;
   margin-right: 10px;
 `;

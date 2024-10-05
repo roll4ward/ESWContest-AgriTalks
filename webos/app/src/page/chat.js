@@ -163,7 +163,7 @@ export default function ChatPage() {
               placeholder="텍스트를 입력하세요."
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              style={{ height: "50px", fontSize: "1.5rem" }}
+              style={{ height: "80px", fontSize: "50px" }}
             />
             <Button
               style={{ backgroundColor: "#448569", color: "#fff" }}
