@@ -12,6 +12,7 @@
     "all",
     "database.operation",
     "audio.operation",
-    "camera.operation"
+    "camera.operation",
+    "mediarecorder.operation"
   ]
 }

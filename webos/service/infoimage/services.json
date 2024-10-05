@@ -1,9 +1,0 @@
-{
-  "id": "xyz.rollforward.app.infoimage",
-  "description": "A image info service",
-  "services": [
-    {
-      "name": "xyz.rollforward.app.infoimage"
-    }
-  ]
-}

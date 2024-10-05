@@ -21,7 +21,7 @@ export function readAllImages(callback) {
   
       if(callback) callback(msg.result);
   }
-  bridge.call(getServiceURL("infoimage", "image/readAll"), "{}");
+  bridge.call(getServiceURL("infomedia", "image/readAll"), "{}");
 }
 
 /**
@@ -39,7 +39,7 @@ export function startCameraPreview(callback) {
 
         if(callback) callback(msg.result);
     }
-    bridge.call(getServiceURL("infoimage", "camera/startPreview"), "{}");
+    bridge.call(getServiceURL("infomedia", "camera/startPreview"), "{}");
 }
 
 /**
@@ -54,7 +54,7 @@ export function stopCameraPreview() {
             return;
         }
     }
-    bridge.call(getServiceURL("infoimage", "camera/stopPreview"), "{}");
+    bridge.call(getServiceURL("infomedia", "camera/stopPreview"), "{}");
 }
 
 /**
@@ -72,5 +72,5 @@ export function captureImage(callback) {
         
         if(callback) callback(msg.result);
     }
-    bridge.call(getServiceURL("infoimage", "camera/captureImage"), "{}");
+    bridge.call(getServiceURL("infomedia", "camera/captureImage"), "{}");
 }
