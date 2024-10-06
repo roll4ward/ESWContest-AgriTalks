@@ -5,7 +5,7 @@ import { FaMicrophone, FaStop } from "react-icons/fa";
 import { startRecord, pauseRecord, resumeRecord, stopRecord } from "../../api/mediaService";
 export default function RecorderModal({ show, handleClose, recorderId }) {
   const [rId, setRId] = useState(false);
-  const [isRecording, setIsRecording] = useState(true);
+  const [isRecording, setIsRecording] = useState(false);
   const [recordedAudio, setRecordedAudio] = useState(null);
   const [seconds, setSeconds] = useState(0);
   useEffect(() => {
@@ -32,21 +32,21 @@ export default function RecorderModal({ show, handleClose, recorderId }) {
   const handleToggleRecording = () => {
     if (isRecording) {
       setIsRecording(false);
-      // stopRecord(rId, (result)=> {
-      //   if(result){
-      //     setRecordedAudio(result);
-      //   }else{
-      //     console.log("녹음 종료 실패");
-      //   }
-      // });
+      stopRecord(rId, (result)=> {
+        if(result){
+          setRecordedAudio(result);
+        }else{
+          console.log("녹음 종료 실패");
+        }
+      });
 
     } else {
       setSeconds(0);
-      // startRecord(rId, (result)=> {
-      //   if(!result){
-      //     console.log("녹음 시작 실패");
-      //   }
-      // });
+      startRecord(rId, (result)=> {
+        if(!result){
+          console.log("녹음 시작 실패");
+        }
+      });
       setIsRecording(true);
     }
   };
@@ -59,8 +59,7 @@ export default function RecorderModal({ show, handleClose, recorderId }) {
   };
   return (
     <Modal show={show} onHide={handleClose} centered>
-      {/* <Modal.Header closeButton> */}
-      <Modal.Header>
+      <Modal.Header closeButton>
         <Modal.Title>녹음하기</Modal.Title>
       </Modal.Header>
       <Modal.Body>
@@ -82,10 +81,19 @@ export default function RecorderModal({ show, handleClose, recorderId }) {
           onClick={handleToggleRecording}
           recording={isRecording}
         >
-        <FaStop style={{ color: "black" }} />
+          {isRecording ? (
+            <FaStop style={{ color: "black" }} />
+          ) : (
+            <FaMicrophone style={{ color: "red" }} />
+          )}
         </RecordingButton>
-        <SendButton variant="success" onClick={handleSendAudio} disabled={!recordedAudio}> 전송 </SendButton>
-        <ExitButton variant="secondary" onClick={handleSendAudio} disabled={!recordedAudio}> 취소 </ExitButton>
+        <SendButton
+          variant="success"
+          onClick={handleSendAudio}
+          disabled={!recordedAudio}
+        >
+          전송
+        </SendButton>
       </Modal.Body>
     </Modal>
   );
@@ -139,19 +147,9 @@ const RecordingButton = styled.button`
   cursor: pointer;
   margin: 20px auto;
 `;
-
 const SendButton = styled(Button)`
-  width: 47%;
+  width: 100%;
   margin-top: 20px;
-  margin-right: 10px;
-  background-color: ${({ disabled }) => (disabled ? "#ccc" : "#448569")};
-  cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
-`;
-
-const ExitButton = styled(Button)`
-  width: 47%;
-  margin-top: 20px;
-  margin-left: 10px;
   background-color: ${({ disabled }) => (disabled ? "#ccc" : "#448569")};
   cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
 `;
