@@ -12,7 +12,7 @@ export default function DeviceDetailPage() {
   const { deviceID } = useParams();
   console.log("Device Detail : ", deviceID);
 
-  useEffect(()=>{
+  useEffect(() => {
     readDevicewithID(deviceID, (result) => {
       setIsActuator(result.type === "actuator");
     });
@@ -21,7 +21,7 @@ export default function DeviceDetailPage() {
   return (
     <Container>
       <DeviceDetail deviceID={deviceID} />
-      { isActuator ? <ControlPannel>ddd</ControlPannel> : null }
+      {isActuator ? <ControlPannel>ddd</ControlPannel> : null}
       <GraphContainer />
     </Container>
   );
@@ -30,7 +30,6 @@ export default function DeviceDetailPage() {
 const Container = styled.div`
   display: flex;
   width: 100%;
-  height: 100%;
   flex-direction: column;
   padding: 0px 60px;
 `;

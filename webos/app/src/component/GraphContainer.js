@@ -30,12 +30,29 @@ export default function GraphContainer() {
     plugins: {
       legend: {
         position: "top",
+        labels: {
+          font: {
+            size: 30,
+          },
+        },
       },
     },
     scales: {
+      x: {
+        ticks: {
+          font: {
+            size: 32,
+          },
+        },
+      },
       y: {
         max: 100, // Y축 최대값 설정
         min: 0, // Y축 최소값 설정
+        ticks: {
+          font: {
+            size: 20,
+          },
+        },
       },
     },
   };
@@ -48,12 +65,11 @@ export default function GraphContainer() {
 }
 
 const GraphWrap = styled.div`
-  height: 65vh;
+  height: 600px;
   background-color: #f5f5f5;
   border-radius: 20px;
   display: flex;
   align-items: center;
-  flex-direction: column;
   justify-content: center;
   margin-top: 20px;
 `;
