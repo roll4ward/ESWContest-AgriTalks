@@ -21,39 +21,6 @@ export default function ChatPage() {
   // 태스트를 위한 image path 예시
   // var selectImage = "/media/multimedia/images/tomato2.jpg";
   var selectImage = null
-//  만약 이미지 load를 성공하면 다음과 같이 데이터가 들어옴 (이미지가 들어있어야함)
-//   [
-//     {
-//         "width": 612,
-//         "last_modified_date": "Sat Oct  5 02:48:17 2024 GMT",
-//         "dirty": false,
-//         "file_path": "file:///media/multimedia/images/tomato.jpg",
-//         "height": 547,
-//         "file_size": 32502,
-//         "title": "tomato.jpg",
-//         "uri": "storage:///media/multimedia/media/multimedia/images/tomato.jpg"
-//     },
-//     {
-//         "width": 612,
-//         "last_modified_date": "Sat Oct  5 03:28:39 2024 GMT",
-//         "dirty": false,
-//         "file_path": "file:///media/multimedia/images/tomato1.jpg",
-//         "height": 547,
-//         "file_size": 32502,
-//         "title": "tomato1.jpg",
-//         "uri": "storage:///media/multimedia/media/multimedia/images/tomato1.jpg"
-//     },
-//     {
-//         "width": 612,
-//         "last_modified_date": "Sat Oct  5 03:34:26 2024 GMT",
-//         "dirty": false,
-//         "file_path": "file:///media/multimedia/images/tomato2.jpg",
-//         "height": 547,
-//         "file_size": 32502,
-//         "title": "tomato2.jpg",
-//         "uri": "storage:///media/multimedia/media/multimedia/images/tomato2.jpg"
-//     }
-// ]
   useEffect(() => {
     const initializeChat = () => {
       readAllConversation((result)=> {
@@ -73,12 +40,24 @@ export default function ChatPage() {
         }
       });
 
-      if(!cameraHandle){
-        initCamera((result)=> { setCameraHandle(result); });
+      const storedCameraHandle = localStorage.getItem('cameraHandle');
+      if(storedCameraHandle){
+        setCameraHandle(storedCameraHandle);
+      }else{
+        initCamera((result)=> {
+          setCameraHandle(result); 
+          localStorage.setItem('cameraHandle', result);
+        });
       }
 
-      if(!recorderId){
-        initRecord((result)=> { setRecorderId(result); });
+      const storedRecorderId = localStorage.getItem('recorderId');
+      if (storedRecorderId) {
+        setRecorderId(storedRecorderId);
+      } else {
+        initRecord((result)=> {
+          setRecorderId(result); 
+          localStorage.setItem('recorderId', result);
+        });
       }
     };
     initializeChat();

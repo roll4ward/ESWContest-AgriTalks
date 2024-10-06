@@ -65,6 +65,8 @@ const Container = styled.div`
 const AreaName = styled.div`
   font-size: 64px;
   font-weight: 600;
+  text-overflow: ellipsis;
+  overflox: hidden;
 `;
 
 const InputText = styled.div`
@@ -73,6 +75,7 @@ const InputText = styled.div`
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
+  height: 50px;
 `;
 
 const DeviceWrap = styled.div`
