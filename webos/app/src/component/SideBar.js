@@ -3,8 +3,8 @@ import arrowRight from "../assets/icon/arrowLeft.png";
 import { useNavigate } from "react-router-dom";
 import home from "./../assets/icon/home.png";
 import chat from "./../assets/icon/chat.png";
-import control from "./../assets/icon/control.png";
-import setting from "./../assets/icon/setting.png";
+import image from "./../assets/icon/image.png";
+import cameraIcon from "./../assets/icon/cameraIcon.svg";
 
 export const SideBar = () => {
   const navigate = useNavigate();
@@ -30,21 +30,21 @@ export const SideBar = () => {
           }}
         />
         <img
-          src={control}
+          src={cameraIcon}
           width={70}
-          height={60}
+          height={70}
           alt=""
           onClick={() => {
-            navigate("/devices");
+            navigate("/camera");
           }}
         />
         <img
-          src={setting}
+          src={image}
           width={70}
           height={60}
           alt=""
           onClick={() => {
-            navigate("setting");
+            navigate("gallery");
           }}
         />
       </MeunContainer>
