@@ -7,7 +7,6 @@ import ChatPage from "./page/chat";
 import { Camera } from "./page/Camera";
 import { Home } from "./page/Home";
 import DeviceDetailPage from "./page/DeviceDetailPage";
-import DeviceDetailPage from "./page/DeviceDetailPage";
 import { DeviceOverView } from "./page/DeviceOverView";
 import { SideBar } from "./component/SideBar";
 

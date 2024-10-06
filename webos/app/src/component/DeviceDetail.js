@@ -76,8 +76,8 @@ const MainWrap = styled.div`
 const DeviceInfoContainer = styled.div`
   display: flex;
   align-items: center;
+  width: 65%;
   flex-direction: column;
-  width: 760px;
   padding: 40px;
   white-space: nowrap;
 `;
@@ -99,11 +99,12 @@ const DeviceInfo = styled.div`
   text-overflow: ellipsis; /* 텍스트가 너무 길면 말줄임표로 표시 */
   max-height: 200px;
   overflow-y: auto;
+  justify-content: center;
 `;
 
 const ValueConiner = styled.div`
-  width: 700px;
-  padding: 40px;
+  flex-grow: 1;
+  padding: 40px 10px;
   background-color: #f5f5f5;
   border-radius: 20px;
   display: flex;
