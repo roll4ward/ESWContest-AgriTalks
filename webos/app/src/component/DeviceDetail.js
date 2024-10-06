@@ -62,7 +62,7 @@ export default function DeviceDetail({ deviceID }) {
 
         <StyledValue>
           {valueInfo.value}
-          {valueInfo.value ? "" : deviceInfo.unit}
+          {valueInfo.value === "X" ? "" : deviceInfo.unit}
         </StyledValue>
       </ValueConiner>
     </MainWrap>
