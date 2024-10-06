@@ -5,11 +5,15 @@ import { readLatestValue } from "../../api/coapService";
 import edit from "../../assets/icon/edit.svg"
 import trash from "../../assets/icon/trash.svg"
 import arrowRight from "../../assets/icon/arrowRight.png";
+import { CheckDelete } from "../modal/CheckDelete";
+import { DeviceInfoInput } from "../modal/DeviceInfoInput";
 
-export const DeviceValueBox = ({ device }) => {
+export const DeviceValueBox = ({ device, onEdit, onDelete }) => {
   const navigate = useNavigate();
-  const { _id, name, unit } = device;
+  const { _id, name, unit, areaId, desc } = device;
   const [value, setValue] = useState("X");
+  const [showDelete, setShowDelete] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
 
   useEffect(()=> {
     readLatestValue(_id, (result) => {
@@ -20,6 +24,14 @@ export const DeviceValueBox = ({ device }) => {
   console.log("devices : ", device);
   return (
     <Container>
+      <CheckDelete show = {showDelete}
+                   setShow={setShowDelete}
+                   onDelete={()=>{onDelete(_id)}} />
+      <DeviceInfoInput show={showEdit} onSubmit={onEdit}
+                     setShow={setShowEdit}
+                     title={"기기 수정"}
+                     deviceName={name} deviceDescription={desc}
+                     deviceArea={areaId}/>
       <RowWrapper>
         <Title>{name}</Title>
         <img src={arrowRight} width={80} height={80} onClick={() => {navigate(`/detail/${_id}`)}}/>
@@ -28,8 +40,8 @@ export const DeviceValueBox = ({ device }) => {
       <RowWrapper>
         <Value>{value}</Value>
         <ButtonWrapper>
-          <img src={edit} width={60} height={60} onClick={()=>{console.log("edit")}}/>
-          <img src={trash} width={60} height={60} onClick={()=>{console.log("delete")}}/>
+          <img src={edit} width={60} height={60} onClick={()=>{setShowEdit(true)}}/>
+          <img src={trash} width={60} height={60} onClick={()=>{setShowDelete(true)}}/>
         </ButtonWrapper>
       </RowWrapper>
     </Container>

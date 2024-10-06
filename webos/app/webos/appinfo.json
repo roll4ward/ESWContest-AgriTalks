@@ -11,6 +11,8 @@
     "activity.operation",
     "all",
     "database.operation",
-    "audio.operation"
+    "audio.operation",
+    "camera.operation",
+    "mediarecorder.operation"
   ]
 }
