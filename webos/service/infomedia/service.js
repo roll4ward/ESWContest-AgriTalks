@@ -25,16 +25,17 @@ service.register('camera/init', function(message) {
     service.call('luna://com.webos.service.camera2/getCameraList', {}, (Cresponse) => {
         if (Cresponse.payload.returnValue) {
             if (Cresponse.payload.deviceList.length > 0){
-                const Hquery = coap.request({
+                const Hquery = {
                     id: Cresponse.payload.deviceList[0].id,
                     appId: "xyz.rollforward.app",
                     mode: 'primary'
-                });
+                };
 
                 service.call('luna://com.webos.service.camera2/open', Hquery, (Hresponse) => {
+                    console.log(Hresponse);
                     if (Hresponse.payload.returnValue && Hresponse.payload.deviceList.length > 0) {
                         cameraHandle = Hresponse.payload.handle;
-                        const Fquery = coap.request({
+                        const Fquery = {
                             handle: cameraHandle,
                             params: {
                                 width: 1920,
@@ -42,7 +43,7 @@ service.register('camera/init', function(message) {
                                 format: "JPEG",
                                 fps: 30
                             }
-                        });
+                        };
                         service.call('luna://com.webos.service.camera2/setFormat', Fquery, (Fresponse) => {
                             if (Fresponse.payload.returnValue) {
                                 message.respond({ returnValue: true, result: cameraHandle });
@@ -110,10 +111,10 @@ service.register('camera/captureImage', function(message) {
     if (!message.payload.cameraHandle) {
         return message.respond({ returnValue: false, result: "cameraHandle required" });
     }
-    const filepath = '/media/multimedia/images/';
+    const filepath = '/tmp/';
 
     const query = {
-        handle: cameraHandle,
+        handle: message.payload.cameraHandle,
         params: {
             width: 1920,
             height: 1080,
@@ -124,6 +125,7 @@ service.register('camera/captureImage', function(message) {
     };
 
     service.call('luna://com.webos.service.camera2/startCapture', query, (response) => {
+        console.log(response);
         if (response.payload.returnValue) {
             message.respond({ returnValue: true, result: filepath });
         } else {

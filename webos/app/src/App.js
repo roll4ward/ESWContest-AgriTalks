@@ -19,8 +19,7 @@ function App() {
           flexDirection: "row",
           height: "100vh",
           width: "1920px",
-          paddingTop: 45,
-          paddingLeft: 50,
+          padding: "25px"
         }}
       >
         {/* 사이드 메뉴 */}
