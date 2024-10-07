@@ -1,0 +1,31 @@
+{
+    "uuid" : {
+        "COMMISSION_SERVICE": "9fff0001-89f6-4f1b-9e5d-0d4648d944c9",
+        "COMMISSION_NETWORK_KEY": "9fff0003-89f6-4f1b-9e5d-0d4648d944c9",
+        "COMMISSION_COMMAND": "9fff0005-89f6-4f1b-9e5d-0d4648d944c9",
+        "COMMISSION_STATUS": "9fff0006-89f6-4f1b-9e5d-0d4648d944c9",
+        "COMMISSION_ROLE": "9fff0007-89f6-4f1b-9e5d-0d4648d944c9",
+        "COMMISSION_ML_ADDR": "9fff0008-89f6-4f1b-9e5d-0d4648d944c9"
+    },
+    
+    "command" : {
+        "JOIN_NETWORK" : 2,
+        "RESET_DATASET" : 3,
+        "DISABLE_BLE" : 4
+    },
+    
+    "status" : {
+        "WAITING" : 0,
+        "PROGRESSING" : 1,
+        "FAILED" : 2,
+        "DONE" : 3
+    },
+
+    "thread_role" : {
+        "DISABLED" : 0,
+        "DETACHED" : 1,
+        "CHILD" : 2,
+        "ROUTER" : 3,
+        "LEADER" : 4
+    }
+}
