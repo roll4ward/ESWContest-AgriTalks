@@ -37,4 +37,47 @@ module.exports = (service) => {
 
         message.respond(new Respond(true, "Stopped scanning successfully"));
     });
+
+    service.register("newDevice/connect", (message) => {
+        if (!message.payload.address) {
+            message.respond(new Respond(false, "Address is required."));
+            return;
+        }
+
+        service.call(
+            "luna://com.webos.service.bluetooth2/gatt/connect",
+            { address : message.payload.address },
+            (response) => {
+                console.log(response);
+                if (!response.payload.returnValue) {
+                    message.respond(new Respond(false, response.payload.errorText));
+                    return;
+                }
+                
+                const clientId = response.payload.clientId;
+                callDiscoveryService(service, message, response.payload.address, clientId);
+
+            }
+        );
+    });
+}
+
+function callDiscoveryService(service, message, address, clientId) {
+    service.call(
+        "luna://com.webos.service.bluetooth2/gatt/discoverServices",
+        { address : address },
+        (response) => {
+            console.log(response);
+            if (!response.payload.returnValue) {
+                callDiscoveryService(service, message, address, clientId);
+                return;
+            }
+            
+            message.respond(new Respond(true, {
+                clientId: clientId,
+                address: response.payload.address
+            }));
+            
+        }
+    );
 }
