@@ -1,3 +1,5 @@
+const { exec } = require("child_process");
+
 const {uuid : UUID, command : COMMAND, status: STATUS, thread_role : ROLE} = require("./ble_info.json");
 let scanSubscription = null;
 
@@ -59,6 +61,62 @@ module.exports = (service) => {
             }
         );
     });
+
+    service.register("newDevice/register", async (message) => {
+        if (!message.payload.clientId) {
+            message.respond(new Respond(false, "ClientId is required."));
+        }
+
+        const clientId = message.payload.clientId;
+
+        let networkkey = await getThreadNetworkkey().then(
+            (key) => hexStringToByteArray(key),
+        ).catch(
+            (error) => {
+                console.error("Networkkey query error ", error);
+                message.respond(new Respond(false, "Can not get Thread Network key"));
+                message.cancel();
+                return;
+            }
+        );
+
+        try {
+            await writeGATTCharacteristic(service, clientId, UUID.COMMISSION_NETWORK_KEY, networkkey);
+            await writeGATTCharacteristic(service, clientId, UUID.COMMISSION_COMMAND, [COMMAND.JOIN_NETWORK]);
+        }
+
+        catch (error) {
+            console.error("GATT Write Error ", error);
+            message.respond(new Respond(false, "Failed to write command"));
+            message.cancel();
+            return;
+        }
+        
+        message.respond(new Respond(true, "Command Write"));
+        // Status = DONE, ROLE > 1
+        // Read ML_ADDR, UNIT, TYPE
+        // infomanage/device/create
+        // "새로운 기기" / "" (이름 / 설명), areaId = null;
+        // Return ID of device
+        // DISABLE_BLE Write
+    });
+
+    service.register("newDevice/initialize", (message) => {
+        if (!(message.payload.deviceId)) {
+            message.respond(new Respond(false, "deviceId is required."));
+            return;
+        }
+        if (!(message.payload.name)) {
+            message.respond(new Respond(false, "name is required."));
+            return;
+        }
+        if (!(message.payload.areaId)) {
+            message.respond(new Respond(false, "areaId is required."));
+            return;
+        }
+
+        // infomanage/device/update
+    });
 }
 
 function callDiscoveryService(service, message, address, clientId, trial) {
@@ -86,4 +144,50 @@ function callDiscoveryService(service, message, address, clientId, trial) {
             
         }
     );
+}
+
+function getThreadNetworkkey() {
+    return new Promise((res, rej)=>{
+        exec("wpanctl get networkkey", (error, stdout, stderr) => {
+            if (error) {
+                console.log(error);
+                rej();
+            }
+    
+            let result = stdout.match(/\[(.*?)\]/)[1];
+            
+            res(result);
+        })
+    });
+}
+
+function hexStringToByteArray(hexString) {
+    const byteArray = [];
+    for (let i = 0; i < hexString.length; i += 2) {
+      const byte = parseInt(hexString.substr(i, 2), 16);
+      byteArray.push(byte);
+    }
+  
+    return byteArray;
+}
+
+function writeGATTCharacteristic(service, clientId, characteristic, value) {
+    return new Promise((res, rej) => {
+        service.call("luna://com.webos.service.bluetooth2/gatt/writeCharacteristicValue", 
+            {
+                clientId: clientId,
+                service: UUID.COMMISSION_SERVICE, 
+                characteristic: characteristic,
+                value: {bytes: value}
+            },    
+            (response) => {
+                if (!response.payload.returnValue) {
+                    console.log("Failed to write gatt ", response);
+                    rej();
+                }
+
+                res();
+            }
+        );
+    });
 }
