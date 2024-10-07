@@ -48,31 +48,37 @@ module.exports = (service) => {
             "luna://com.webos.service.bluetooth2/gatt/connect",
             { address : message.payload.address },
             (response) => {
-                console.log(response);
                 if (!response.payload.returnValue) {
                     message.respond(new Respond(false, response.payload.errorText));
                     return;
                 }
                 
                 const clientId = response.payload.clientId;
-                callDiscoveryService(service, message, response.payload.address, clientId);
+                callDiscoveryService(service, message, response.payload.address, clientId, 0);
 
             }
         );
     });
 }
 
-function callDiscoveryService(service, message, address, clientId) {
+function callDiscoveryService(service, message, address, clientId, trial) {
     service.call(
         "luna://com.webos.service.bluetooth2/gatt/discoverServices",
         { address : address },
         (response) => {
             console.log(response);
             if (!response.payload.returnValue) {
-                callDiscoveryService(service, message, address, clientId);
+                if (++trial < 1000) callDiscoveryService(service, message, address, clientId, trial);
+                else {
+                    message.respond(new Respond(false, {
+                        clientId: clientId,
+                        errorText: response.payload.errorText
+                    }));
+                    console.log(trial);
+                }
                 return;
             }
-            
+            console.log(trial);
             message.respond(new Respond(true, {
                 clientId: clientId,
                 address: response.payload.address
