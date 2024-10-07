@@ -50,15 +50,34 @@ module.exports = (service) => {
         service.call(
             "luna://com.webos.service.bluetooth2/gatt/connect",
             { address : message.payload.address },
-            (response) => {
+            async (response) => {
                 if (!response.payload.returnValue) {
                     message.respond(new Respond(false, response.payload.errorText));
                     return;
                 }
                 
                 const clientId = response.payload.clientId;
-                callDiscoveryService(service, message, response.payload.address, clientId, 0);
+                let trial = 0;
+                while (trial < 1000) {
+                    try{
+                        await callDiscoveryService(service, message.payload.address, clientId);
+                        break;
+                    }
+                    catch (err) {
+                        ++trial;
+                        continue;
+                    }
+                }
+                if (trial >= 1000) {
+                    message.respond(new Respond(false, "Service discover failed"));
+                    return;
+                }
 
+                message.respond(new Respond(true, {
+                    clientId: clientId,
+                    address: message.payload.address
+                }));
+                callDiscoveryService(service, message.payload.address, clientId);
             }
         );
     });
@@ -69,6 +88,10 @@ module.exports = (service) => {
         }
 
         const clientId = message.payload.clientId;
+
+        if (message.payload.address) {
+            await callDiscoveryService(service, message.payload.address, clientId);
+        }
 
         // Get Thread Network key
         let networkkey = await getThreadNetworkkey().then(
@@ -109,7 +132,21 @@ module.exports = (service) => {
         await checkStatus;
 
         message.respond(new Respond(true, "Network Joinning Done"));
+
         // Read ML_ADDR, UNIT, TYPE
+        let deviceInfo = await readGATTCharacteristic(service, clientId, [
+            UUID.COMMISSION_TYPE, UUID.COMMISSION_ML_ADDR, UUID.COMMISSION_UNIT
+        ])
+                                .catch((err)=> {
+                                 console.log("Error while reading device info", err);
+                                 message.respond(new Respond(false, "Failed to read deviceinfo"));
+                                 message.cancel();
+                            });
+
+        message.respond(new Respond(true, deviceInfo));
+
+
+
         // infomanage/device/create
         // "새로운 기기" / "" (이름 / 설명), areaId = null;
         // Return ID of device
@@ -134,31 +171,21 @@ module.exports = (service) => {
     });
 }
 
-function callDiscoveryService(service, message, address, clientId, trial) {
-    service.call(
-        "luna://com.webos.service.bluetooth2/gatt/discoverServices",
-        { address : address },
-        (response) => {
-            console.log(response);
-            if (!response.payload.returnValue) {
-                if (++trial < 1000) callDiscoveryService(service, message, address, clientId, trial);
-                else {
-                    message.respond(new Respond(false, {
-                        clientId: clientId,
-                        errorText: response.payload.errorText
-                    }));
-                    console.log(trial);
+function callDiscoveryService(service, address, clientId) {
+    return new Promise((res, rej) => {
+        service.call(
+            "luna://com.webos.service.bluetooth2/gatt/discoverServices",
+            { address : address },
+            (response) => {
+                console.log(response);
+                if (!response.payload.returnValue) {                
+                    rej();
                 }
-                return;
+
+                res();
             }
-            console.log(trial);
-            message.respond(new Respond(true, {
-                clientId: clientId,
-                address: response.payload.address
-            }));
-            
-        }
-    );
+        );
+    });
 }
 
 function getThreadNetworkkey() {
@@ -207,10 +234,86 @@ function writeGATTCharacteristic(service, clientId, characteristic, value) {
     });
 }
 
+function readGATTCharacteristic(service, clientId, characteristics) {
+    return new Promise((res, rej) => {
+        service.call("luna://com.webos.service.bluetooth2/gatt/readCharacteristicValues", 
+            {
+                clientId: clientId,
+                service: UUID.COMMISSION_SERVICE, 
+                characteristics: characteristics
+            },    
+            (response) => {
+                if (!response.payload.returnValue) {
+                    console.log("Failed to read gatt ", response.payload);
+                    rej();
+                    return;
+                }
+            
+                let result_arr = response.payload.values;
+                let result = {};
+                result_arr = result_arr.map(({characteristic, value}) => ({characteristic: characteristic, value: value.bytes}));
+                result_arr = result_arr.map((ele) => {
+                    switch(ele.characteristic) {
+                        case UUID.COMMISSION_ML_ADDR:
+                            result.ipv6 = byteArrayToIpv6(ele.value);
+                            break;
+                        case UUID.COMMISSION_UNIT:
+                            result.unit = byteArrayToString(ele.value);
+                            break;
+                        case UUID.COMMISSION_TYPE:
+                            result.type = byteArrayToString(ele.value);
+                            break;
+                        case UUID.COMMISSION_STATUS:
+                            result.status = ele.value[0];
+                            break;
+                        case UUID.COMMISSION_ROLE:
+                            result.role = ele.value[0];
+                            break;
+                    }
+                })
+                res(result);
+            }
+        );
+    });
+}
+
+function byteArrayToIpv6(byteArray) {
+    let ipv6 = "";
+    for (let i = 0; i < 16; i += 2) {
+      const hex = (byteArray[i] << 8 | byteArray[i + 1]).toString(16);
+      ipv6 += hex;
+      if (i < 14) {
+        ipv6 += ":";
+      }
+    }
+  
+    return ipv6;
+  }
+
+function byteArrayToString(byteArray) {
+    return new TextDecoder('utf-8').decode(new Uint8Array(byteArray));
+  }
+
 function waitForJoiningNetwork(service, clientId, haltSignal) {
     let subscription;
     return new Promise((res, rej) => {
         let isCommandDone = false, isJoiningDone = false;
+        let status, role;
+
+        readGATTCharacteristic(service, clientId, [
+            UUID.COMMISSION_STATUS, UUID.COMMISSION_ROLE
+        ]).then((data)=>{
+            role = data.role;
+            status = data.status;
+
+            if (role >= 2 && status == 3) {
+                res();
+                return;
+            }
+            
+        }).catch((err) => {
+            rej("Monitoring Failed");
+        })
 
         subscription = service.subscribe("luna://com.webos.service.bluetooth2/gatt/monitorCharacteristics",
             {
