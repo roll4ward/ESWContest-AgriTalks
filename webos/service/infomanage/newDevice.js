@@ -1,4 +1,5 @@
 const { exec } = require("child_process");
+const EventEmitter = require('events');
 
 const {uuid : UUID, command : COMMAND, status: STATUS, thread_role : ROLE} = require("./ble_info.json");
 let scanSubscription = null;
@@ -69,8 +70,9 @@ module.exports = (service) => {
 
         const clientId = message.payload.clientId;
 
+        // Get Thread Network key
         let networkkey = await getThreadNetworkkey().then(
-            (key) => hexStringToByteArray(key),
+            (key) => hexStringToByteArray(key)
         ).catch(
             (error) => {
                 console.error("Networkkey query error ", error);
@@ -80,20 +82,33 @@ module.exports = (service) => {
             }
         );
 
+        let haltSignal = new EventEmitter();
+        let checkStatus = waitForJoiningNetwork(service, clientId, haltSignal)
+            .catch((reason)=>{
+                console.log("Monitoring GATT Error ", reason);
+                message.respond(new Respond(false, "Failed to monitor status"));
+                message.cancel();
+                return;
+            });
+
+        // Write Network key and Join Network Command
         try {
             await writeGATTCharacteristic(service, clientId, UUID.COMMISSION_NETWORK_KEY, networkkey);
             await writeGATTCharacteristic(service, clientId, UUID.COMMISSION_COMMAND, [COMMAND.JOIN_NETWORK]);
         }
-
         catch (error) {
             console.error("GATT Write Error ", error);
             message.respond(new Respond(false, "Failed to write command"));
             message.cancel();
+
+            haltSignal.emit("stop");
             return;
         }
-        
         message.respond(new Respond(true, "Command Write"));
-        // Status = DONE, ROLE > 1
+
+        await checkStatus;
+
+        message.respond(new Respond(true, "Network Joinning Done"));
         // Read ML_ADDR, UNIT, TYPE
         // infomanage/device/create
         // "새로운 기기" / "" (이름 / 설명), areaId = null;
@@ -189,5 +204,61 @@ function writeGATTCharacteristic(service, clientId, characteristic, value) {
                 res();
             }
         );
+    });
+}
+
+function waitForJoiningNetwork(service, clientId, haltSignal) {
+    let subscription;
+    return new Promise((res, rej) => {
+        let isCommandDone = false, isJoiningDone = false;
+
+        subscription = service.subscribe("luna://com.webos.service.bluetooth2/gatt/monitorCharacteristics",
+            {
+               service: UUID.COMMISSION_SERVICE,
+               characteristics : [
+                   UUID.COMMISSION_STATUS,
+                   UUID.COMMISSION_ROLE
+               ],
+               clientId: clientId,
+               subscribe: true
+            });
+
+        subscription.on("response", (response) => {
+            console.log(response);
+            if (!response.payload.returnValue) {
+                console.log("Error while monitoring ", response);
+                subscription.cancel();
+                rej("Monitoring Failed");
+                return;
+            }
+
+            if (!response.payload.changed) return;
+
+            let {characteristic, value} = response.payload.changed;
+            value = value.bytes;
+            console.log(characteristic);
+            console.log(value[0]);
+
+            if ((!isCommandDone) && characteristic == UUID.COMMISSION_STATUS) {
+                isCommandDone = (value[0] == STATUS.DONE);
+                console.log(isCommandDone);
+            }
+
+            if ((!isJoiningDone) && characteristic == UUID.COMMISSION_ROLE) {
+                isJoiningDone = (value[0] >= ROLE.CHILD);
+                console.log(isJoiningDone);
+            }
+
+            if (isCommandDone && isJoiningDone) {
+                subscription.cancel();
+                res();
+                return;
+            }
+        });
+
+        haltSignal.addListener("stop", ()=>{
+            console.log("Monitoring Halted");
+            rej("Monitoring Halted");
+        })
     });
 }
