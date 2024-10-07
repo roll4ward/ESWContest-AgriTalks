@@ -361,6 +361,7 @@ aitalk_service.register('createKind', function (message) {
             _id: { type: 'string' },
             type: { type: 'string' },
             text: { type: 'string' },
+            file_path: { type: 'string' },
             regdate: { type: 'string' }
         },
         required: ['type', 'text', 'regdate']
@@ -398,6 +399,7 @@ aitalk_service.register('create', function(message) {
       _kind: CONVESKIND,
       text: message.payload.text,
       type: message.payload.type,
+      file_path: message.payload.type,
       regdate: new Date().toISOString()
   };
 

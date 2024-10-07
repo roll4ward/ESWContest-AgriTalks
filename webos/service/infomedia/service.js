@@ -22,65 +22,37 @@ service.register('image/readAll', function(message) {
 
 // 카메라는 두번 등록되면 안됨 따라서 서비스에서 한번 호출하고 handle을 계속 global하게 가지고있게 하기 위함
 service.register('camera/init', function(message) {
-    service.call('luna://com.webos.service.camera2/getCameraList', {}, (Cresponse) => {
-        if (Cresponse.payload.returnValue) {
-            if (Cresponse.payload.deviceList.length > 0){
-                const Hquery = {
-                    id: Cresponse.payload.deviceList[0].id,
-                    appId: "xyz.rollforward.app",
-                    mode: 'primary'
-                };
+    const query = {
+        id: "camera1",
+        appId: "xyz.rollforward.app"
+    };
 
-                service.call('luna://com.webos.service.camera2/open', Hquery, (Hresponse) => {
-                    console.log(Hresponse);
-                    if (Hresponse.payload.returnValue && Hresponse.payload.deviceList.length > 0) {
-                        cameraHandle = Hresponse.payload.handle;
-                        const Fquery = {
-                            handle: cameraHandle,
-                            params: {
-                                width: 1920,
-                                height: 1080,
-                                format: "JPEG",
-                                fps: 30
-                            }
-                        };
-                        service.call('luna://com.webos.service.camera2/setFormat', Fquery, (Fresponse) => {
-                            if (Fresponse.payload.returnValue) {
-                                message.respond({ returnValue: true, result: cameraHandle });
-                            }else{
-                                message.respond({ returnValue: false, result: "camera Setting Fail" });
-                            }
-                        });
-                    }else{
-                        message.respond({ returnValue: false, result: "there is no camera1" });
-                    }
-                });
-            }else{
-                message.respond({ returnValue: false, result: "there is no camera2" });
-            }
+    service.call('luna://com.webos.service.camera2/open', query, (response) => {
+        if (response.payload.returnValue) {
+            message.respond({ returnValue: true, result: response.payload.handle });
         }else{
-            message.respond({ returnValue: false, result: "fail init camera" });
+            message.respond({ returnValue: false, result: "there is no camera1" });
         }
     });
 });
 
-service.register('camera/startPreview', function(message) {
+service.register('camera/startCamera', function(message) {
     if (!message.payload.cameraHandle) {
         return message.respond({ returnValue: false, result: "cameraHandle required" });
     }
 
     const query = {
-        handle: message.payload.cameraHandle,
+        handle: Number(message.payload.cameraHandle),
         params: {
-            type:"sharedmemory",
-            "source":"0"
-        },
-        windowId: "_Window_Id_1"
+            type: "sharedmemory",
+            source: "0"
+        }
     };
 
-    service.call('luna://com.webos.service.camera2/startPreview', query, (response) => {
+    service.call('luna://com.webos.service.camera2/startCamera', query, (response) => {
+        console.log(response);
         if (response.payload.returnValue) {
-            message.respond({ returnValue: true, result:{key:response.payload.key, mediaId:response.payload.mediaId} });
+            message.respond({ returnValue: true, result: response.payload.key });
         } else {
             message.respond({ returnValue: false, result: response.payload.errorText });
         }
@@ -88,16 +60,16 @@ service.register('camera/startPreview', function(message) {
 });
 
 // 카메라 미리보기 종료 서비스
-service.register('camera/stopPreview', function(message) {
+service.register('camera/stopCamera', function(message) {
     if (!message.payload.cameraHandle) {
         return message.respond({ returnValue: false, result: "cameraHandle required" });
     }
 
     const query = {
-        handle: message.payload.cameraHandle
+        handle: Number(message.payload.cameraHandle)
     };
 
-    service.call('luna://com.webos.service.camera2/stopPreview', query, (response) => {
+    service.call('luna://com.webos.service.camera2/stopCamera', query, (response) => {
         if (response.payload.returnValue) {
             message.respond({ returnValue: true });
         } else {
@@ -111,10 +83,10 @@ service.register('camera/captureImage', function(message) {
     if (!message.payload.cameraHandle) {
         return message.respond({ returnValue: false, result: "cameraHandle required" });
     }
-    const filepath = '/tmp/';
+    const filepath = '/media/multimedia/';
 
     const query = {
-        handle: message.payload.cameraHandle,
+        handle: Number(message.payload.cameraHandle),
         params: {
             width: 1920,
             height: 1080,
@@ -136,7 +108,6 @@ service.register('camera/captureImage', function(message) {
 
 // record 객체 초기화 함수
 service.register('record/init', function(message) {
-    
     service.call('luna://com.webos.service.audio/listSupportedDevices', {}, (response) => {
         if (response.payload.returnValue) {
             service.call('luna://com.webos.service.mediarecorder/open', {audio: true}, (response) => {

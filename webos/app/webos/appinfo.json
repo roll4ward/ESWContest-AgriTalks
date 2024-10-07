@@ -6,6 +6,9 @@
   "main": "index.html",
   "title": "My Awesome App",
   "icon": "icon.png",
+  "allowVideoCapture": true,
+  "allowAudioCapture": true,
+  "enableWebOSVDA": true,
   "requiredPermissions": [
     "time.query",
     "activity.operation",

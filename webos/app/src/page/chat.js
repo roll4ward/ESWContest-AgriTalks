@@ -5,7 +5,7 @@ import { Button, Form, InputGroup, Card } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import styled from "styled-components";
 import { askToAi, askToAiStream, TTS, STT, speak, createConversation, readAllConversation, deleteAllConversation } from "../api/aiService";
-import { readAllImages, startCameraPreview, stopCameraPreview, captureImage, initRecord,  initCamera} from "../api/mediaService";
+import { readAllImages, initRecord} from "../api/mediaService";
 import RecordModal from "../component/modal/RecorderModal";
 import { FaMicrophone } from "react-icons/fa"; // 마이크 아이콘 추가
 
@@ -14,9 +14,8 @@ export default function ChatPage() {
   const [prompt, setPrompt] = useState("");
   const [showRecordModal, setShowRecordModal] = useState(false);
   const [images, setImages] = useState([]);
-
-  const [recorderId, setRecorderId] = useState(null);
-  const [cameraHandle, setCameraHandle] = useState(null);
+  const [recorderId, setRecorderId] = useState("");
+  
 
   // 태스트를 위한 image path 예시
   // var selectImage = "/media/multimedia/images/tomato2.jpg";
@@ -40,16 +39,6 @@ export default function ChatPage() {
         }
       });
 
-      const storedCameraHandle = localStorage.getItem('cameraHandle');
-      if(storedCameraHandle){
-        setCameraHandle(storedCameraHandle);
-      }else{
-        initCamera((result)=> {
-          setCameraHandle(result); 
-          localStorage.setItem('cameraHandle', result);
-        });
-      }
-
       const storedRecorderId = localStorage.getItem('recorderId');
       if (storedRecorderId) {
         setRecorderId(storedRecorderId);
@@ -59,7 +48,6 @@ export default function ChatPage() {
           localStorage.setItem('recorderId', result);
         });
       }
-
     };
     initializeChat();
   }, []);
