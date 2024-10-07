@@ -72,4 +72,6 @@ const GraphWrap = styled.div`
   align-items: center;
   justify-content: center;
   margin-top: 20px;
+  flex-wrap: wrap;
+  overflow: hidden;
 `;
