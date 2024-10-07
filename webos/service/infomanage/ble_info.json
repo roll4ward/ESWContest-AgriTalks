@@ -5,7 +5,9 @@
         "COMMISSION_COMMAND": "9fff0005-89f6-4f1b-9e5d-0d4648d944c9",
         "COMMISSION_STATUS": "9fff0006-89f6-4f1b-9e5d-0d4648d944c9",
         "COMMISSION_ROLE": "9fff0007-89f6-4f1b-9e5d-0d4648d944c9",
-        "COMMISSION_ML_ADDR": "9fff0008-89f6-4f1b-9e5d-0d4648d944c9"
+        "COMMISSION_ML_ADDR": "9fff0008-89f6-4f1b-9e5d-0d4648d944c9",
+        "COMMISSION_UNIT": "9fff0009-89f6-4f1b-9e5d-0d4648d944c9",
+        "COMMISSION_TYPE": "9fff000a-89f6-4f1b-9e5d-0d4648d944c9"
     },
     
     "command" : {

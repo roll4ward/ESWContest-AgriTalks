@@ -10,7 +10,7 @@ const registerDeviceMethod = (service) => {
                 type: 'object',
                 properties: {
                     _id: { type: 'string' },
-                    snum: { type: 'string' },
+                    subtype: { type: 'string' },
                     name: {type: 'string'},
                     type: { type: 'string' },
                     desc: { type: 'string' },
@@ -19,10 +19,10 @@ const registerDeviceMethod = (service) => {
                     areaId: {type: 'string'}
 
                 },
-                required: ['snum', 'name','type', 'ip', 'unit', 'areaId']
+                required: ['subtype', 'name','type', 'ip', 'unit', 'areaId']
             },
             indexes: [
-                { name: 'snum', props: [{ name: 'snum' }] },
+                { name: 'subtype', props: [{ name: 'subtype' }] },
                 { name: 'name', props: [{ name: 'name' }] },
                 { name: 'ip', props: [{ name: 'ip' }] },
                 { name: 'type', props: [{ name: 'type' }] },
@@ -53,7 +53,7 @@ const registerDeviceMethod = (service) => {
     service.register('device/create', function(message) {
         const dataToStore = {
             _kind: DEVKIND,
-            snum: message.payload.snum,
+            subtype: message.payload.subtype,
             name: message.payload.name,
             type: message.payload.type,
             desc: message.payload.desc,
@@ -62,7 +62,7 @@ const registerDeviceMethod = (service) => {
             areaId: message.payload.areaId
         };
 
-        if (!dataToStore.snum || !dataToStore.name || !dataToStore.type || !dataToStore.ip || !dataToStore.unit || !dataToStore.areaId) {
+        if (!dataToStore.subtype || !dataToStore.name || !dataToStore.type || !dataToStore.ip || !dataToStore.unit || !dataToStore.areaId) {
             return message.respond({ returnValue: false, results: 'All fields are required.' });
         }
 
@@ -86,8 +86,8 @@ const registerDeviceMethod = (service) => {
             query.where.push({ prop: '_id', op: '=', val: message.payload.id });
         }
 
-        if (message.payload.snum) {
-            query.where.push({ prop: 'snum', op: '=', val: message.payload.snum });
+        if (message.payload.subtype) {
+            query.where.push({ prop: 'subtype', op: '=', val: message.payload.subtype });
         }
 
         if (message.payload.name) {
@@ -114,7 +114,7 @@ const registerDeviceMethod = (service) => {
             _kind: DEVKIND
         };
 
-        if (message.payload.snum) updatedItem.snum = message.payload.snum;
+        if (message.payload.subtype) updatedItem.subtype = message.payload.subtype;
         if (message.payload.name) updatedItem.name = message.payload.name;
         if (message.payload.type) updatedItem.type = message.payload.type;
         if (message.payload.desc) updatedItem.desc = message.payload.desc;
