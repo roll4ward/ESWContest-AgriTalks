@@ -2,28 +2,14 @@ import React, { useEffect, useState, useRef } from "react";
 import { Button } from "react-bootstrap";
 import styled from "styled-components";
 import cameraIcon from "../assets/icon/cameraIcon.svg";
-import {startCamera, stopCamera, captureImage, initCamera} from "../api/mediaService";
+import {captureImage, initCamera} from "../api/mediaService";
 
 export const Camera = () => {
-  const [cameraHandle, setCameraHandle] = useState("");
   const [stream, setStream] = useState(null);
   const videoRef = useRef(null);
 
   useEffect(() => {
-    // 기존 카메라 핸들러 확인
-    const storedCameraHandle = localStorage.getItem('cameraHandle');
-    if(storedCameraHandle){
-      localStorage.setItem('cameraHandle', "");
-      setCameraHandle("");
-    }
-
-    // 카메라 미리보기 실행
     startVideoStream();
-
-    initCamera((result)=> {
-      setCameraHandle(result); 
-      localStorage.setItem('cameraHandle', result);
-    });
 
     // 컴포넌트 언마운트 시 스트림 정리
     return () => {
@@ -34,9 +20,11 @@ export const Camera = () => {
   }, []);
 
   const startVideoStream = () => {
+    console.log("startVideoStream");
     navigator.mediaDevices.getUserMedia({video: true, audio: false})
       .then((stream) => {
         setStream(stream);
+        console.log(stream);
         videoRef.current.srcObject = stream;
       })
       .catch((err) => {
@@ -44,8 +32,10 @@ export const Camera = () => {
       });
   };
 
-  const stopVideoStream = () => {
+  const stopVideoStream = (callback) => {
+    console.log("stopVideoStream");
     if (stream) {
+      console.log("스트림이있다.");
       stream.getTracks().forEach(track => track.stop());
       setStream(null);
       videoRef.current.srcObject = null;
@@ -53,23 +43,22 @@ export const Camera = () => {
   };
 
   const capture = () => {
-    if(cameraHandle){
-      console.log("캡쳐실행: ", cameraHandle);
+    // if(cameraHandle){
       stopVideoStream();  // 캡처 전 비디오 스트림 중지
-      startCamera(cameraHandle, (result)=> {
-        console.log(result);
-        console.log("start 카메라 성공1");
-        captureImage(cameraHandle, (result) => {
-          console.log("카메라 캡쳐 결과 경로", result);
-          stopCamera(cameraHandle,() => {
-            startVideoStream();
-          });
-        });
+      // await captureImage(cameraHandle, (result) => {
+      //   console.log("캡쳐실행: ", cameraHandle);
+      // });
+      console.log(stream);
+      initCamera((result)=> {
+        // console.log("loacl없음",result);
+        // setCameraHandle(result); 
+        // localStorage.setItem('cameraHandle', result);
+        startVideoStream();
       });
-      
-    } else {
-      console.log("no camera Handle");
-    }
+      // startVideoStream();
+    // } else {
+    //   console.log("no camera Handle");
+    // }
   };
 
   return (

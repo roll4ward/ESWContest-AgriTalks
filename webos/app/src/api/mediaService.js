@@ -44,75 +44,75 @@ export function initCamera(callback) {
     bridge.call(getServiceURL("infomedia", "camera/init"), "{}");
 }
 
-/**
- * 카메라 미리보기 재생
- * @param { string } handle 카메라 핸들러
- * @param {*} callback 미리보기 결과를 처리할 콜백 함수
- */
-export function startCamera(handle, callback) {
-    let bridge = new WebOSServiceBridge();
-    bridge.onservicecallback = (msg) => {
-        msg = JSON.parse(msg);
-        if(!msg.returnValue) {
-            console.log(`Camera Already Start : ${msg.result}`);
-            if(callback) callback();
-            return;
-        }
-        if(callback) callback(msg.result);
-    }
+// /**
+//  * 카메라 미리보기 재생
+//  * @param { string } handle 카메라 핸들러
+//  * @param {*} callback 미리보기 결과를 처리할 콜백 함수
+//  */
+// export function startCamera(handle, callback) {
+//     let bridge = new WebOSServiceBridge();
+//     bridge.onservicecallback = (msg) => {
+//         msg = JSON.parse(msg);
+//         if(!msg.returnValue) {
+//             console.log(`Camera Already Start : ${msg.result}`);
+//             if(callback) callback();
+//             return;
+//         }
+//         if(callback) callback(msg.result);
+//     }
 
-    let query = {
-        cameraHandle: handle
-    };
+//     let query = {
+//         cameraHandle: handle
+//     };
 
-    bridge.call(getServiceURL("infomedia", "camera/startCamera"), JSON.stringify(query));
-}
+//     bridge.call(getServiceURL("infomedia", "camera/startCamera"), JSON.stringify(query));
+// }
 
-/**
- * 카메라 미리보기 정지 함수
- * @param { string } handle 카메라 핸들러
- */
-export function stopCamera(handle, callback) {
-    let bridge = new WebOSServiceBridge();
-    bridge.onservicecallback = (msg) => {
-        msg = JSON.parse(msg);
-        if(!msg.returnValue) {
-            console.log(`Camera Already Stop : ${msg.result}`);
-            if(callback) callback();
-            return;
-        }
-        if(callback) callback(msg.result);
-    }
+// /**
+//  * 카메라 미리보기 정지 함수
+//  * @param { string } handle 카메라 핸들러
+//  */
+// export function stopCamera(handle, callback) {
+//     let bridge = new WebOSServiceBridge();
+//     bridge.onservicecallback = (msg) => {
+//         msg = JSON.parse(msg);
+//         if(!msg.returnValue) {
+//             console.log(`Camera Already Stop : ${msg.result}`);
+//             if(callback) callback();
+//             return;
+//         }
+//         if(callback) callback(msg.result);
+//     }
 
-    let query = {
-        cameraHandle: handle
-    };
+//     let query = {
+//         cameraHandle: handle
+//     };
 
-    bridge.call(getServiceURL("infomedia", "camera/stopCamera"), JSON.stringify(query));
-}
+//     bridge.call(getServiceURL("infomedia", "camera/stopCamera"), JSON.stringify(query));
+// }
 
-/**
- * 카메라 이미지 캡쳐
- * @param {*} callback 미리보기 결과를 처리할 콜백 함수
- */
-export function captureImage(handle, callback) {
-    let bridge = new WebOSServiceBridge();
-    bridge.onservicecallback = (msg) => {
-        msg = JSON.parse(msg);
-        if(!msg.returnValue) {
-            console.log(`captureImage Service call failed : ${msg.result}`);
-            return;
-        }
-        
-        if(callback) callback(msg.result);
-    }
+// /**
+//  * 카메라 이미지 캡쳐
+//  * @param {*} callback 미리보기 결과를 처리할 콜백 함수
+//  */
+// export function captureImage(handle, callback) {
+//     let bridge = new WebOSServiceBridge();
+//     bridge.onservicecallback = (msg) => {
+//         msg = JSON.parse(msg);
+//         if(!msg.returnValue) {
+//             console.log(`captureImage Service call failed : ${msg.result}`);
+//             return;
+//         }
+//         console.log("캡쳐 종료!!");
+//         if(callback) callback(msg.result);
+//     }
 
-    let query = {
-        cameraHandle: handle
-    };
+//     let query = {
+//         cameraHandle: handle
+//     };
 
-    bridge.call(getServiceURL("infomedia", "camera/captureImage"), JSON.stringify(query));
-}
+//     bridge.call(getServiceURL("infomedia", "camera/captureImage"), JSON.stringify(query));
+// }
 
 /**
  * 녹음기 초기화 * @param {*} callback 녹음 시작 결과를 처리할 콜백 함수

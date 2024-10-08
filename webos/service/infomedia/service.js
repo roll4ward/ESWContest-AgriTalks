@@ -27,84 +27,104 @@ service.register('camera/init', function(message) {
         appId: "xyz.rollforward.app"
     };
 
-    service.call('luna://com.webos.service.camera2/open', query, (response) => {
-        if (response.payload.returnValue) {
-            message.respond({ returnValue: true, result: response.payload.handle });
+    service.call('luna://com.webos.service.camera2/open', query, (Aresponse) => {
+        if (Aresponse.payload.returnValue) {
+            const filepath = '/media/multimedia/';
+            const Bquery = {
+                handle: Aresponse.payload.handle,
+                params: {
+                    width: 1920,
+                    height: 1080,
+                    format: "JPEG",
+                    mode: "MODE_ONESHOT"
+                },
+                path: filepath
+            };
+            
+            service.call('luna://com.webos.service.camera2/startCapture', Bquery, (Bresponse) => {
+                if (Bresponse.payload.returnValue) {
+                    service.call('luna://com.webos.service.camera2/close', {handle: Aresponse.payload.handle}, (Cresponse) => {
+                        message.respond({ returnValue: true, result: filepath });
+                    });
+                } else {
+                    message.respond({ returnValue: false, result: Bresponse.payload.errorText });
+                }
+            });
+            message.respond({ returnValue: true, result: Aresponse.payload.handle });
         }else{
             message.respond({ returnValue: false, result: "there is no camera1" });
         }
     });
 });
 
-service.register('camera/startCamera', function(message) {
-    if (!message.payload.cameraHandle) {
-        return message.respond({ returnValue: false, result: "cameraHandle required" });
-    }
+// service.register('camera/startCamera', function(message) {
+//     if (!message.payload.cameraHandle) {
+//         return message.respond({ returnValue: false, result: "cameraHandle required" });
+//     }
 
-    const query = {
-        handle: Number(message.payload.cameraHandle),
-        params: {
-            type: "sharedmemory",
-            source: "0"
-        }
-    };
+//     const query = {
+//         handle: Number(message.payload.cameraHandle),
+//         params: {
+//             type: "sharedmemory",
+//             source: "0"
+//         }
+//     };
 
-    service.call('luna://com.webos.service.camera2/startCamera', query, (response) => {
-        console.log(response);
-        if (response.payload.returnValue) {
-            message.respond({ returnValue: true, result: response.payload.key });
-        } else {
-            message.respond({ returnValue: false, result: response.payload.errorText });
-        }
-    });
-});
+//     service.call('luna://com.webos.service.camera2/startCamera', query, (response) => {
+//         console.log(response);
+//         if (response.payload.returnValue) {
+//             message.respond({ returnValue: true, result: response.payload.key });
+//         } else {
+//             message.respond({ returnValue: false, result: response.payload.errorText });
+//         }
+//     });
+// });
 
-// 카메라 미리보기 종료 서비스
-service.register('camera/stopCamera', function(message) {
-    if (!message.payload.cameraHandle) {
-        return message.respond({ returnValue: false, result: "cameraHandle required" });
-    }
+// // 카메라 미리보기 종료 서비스
+// service.register('camera/stopCamera', function(message) {
+//     if (!message.payload.cameraHandle) {
+//         return message.respond({ returnValue: false, result: "cameraHandle required" });
+//     }
 
-    const query = {
-        handle: Number(message.payload.cameraHandle)
-    };
+//     const query = {
+//         handle: Number(message.payload.cameraHandle)
+//     };
 
-    service.call('luna://com.webos.service.camera2/stopCamera', query, (response) => {
-        if (response.payload.returnValue) {
-            message.respond({ returnValue: true });
-        } else {
-            message.respond({ returnValue: false, result: response.payload.errorText });
-        }
-    });
-});
+//     service.call('luna://com.webos.service.camera2/stopCamera', query, (response) => {
+//         if (response.payload.returnValue) {
+//             message.respond({ returnValue: true });
+//         } else {
+//             message.respond({ returnValue: false, result: response.payload.errorText });
+//         }
+//     });
+// });
 
-// 정지영상 촬영 및 저장 서비스
-service.register('camera/captureImage', function(message) {
-    if (!message.payload.cameraHandle) {
-        return message.respond({ returnValue: false, result: "cameraHandle required" });
-    }
-    const filepath = '/media/multimedia/';
+// // 정지영상 촬영 및 저장 서비스
+// service.register('camera/captureImage', function(message) {
+//     if (!message.payload.cameraHandle) {
+//         return message.respond({ returnValue: false, result: "cameraHandle required" });
+//     }
+//     const filepath = '/media/multimedia/';
 
-    const query = {
-        handle: Number(message.payload.cameraHandle),
-        params: {
-            width: 1920,
-            height: 1080,
-            format: "JPEG",
-            mode: "MODE_ONESHOT"
-        },
-        path: filepath
-    };
+//     const query = {
+//         handle: Number(message.payload.cameraHandle),
+//         params: {
+//             width: 1920,
+//             height: 1080,
+//             format: "JPEG",
+//             mode: "MODE_ONESHOT"
+//         },
+//         path: filepath
+//     };
 
-    service.call('luna://com.webos.service.camera2/startCapture', query, (response) => {
-        console.log(response);
-        if (response.payload.returnValue) {
-            message.respond({ returnValue: true, result: filepath });
-        } else {
-            message.respond({ returnValue: false, result: response.payload.errorText });
-        }
-    });
-});
+//     service.call('luna://com.webos.service.camera2/startCapture', query, (response) => {
+//         if (response.payload.returnValue) {
+//             message.respond({ returnValue: true, result: filepath });
+//         } else {
+//             message.respond({ returnValue: false, result: response.payload.errorText });
+//         }
+//     });
+// });
 
 // record 객체 초기화 함수
 service.register('record/init', function(message) {
