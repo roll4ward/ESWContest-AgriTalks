@@ -1,0 +1,9 @@
+{
+  "id": "xyz.rollforward.app.infomedia",
+  "description": "A image info service",
+  "services": [
+    {
+      "name": "xyz.rollforward.app.infomedia"
+    }
+  ]
+}

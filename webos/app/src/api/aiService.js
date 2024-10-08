@@ -9,9 +9,10 @@ const getServiceURL = (service, method) => `luna://xyz.rollforward.app.${service
 /**
  * ai에게 질문을 함
  * @param {string} prompt 질문할 text
+ * @param {string} image_path 질문할 이미지 경로
  * @param {*} callback 쿼리한 결과를 처리할 콜백 함수
  */
-export function askToAi(prompt, callback) {
+export function askToAi(prompt, image_path, callback) {
   let bridge = new WebOSServiceBridge();
   bridge.onservicecallback = (msg) => {
       msg = JSON.parse(msg);
@@ -27,15 +28,18 @@ export function askToAi(prompt, callback) {
     prompt: prompt
   };
 
+  if(image_path) query.image_path = image_path
+
   bridge.call(getServiceURL("aitalk", "ask"), JSON.stringify(query));
 }
 
 /**
  * ai에게 스트림으로 질문을 함
  * @param {string} prompt 질문할 text
+ * @param {string} image_path 질문할 이미지 경로
  * @param {*} callback 쿼리한 결과를 처리할 콜백 함수
  */
-export function askToAiStream(prompt, callback) {
+export function askToAiStream(prompt, image_path, callback) {
   let bridge = new WebOSServiceBridge();
   bridge.onservicecallback = (msg) => {
       msg = JSON.parse(msg);
@@ -52,6 +56,8 @@ export function askToAiStream(prompt, callback) {
     subscribe: true
   };
 
+  if(image_path) query.image_path = image_path
+  
   bridge.call(getServiceURL("aitalk", "ask_stream"), JSON.stringify(query));
 }
 
@@ -77,6 +83,28 @@ export function TTS(text, callback) {
   };
 
   bridge.call(getServiceURL("aitalk", "tts"), JSON.stringify(query));
+}
+
+/**
+ * m4a 음성파일을 text로 변환하고 반환
+ * @param {string} prompt 변환 할 음성파일
+ * @param {*} callback 쿼리한 결과를 처리할 콜백 함수
+ */
+export function STT(text, callback) {
+  let bridge = new WebOSServiceBridge();
+  bridge.onservicecallback = (msg) => {
+      msg = JSON.parse(msg);
+      if(!msg.returnValue) {
+          console.log(`STT Service call failed : ${msg.result}`);
+          return;
+      }
+
+      if(callback) callback(msg.result.voice_prompt);
+  }
+  let query = {
+    voice_path: text
+  };
+  bridge.call(getServiceURL("aitalk", "stt"), JSON.stringify(query));
 }
 
 /**
@@ -135,7 +163,7 @@ export function readAllConversation (callback) {
   bridge.onservicecallback = (msg) => {
       msg = JSON.parse(msg);
       if (!msg.returnValue) {
-          console.log(`Service call failed : ${msg.result}`);
+          console.log(`readAllConversation Service call failed : ${msg.result}`);
           return null;
       }
       if (callback) callback(msg.result);
@@ -153,11 +181,10 @@ export function deleteAllConversation (callback) {
   bridge.onservicecallback = (msg) => {
       msg = JSON.parse(msg);
       if (!msg.returnValue) {
-          console.log(`Service call failed : ${msg.result}`);
+          console.log(`delete conversation Service call failed : ${msg.result}`);
           return;
       }
       if (callback) callback(msg.result);
-      console.log("callback called", callback);
   };
 
   bridge.call(getServiceURL("aitalk", "delete"), "{}");

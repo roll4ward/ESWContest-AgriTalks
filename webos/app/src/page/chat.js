@@ -4,7 +4,8 @@ import MessageBox from "../component/MessageBox";
 import { Button, Form, InputGroup, Card } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import styled from "styled-components";
-import { askToAi, askToAiStream, TTS, speak, createConversation, readAllConversation, deleteAllConversation } from "../api/aiService";
+import { askToAi, askToAiStream, TTS, STT, speak, createConversation, readAllConversation, deleteAllConversation } from "../api/aiService";
+import { readAllImages, startCameraPreview, stopCameraPreview, captureImage, initRecord,  initCamera} from "../api/mediaService";
 import RecordModal from "../component/modal/RecorderModal";
 import { FaMicrophone } from "react-icons/fa"; // 마이크 아이콘 추가
 
@@ -12,7 +13,14 @@ export default function ChatPage() {
   const [messages, setMessages] = useState([]);
   const [prompt, setPrompt] = useState("");
   const [showRecordModal, setShowRecordModal] = useState(false);
+  const [images, setImages] = useState([]);
 
+  const [recorderId, setRecorderId] = useState(null);
+  const [cameraHandle, setCameraHandle] = useState(null);
+
+  // 태스트를 위한 image path 예시
+  // var selectImage = "/media/multimedia/images/tomato2.jpg";
+  var selectImage = null
   useEffect(() => {
     const initializeChat = () => {
       readAllConversation((result)=> {
@@ -22,28 +30,62 @@ export default function ChatPage() {
           console.log("이전에 대화 기록 없음");
         }
       });
+
+      // 초기 이미지 목록 업데이트 함수
+      readAllImages((result)=> {
+        if(result){
+          setImages(result);
+        }else{
+          console.log("저장된 이미지 없음");
+        }
+      });
+
+      const storedCameraHandle = localStorage.getItem('cameraHandle');
+      if(storedCameraHandle){
+        setCameraHandle(storedCameraHandle);
+      }else{
+        initCamera((result)=> {
+          setCameraHandle(result); 
+          localStorage.setItem('cameraHandle', result);
+        });
+      }
+
+      const storedRecorderId = localStorage.getItem('recorderId');
+      if (storedRecorderId) {
+        setRecorderId(storedRecorderId);
+      } else {
+        initRecord((result)=> {
+          setRecorderId(result); 
+          localStorage.setItem('recorderId', result);
+        });
+      }
+
     };
     initializeChat();
   }, []);
 
   const handleSendMessage = () => {
+
+    // 질문창이 공백이면 return
     if (prompt == "") {
       return;
     }
 
+    // 사용자 메시지 저장
     const newMessages = [...messages, { type: "user", text: prompt }];
     setMessages(newMessages);
-    // 사용자 메시지 저장
-    createConversation(prompt, "user"); // 세션 ID와 함께 kind 전달
+    createConversation(prompt, "user");
     setPrompt("");
-    // AI 응답을 받는 부분 (WebOS AI 서비스와 통신)
-    
-    setMessages((prevMessages) => [...prevMessages,{type: "ai",text: "..."}]);
-    var aiMessage = { type: "ai", text: "" };
 
-    askToAiStream(prompt, (askResult)=> {
+    // ai의 대답창을 우선 "..."으로 초기화
+    setMessages((prevMessages) => [...prevMessages,{type: "ai",text: "..."}]);
+    let aiMessage = { type: "ai", text: "" };
+    
+    // 스트림 질문 전송 함수
+    askToAiStream(prompt, selectImage, (askResult)=> {
+      // 스트림의 마지막 토큰이 수신되면 ai의 대답 전문을 저장 및 tts & speak
       if(!askResult.is_streaming){
-        createConversation(aiMessage.text, "ai"); // 세션 ID와 함께 kind 전달
+        createConversation(aiMessage.text, "ai");
         TTS(aiMessage.text, ()=> { speak(); });
       }else{
         aiMessage.text = askResult.chunks;
@@ -55,8 +97,36 @@ export default function ChatPage() {
     });
   };
 
-  const handleRecordModalClose = () => {
+  const handleRecordModalClose = (audio) => {
     setShowRecordModal(false);
+    if (audio) {
+      STT(audio, (result) => {
+
+        // 사용자 메시지 저장
+        const newMessages = [...messages, { type: "user", text: result }];
+        setMessages(newMessages);
+        createConversation(result, "user");
+
+        // ai의 대답창을 우선 "..."으로 초기화
+        setMessages((prevMessages) => [...prevMessages,{type: "ai",text: "..."}]);
+        let aiMessage = { type: "ai", text: "" };
+
+        // 스트림 질문 전송 함수
+        askToAiStream(result, selectImage, (askResult)=> {
+          // 스트림의 마지막 토큰이 수신되면 ai의 대답 전문을 저장 및 tts & speak
+          if(!askResult.is_streaming){
+            createConversation(aiMessage.text, "ai");
+            TTS(aiMessage.text, ()=> { speak(); });
+          }else{
+            aiMessage.text = askResult.chunks;
+            setMessages((prevMessages) => {
+              const updatedMessages = prevMessages.slice(0, -1);
+              return([...updatedMessages, aiMessage]);
+            });
+          }
+        });
+      });
+    }
   };
 
   return (
@@ -73,7 +143,7 @@ export default function ChatPage() {
               placeholder="텍스트를 입력하세요."
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              style={{ height: "50px", fontSize: "1.5rem" }}
+              style={{ height: "80px", fontSize: "50px" }}
             />
             <Button
               style={{ backgroundColor: "#448569", color: "#fff" }}
@@ -94,14 +164,12 @@ export default function ChatPage() {
       <RecordModal
         show={showRecordModal}
         handleClose={handleRecordModalClose}
+        recorderId={recorderId} 
       />
     </Container>
   );
 }
-// display: flex;
-  // justify-content: center;
-  // align-items: center;
-  // height: 100vh;
+
 // 전체 컨테이너 스타일
 const Container = styled.div`
   display: flex;

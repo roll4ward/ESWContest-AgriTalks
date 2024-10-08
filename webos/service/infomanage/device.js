@@ -1,5 +1,4 @@
 const DEVKIND = 'xyz.rollforward.app.infomanage:2';
-
 const registerDeviceMethod = (service) => {
     // 기기 정보 데이터베이스 생성 (임시)
     service.register('device/createKind', function(message) {
@@ -29,7 +28,6 @@ const registerDeviceMethod = (service) => {
                 { name: 'areaId', props: [{ name: 'areaId' }] }
             ]
         };
-
         service.call('luna://com.webos.service.db/putKind', kindData, (response) => {
             if (response.payload.returnValue) {
                 message.respond({ returnValue: true});
@@ -38,7 +36,6 @@ const registerDeviceMethod = (service) => {
             }
         });
     });
-
     // 기기 정보 데이터베이스 삭제 (임시)
     service.register('device/deleteKind', function(message) {
         service.call('luna://com.webos.service.db/delKind', {id: DEVKIND}, (response) => {
@@ -74,7 +71,6 @@ const registerDeviceMethod = (service) => {
             }
         });
     });
-
     // 기기 정보 데이터 Read
     service.register('device/read', function(message) {
         const query = {
@@ -106,7 +102,6 @@ const registerDeviceMethod = (service) => {
             }
         });
     });
-
     // 기기 정보 데이터 Update
     service.register('device/update', function(message) {
         const updatedItem = {
@@ -121,7 +116,6 @@ const registerDeviceMethod = (service) => {
         if (message.payload.ip) updatedItem.ip = message.payload.ip;
         if (message.payload.unit) updatedItem.unit = message.payload.unit;
         if (message.payload.areaId) updatedItem.areaId = message.payload.areaId;
-
         service.call('luna://com.webos.service.db/merge', { objects: [updatedItem] }, (response) => {
             if (response.payload.returnValue) {
                 message.respond({ returnValue: true, results: 'Item updated successfully' });
@@ -130,7 +124,6 @@ const registerDeviceMethod = (service) => {
             }
         });
     });
-
     // 기기 정보 데이터 Delete
     service.register('device/delete', function(message) {
         const ids = [message.payload.id];
@@ -138,7 +131,6 @@ const registerDeviceMethod = (service) => {
         if (!("id" in message.payload)) {
             message.respond({ returnValue: false, results: 'id is required.' });
         }
-
         service.call('luna://com.webos.service.db/del', { ids: ids }, (response) => {
             if (response.payload.returnValue) {
                 message.respond({ returnValue: true, results: 'Item deleted successfully' });

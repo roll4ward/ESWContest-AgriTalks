@@ -6,7 +6,7 @@ import { HashRouter as Router, Routes, Route } from "react-router-dom";
 import ChatPage from "./page/chat";
 import { Camera } from "./page/Camera";
 import { Home } from "./page/Home";
-import DeviceDetailPage from "./page/DeviceDetailPage"
+import DeviceDetailPage from "./page/DeviceDetailPage";
 import { DeviceOverView } from "./page/DeviceOverView";
 import { SideBar } from "./component/SideBar";
 
@@ -19,8 +19,7 @@ function App() {
           flexDirection: "row",
           height: "100vh",
           width: "1920px",
-          paddingTop: 45,
-          paddingLeft: 50,
+          padding: "25px",
         }}
       >
         {/* 사이드 메뉴 */}
@@ -41,6 +40,7 @@ function App() {
             <Route path="/camera" element={<Camera />} />
             <Route path="/devices/:areaID" element={<DeviceOverView />} />
             <Route path="/detail/:deviceID" element={<DeviceDetailPage />} />
+            <Route path="/gallery" element={<div />} />
           </Routes>
         </div>
       </div>

@@ -2,8 +2,10 @@ import React, { useState, useEffect } from "react";
 import { Button, Modal } from "react-bootstrap";
 import styled, { keyframes } from "styled-components";
 import { FaMicrophone, FaStop } from "react-icons/fa";
-export default function RecorderModal({ show, handleClose }) {
-  const [isRecording, setIsRecording] = useState(false);
+import { startRecord, pauseRecord, resumeRecord, stopRecord } from "../../api/mediaService";
+export default function RecorderModal({ show, handleClose, recorderId }) {
+  const [rId, setRId] = useState(false);
+  const [isRecording, setIsRecording] = useState(true);
   const [recordedAudio, setRecordedAudio] = useState(null);
   const [seconds, setSeconds] = useState(0);
   useEffect(() => {
@@ -18,31 +20,47 @@ export default function RecorderModal({ show, handleClose }) {
     return () => clearInterval(interval);
   }, [isRecording, seconds]);
   useEffect(() => {
+    // 래코드 id 저장
+    if(recorderId) setRId(recorderId);
     // 모달이 열릴 때마다 상태 초기화
     if (show) {
       setIsRecording(false);
       setRecordedAudio(null);
       setSeconds(0);
     }
-  }, [show]);
+  }, [show, recorderId]);
   const handleToggleRecording = () => {
     if (isRecording) {
       setIsRecording(false);
-      setRecordedAudio("dummy-audio-file");
+      // stopRecord(rId, (result)=> {
+      //   if(result){
+      //     setRecordedAudio(result);
+      //   }else{
+      //     console.log("녹음 종료 실패");
+      //   }
+      // });
+
     } else {
       setSeconds(0);
-      setRecordedAudio(null);
+      // startRecord(rId, (result)=> {
+      //   if(!result){
+      //     console.log("녹음 시작 실패");
+      //   }
+      // });
       setIsRecording(true);
     }
   };
   const handleSendAudio = () => {
     if (recordedAudio) {
-      handleClose();
+      handleClose(recordedAudio);
+    }else{
+      handleClose(null);
     }
   };
   return (
     <Modal show={show} onHide={handleClose} centered>
-      <Modal.Header closeButton>
+      {/* <Modal.Header closeButton> */}
+      <Modal.Header>
         <Modal.Title>녹음하기</Modal.Title>
       </Modal.Header>
       <Modal.Body>
@@ -64,19 +82,10 @@ export default function RecorderModal({ show, handleClose }) {
           onClick={handleToggleRecording}
           recording={isRecording}
         >
-          {isRecording ? (
-            <FaStop style={{ color: "black" }} />
-          ) : (
-            <FaMicrophone style={{ color: "red" }} />
-          )}
+        <FaStop style={{ color: "black" }} />
         </RecordingButton>
-        <SendButton
-          variant="success"
-          onClick={handleSendAudio}
-          disabled={!recordedAudio}
-        >
-          전송
-        </SendButton>
+        <SendButton variant="success" onClick={handleSendAudio} disabled={!recordedAudio}> 전송 </SendButton>
+        <ExitButton variant="secondary" onClick={handleSendAudio} disabled={!recordedAudio}> 취소 </ExitButton>
       </Modal.Body>
     </Modal>
   );
@@ -130,9 +139,19 @@ const RecordingButton = styled.button`
   cursor: pointer;
   margin: 20px auto;
 `;
+
 const SendButton = styled(Button)`
-  width: 100%;
+  width: 47%;
   margin-top: 20px;
+  margin-right: 10px;
+  background-color: ${({ disabled }) => (disabled ? "#ccc" : "#448569")};
+  cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
+`;
+
+const ExitButton = styled(Button)`
+  width: 47%;
+  margin-top: 20px;
+  margin-left: 10px;
   background-color: ${({ disabled }) => (disabled ? "#ccc" : "#448569")};
   cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
 `;

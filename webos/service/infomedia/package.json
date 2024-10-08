@@ -1,0 +1,11 @@
+{
+  "name": "xyz.rollforward.app.infomedia",
+  "version": "1.0.0",
+  "description": "Helloworld service",
+  "main": "service.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "BSD"
+}
