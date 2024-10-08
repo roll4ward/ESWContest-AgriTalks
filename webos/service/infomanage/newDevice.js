@@ -197,7 +197,7 @@ module.exports = (service) => {
         message.cancel();
     });
 
-    service.register("newDevice/initialize", (message) => {
+    service.register("newDevice/initialize", async (message) => {
         if (!(message.payload.deviceId)) {
             message.respond(new Respond(false, "deviceId is required."));
             return;
@@ -211,7 +211,21 @@ module.exports = (service) => {
             return;
         }
 
-        // infomanage/device/update
+        let query = {
+            id: message.payload.deviceId,
+            name: message.payload.name,
+            areaId: message.payload.areaId,
+        }
+
+        if (message.payload.desc) query.desc = message.payload.desc;
+
+        await updateDevice(service, query)
+            .then(()=>{
+                message.respond(new Respond(true, "Initializing device successfully."));
+            })
+            .catch((err)=>{
+                message.respond(new Respond(false, "Failed to initialize device"));
+            });
     });
 }
 
@@ -469,6 +483,23 @@ function createNewDevice(service, deviceInfo) {
                         subtype: subtype
                     }
                 );
+            });
+    });
+}
+
+function updateDevice(service, deviceInfo) {
+    console.log(deviceInfo);
+    return new Promise((res, rej) => {
+        service.call("luna://xyz.rollforward.app.infomanage/device/update", 
+            deviceInfo,
+            (response) => {
+                if (!response.payload.returnValue) {
+                    console.log("Failed to update device");
+                    rej("Error while updating device");
+                    return;
+                }
+
+                res();
             });
     });
 }
