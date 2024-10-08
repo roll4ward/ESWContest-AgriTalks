@@ -44,13 +44,13 @@ service.register('camera/init', function(message) {
             service.call('luna://com.webos.service.camera2/startCapture', Bquery, (Bresponse) => {
                 if (Bresponse.payload.returnValue) {
                     service.call('luna://com.webos.service.camera2/close', {handle: Aresponse.payload.handle}, (Cresponse) => {
+                        console.log(Cresponse);
                         message.respond({ returnValue: true, result: filepath });
                     });
                 } else {
                     message.respond({ returnValue: false, result: Bresponse.payload.errorText });
                 }
             });
-            message.respond({ returnValue: true, result: Aresponse.payload.handle });
         }else{
             message.respond({ returnValue: false, result: "there is no camera1" });
         }
