@@ -1,5 +1,3 @@
-import { useState } from "react"
-import { Button } from "react-bootstrap"
 import Modal from "react-modal"
 
 export const ModalBase = ({show, children}) => {

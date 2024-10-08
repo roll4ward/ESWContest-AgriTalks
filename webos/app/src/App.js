@@ -9,6 +9,7 @@ import { Home } from "./page/Home";
 import DeviceDetailPage from "./page/DeviceDetailPage";
 import { DeviceOverView } from "./page/DeviceOverView";
 import { SideBar } from "./component/SideBar";
+import { RegisterDevice } from "./component/modal/RegisterDevice";
 
 function App() {
   return (
@@ -41,6 +42,7 @@ function App() {
             <Route path="/devices/:areaID" element={<DeviceOverView />} />
             <Route path="/detail/:deviceID" element={<DeviceDetailPage />} />
             <Route path="/gallery" element={<div />} />
+            <Route path="/register" element={<RegisterDevice/>}/>
           </Routes>
         </div>
       </div>
