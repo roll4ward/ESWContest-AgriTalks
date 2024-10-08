@@ -127,30 +127,74 @@ module.exports = (service) => {
             haltSignal.emit("stop");
             return;
         }
-        message.respond(new Respond(true, "Command Write"));
+        message.respond(new Respond(true, {
+            message: "Command Write",
+            status: 1
+        }));
 
         await checkStatus;
 
-        message.respond(new Respond(true, "Network Joinning Done"));
+        message.respond(new Respond(true, {
+            message: "Network Joinning Done",
+            status: 2
+        }));
 
-        // Read ML_ADDR, UNIT, TYPE
+        // Read ML_ADDR, UNIT, TYPE(TYPE/SUBTYPE)
         let deviceInfo = await readGATTCharacteristic(service, clientId, [
             UUID.COMMISSION_TYPE, UUID.COMMISSION_ML_ADDR, UUID.COMMISSION_UNIT
         ])
-                                .catch((err)=> {
-                                 console.log("Error while reading device info", err);
-                                 message.respond(new Respond(false, "Failed to read deviceinfo"));
-                                 message.cancel();
-                            });
+        .catch((err)=> {
+            console.log("Error while reading device info", err);
+            message.respond(new Respond(false, "Failed to read deviceinfo"));
+            message.cancel();
+        });
 
-        message.respond(new Respond(true, deviceInfo));
+        message.respond(new Respond(true, {
+            message: "Read Device Info Done",
+            status: 3
+        }));
 
+        console.log(deviceInfo);
+        let devices = parseDeviceInfo(deviceInfo);
 
+        console.log(devices);
 
-        // infomanage/device/create
-        // "새로운 기기" / "" (이름 / 설명), areaId = null;
-        // Return ID of device
+        let devices_created = await Promise.all(devices.map((ele) => createNewDevice(service, ele)));
+
+        console.log(devices_created);
+
+        message.respond(new Respond(true, {
+            message: "Createing New Device Done.",
+            status: 4,
+            devices: devices_created
+        }));
+
         // DISABLE_BLE Write
+        await writeGATTCharacteristic(service, clientId, UUID.COMMISSION_COMMAND, [COMMAND.DISABLE_BLE])
+            .then(()=>{
+                console.log("write DISABLE_BLE command successfully");
+                message.respond(new Respond(true, {
+                    message: "Disconnect Device by remote",
+                    status: 5
+                }));
+            })
+            .catch((err)=> {
+                console.log("failed to write DISABLE_BLE command");
+                service.call("luna://com.webos.service.bluetooth2/gatt/disconnect",
+                            {clientId: clientId},
+                            (response) => {
+                                if (!response.payload.returnValue) {
+                                    console.log("Failed to disconnect using bluetooth2");
+                                }
+
+                                message.respond(new Respond(true, {
+                                    message: "Disconnect Device by host",
+                                    status: 5
+                                }));
+                            })
+        });
+        
+        message.cancel();
     });
 
     service.register("newDevice/initialize", (message) => {
@@ -297,7 +341,7 @@ function byteArrayToString(byteArray) {
 function waitForJoiningNetwork(service, clientId, haltSignal) {
     let subscription;
     return new Promise((res, rej) => {
-        let isCommandDone = false, isJoiningDone = false;
+        let isJoiningDone = false;
         let status, role;
 
         readGATTCharacteristic(service, clientId, [
@@ -342,20 +386,34 @@ function waitForJoiningNetwork(service, clientId, haltSignal) {
             console.log(characteristic);
             console.log(value[0]);
 
-            if ((!isCommandDone) && characteristic == UUID.COMMISSION_STATUS) {
-                isCommandDone = (value[0] == STATUS.DONE);
-                console.log(isCommandDone);
-            }
-
             if ((!isJoiningDone) && characteristic == UUID.COMMISSION_ROLE) {
                 isJoiningDone = (value[0] >= ROLE.CHILD);
                 console.log(isJoiningDone);
             }
 
-            if (isCommandDone && isJoiningDone) {
-                subscription.cancel();
-                res();
-                return;
+            if (isJoiningDone) {
+                readGATTCharacteristic(service, clientId, [
+                    UUID.COMMISSION_STATUS, UUID.COMMISSION_ROLE
+                ]).then((data)=>{
+                    role = data.role;
+                    status = data.status;
+        
+                    if (role >= 2 && status == 3) {
+                        console.log(role, status);
+                        res();
+                        return;
+                    }
+
+                    else {
+                        console.log(role, status);
+                        rej("Invalid monitoring");
+                    }
+                    
+                }).catch((err) => {
+                    rej("Monitoring Failed");
+                }).finally(()=>{
+                    subscription.cancel();
+                });
             }
         });
 
@@ -363,5 +421,54 @@ function waitForJoiningNetwork(service, clientId, haltSignal) {
             console.log("Monitoring Halted");
             rej("Monitoring Halted");
         })
+    });
+}
+
+function parseDeviceInfo(deviceInfo) {
+    let types = deviceInfo.type.split('^');
+    let units = deviceInfo.unit.split('^');
+
+    let result = types.map((ele, index) => {
+        const split_type = ele.split('/');
+        const result = {
+            ip: deviceInfo.ipv6,
+            type: split_type[0],
+            subtype: split_type[1],
+            unit: units[index]
+        };
+
+        return result;
+    });
+
+    return result;
+}
+
+function createNewDevice(service, deviceInfo) {
+    console.log(deviceInfo);
+    const {ip, subtype, type, unit} = deviceInfo;
+    return new Promise((res, rej) => {
+        service.call("luna://xyz.rollforward.app.infomanage/device/create", 
+            {
+                ip: ip,
+                subtype: subtype,
+                type: type,
+                unit: unit,
+                name: "새로운 기기",
+                areaId: "null"
+            },
+            (response) => {
+                if (!response.payload.returnValue) {
+                    console.log("Failed to create new device");
+                    rej("Error while creating new device");
+                    return;
+                }
+
+                res(
+                    {
+                        deviceId: response.payload.results,
+                        subtype: subtype
+                    }
+                );
+            });
     });
 }
