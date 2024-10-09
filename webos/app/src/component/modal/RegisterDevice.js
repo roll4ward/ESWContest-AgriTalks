@@ -12,7 +12,7 @@ const PAGE = {
 };
 
 export const RegisterDevice = () => {
-  const [page, setPage] = useState(PAGE.JOIN_NETWORK);
+  const [page, setPage] = useState(PAGE.INITIALIZE_DEVICE);
 
   return (
     <ModalBase show>

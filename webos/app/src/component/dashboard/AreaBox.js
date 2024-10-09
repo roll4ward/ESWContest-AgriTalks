@@ -94,7 +94,7 @@ const AreaName = styled.div`
   font-size: 64px;
   font-weight: 600;
   text-overflow: ellipsis;
-  overflox: hidden;
+  overflow: hidden;
 `;
 
 const InputText = styled.div`
