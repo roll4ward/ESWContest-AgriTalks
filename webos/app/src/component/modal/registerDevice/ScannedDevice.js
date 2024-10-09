@@ -1,9 +1,9 @@
 import styled from "styled-components"
 import Signal from "../../../assets/icon/Signal.svg"
 
-export const ScannedDevice = ({name, rssi, select}) => {
+export const ScannedDevice = ({name, rssi, address, select, onClick}) => {
     return (
-        <Container select = {select}>
+        <Container onClick={()=>{onClick(address)}} select = {select}>
             <Name>{name}</Name>
             <Rssi>
                 <img src = {Signal}/>

@@ -1,8 +1,23 @@
 import styled from "styled-components";
 import LoadingIcon from "./LoadingIcon";
 import { ScannedDevice } from "./ScannedDevice";
+import { useEffect, useState } from "react";
 
 export const SelectDevice = () => {
+    const [scannedDevice, setScannedDevice] = useState([
+        new DeviceInfo("준희", "주소1", -70),
+        new DeviceInfo("준희", "주소2", -70),
+        new DeviceInfo("준희", "주소3", -70),
+        new DeviceInfo("준희", "주소4", -70),
+    ]);
+
+    const [selected, setSelected] = useState("");
+
+    function DeviceInfo (name, address, rssi){
+        this.name = name;
+        this.address = address;
+        this.rssi = rssi;
+    }
     
     return (
         <Container>
@@ -14,12 +29,15 @@ export const SelectDevice = () => {
                 </Scanning>
             </Notice>
             <DeviceSelectBox>
-                <ScannedDevice name = {"준희"} rssi = {-70}></ScannedDevice>
-                <ScannedDevice name = {"준희"} rssi = {-70}></ScannedDevice>
-                <ScannedDevice name = {"준희"} rssi = {-70}></ScannedDevice>
-                <ScannedDevice name = {"준희"} rssi = {-70}></ScannedDevice>
-                <ScannedDevice name = {"준희"} rssi = {-70}></ScannedDevice>
-                <ScannedDevice name = {"준희"} rssi = {-70}></ScannedDevice>
+                {
+                    scannedDevice.map(({name, rssi, address})=> 
+                        (<ScannedDevice
+                            onClick={setSelected}
+                            address={address} 
+                            name={name}
+                            rssi={rssi}
+                            select={address === selected}/>))
+                }
             </DeviceSelectBox>
         </Container>
     );

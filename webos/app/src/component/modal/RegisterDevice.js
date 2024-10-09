@@ -6,9 +6,9 @@ import { JoinNetwork } from "./registerDevice/JoinNetwork";
 import { InitializeDevice } from "./registerDevice/InitializeDevice";
 
 const PAGE = {
-    SELECT_DEVICE : SelectDevice,
-    JOIN_NETWORK : JoinNetwork,
-    INITIALIZE_DEVICE : InitializeDevice
+    SELECT_DEVICE : 0,
+    JOIN_NETWORK : 1,
+    INITIALIZE_DEVICE : 2
 }
 
 export const RegisterDevice = () => {
@@ -19,7 +19,9 @@ export const RegisterDevice = () => {
             <Container>
                 <Title>기기 추가</Title>
                 <PageContainer>
-                     {page}
+                     {page == PAGE.SELECT_DEVICE && <SelectDevice/>}
+                     {page == PAGE.JOIN_NETWORK && <JoinNetwork/>}
+                     {page == PAGE.INITIALIZE_DEVICE && <InitializeDevice/>}
                 </PageContainer>
                 <ButtonWrap>
                     <Button>취소</Button>
