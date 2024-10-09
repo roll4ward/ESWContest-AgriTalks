@@ -1,6 +1,6 @@
 import styled from "styled-components";
 import { ModalBase } from "./ModalBase";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { SelectDevice } from "./registerDevice/SelectDevice";
 import { JoinNetwork } from "./registerDevice/JoinNetwork";
 import { InitializeDevice } from "./registerDevice/InitializeDevice";
@@ -13,7 +13,7 @@ const PAGE = {
 };
 
 export const RegisterDevice = () => {
-    const [page, setPage] = useState(PAGE.SELECT_DEVICE);
+    const [page, setPage] = useState(PAGE.JOIN_NETWORK);
     const address = useRef("");
     const [hiddenCancel, setHiddenCancel] = useState(false);
 
