@@ -60,14 +60,17 @@ module.exports = (service) => {
             { address : message.payload.address },
             async (response) => {
                 if (!response.payload.returnValue) {
-                    message.respond(new Respond(false, response.payload.errorText));
+                    message.respond(new Respond(false, {
+                        status: 0,
+                        errorText: response.payload.errorText
+                    }));
                     return;
                 }
                 
                 const clientId = response.payload.clientId;
                 let trial = 0;
                 while (trial < 1000) {
-                    try{
+                    try {
                         await callDiscoveryService(service, message.payload.address, clientId);
                         break;
                     }
@@ -77,11 +80,16 @@ module.exports = (service) => {
                     }
                 }
                 if (trial >= 1000) {
-                    message.respond(new Respond(false, "Service discover failed"));
+                    disconnect(service, clientId);
+                    message.respond(new Respond(false, {
+                        status: 0,
+                        errorText: "Service discover failed"
+                    }));
                     return;
                 }
 
                 message.respond(new Respond(true, {
+                    status: 1,
                     clientId: clientId,
                     address: message.payload.address
                 }));
@@ -107,8 +115,12 @@ module.exports = (service) => {
         ).catch(
             (error) => {
                 console.error("Networkkey query error ", error);
-                message.respond(new Respond(false, "Can not get Thread Network key"));
+                message.respond(new Respond(false, {
+                    errorText: "Can not get Thread Network key",
+                    status: 1
+                }));
                 message.cancel();
+                disconnect(service, clientId);
                 return;
             }
         );
@@ -117,8 +129,12 @@ module.exports = (service) => {
         let checkStatus = waitForJoiningNetwork(service, clientId, haltSignal)
             .catch((reason)=>{
                 console.log("Monitoring GATT Error ", reason);
-                message.respond(new Respond(false, "Failed to monitor status"));
+                message.respond(new Respond(false, {
+                    errorText: "Failed to monitor status",
+                    status: 2
+                }));
                 message.cancel();
+                disconnect(service, clientId);
                 return;
             });
 
@@ -129,22 +145,26 @@ module.exports = (service) => {
         }
         catch (error) {
             console.error("GATT Write Error ", error);
-            message.respond(new Respond(false, "Failed to write command"));
+            message.respond(new Respond(false, {
+                errorText: "Failed to write command",
+                status: 1
+            }));
             message.cancel();
 
             haltSignal.emit("stop");
+            disconnect(service, clientId);
             return;
         }
         message.respond(new Respond(true, {
             message: "Command Write",
-            status: 1
+            status: 2
         }));
 
         await checkStatus;
 
         message.respond(new Respond(true, {
             message: "Network Joinning Done",
-            status: 2
+            status: 3
         }));
 
         // Read ML_ADDR, UNIT, TYPE(TYPE/SUBTYPE)
@@ -153,13 +173,18 @@ module.exports = (service) => {
         ])
         .catch((err)=> {
             console.log("Error while reading device info", err);
-            message.respond(new Respond(false, "Failed to read deviceinfo"));
+            message.respond(new Respond(false, {
+                errorText: "Failed to read deviceinfo",
+                status: 3
+            }));
             message.cancel();
+            disconnect(service, clientId);
+            return;
         });
 
         message.respond(new Respond(true, {
             message: "Read Device Info Done",
-            status: 3
+            status: 4
         }));
 
         console.log(deviceInfo);
@@ -173,7 +198,7 @@ module.exports = (service) => {
 
         message.respond(new Respond(true, {
             message: "Createing New Device Done.",
-            status: 4,
+            status: 5,
             devices: devices_created
         }));
 
@@ -188,18 +213,13 @@ module.exports = (service) => {
             })
             .catch((err)=> {
                 console.log("failed to write DISABLE_BLE command");
-                service.call("luna://com.webos.service.bluetooth2/gatt/disconnect",
-                            {clientId: clientId},
-                            (response) => {
-                                if (!response.payload.returnValue) {
-                                    console.log("Failed to disconnect using bluetooth2");
-                                }
-
-                                message.respond(new Respond(true, {
-                                    message: "Disconnect Device by host",
-                                    status: 5
-                                }));
-                            })
+                disconnect(service, clientId)
+                .then(()=>{
+                    message.respond(new Respond(true, {
+                        message: "Disconnect Device by host",
+                        status: 5
+                    }));
+                });
         });
         
         message.cancel();
@@ -511,3 +531,21 @@ function updateDevice(service, deviceInfo) {
             });
     });
 }
+
+function disconnect(service, clientId) {
+    return new Promise((res, rej) => {
+        service.call("luna://com.webos.service.bluetooth2/gatt/disconnect", 
+            {
+                clientId: clientId
+            },    
+            (response) => {
+                if (!response.payload.returnValue) {
+                    console.log("disconnect failed", response.payload.errorText);
+                    res(); // 이미 연결이 해제되어있음
+                }
+
+                res();
+            }
+        );
+    });
+} 

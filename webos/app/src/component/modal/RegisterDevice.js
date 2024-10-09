@@ -5,6 +5,7 @@ import { SelectDevice } from "./registerDevice/SelectDevice";
 import { JoinNetwork } from "./registerDevice/JoinNetwork";
 import { InitializeDevice } from "./registerDevice/InitializeDevice";
 import { createToast } from "../../api/toast";
+import { stopBLEScan } from "../../api/newDevice";
 
 const PAGE = {
   SELECT_DEVICE: 0,
@@ -24,6 +25,7 @@ export const RegisterDevice = () => {
                     createToast("기기를 선택해주세요!");
                     return;
                 }
+                stopBLEScan();
                 setPage(PAGE.JOIN_NETWORK);
                 setHiddenCancel(true);
                 break;
