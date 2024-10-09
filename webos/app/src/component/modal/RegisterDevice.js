@@ -1,9 +1,10 @@
 import styled from "styled-components";
 import { ModalBase } from "./ModalBase"
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { SelectDevice } from "./registerDevice/SelectDevice";
 import { JoinNetwork } from "./registerDevice/JoinNetwork";
 import { InitializeDevice } from "./registerDevice/InitializeDevice";
+import { createToast } from "../../api/toast";
 
 const PAGE = {
     SELECT_DEVICE : 0,
@@ -13,19 +14,38 @@ const PAGE = {
 
 export const RegisterDevice = () => {
     const [page, setPage] = useState(PAGE.SELECT_DEVICE);
+    const address = useRef("");
+    const [hiddenCancel, setHiddenCancel] = useState(false);
+
+    function ConfirmButtonCallback() {
+        switch(page){
+            case PAGE.SELECT_DEVICE:
+                if (!address.current) {
+                    createToast("기기를 선택해주세요!");
+                    return;
+                }
+                setPage(PAGE.JOIN_NETWORK);
+                setHiddenCancel(true);
+                break;
+            case PAGE.JOIN_NETWORK:
+                break;
+            case PAGE.INITIALIZE_DEVICE:
+                break;
+        }
+    }
 
     return (
         <ModalBase show>
             <Container>
                 <Title>기기 추가</Title>
                 <PageContainer>
-                     {page == PAGE.SELECT_DEVICE && <SelectDevice/>}
-                     {page == PAGE.JOIN_NETWORK && <JoinNetwork/>}
+                     {page == PAGE.SELECT_DEVICE && <SelectDevice address={address}/>}
+                     {page == PAGE.JOIN_NETWORK && <JoinNetwork address={address}/>}
                      {page == PAGE.INITIALIZE_DEVICE && <InitializeDevice/>}
                 </PageContainer>
                 <ButtonWrap>
-                    <Button>취소</Button>
-                    <Button primary="true">확인</Button>
+                    <Button hidden={hiddenCancel}>취소</Button>
+                    <Button primary="true" onClick={ConfirmButtonCallback}>확인</Button>
                 </ButtonWrap>
             </Container>
         </ModalBase>

@@ -38,11 +38,11 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/chat" element={<ChatPage />} />
-            <Route path="/camera" element={<Camera />} />
+            <Route path="/camera2" element={<Camera />} />
             <Route path="/devices/:areaID" element={<DeviceOverView />} />
             <Route path="/detail/:deviceID" element={<DeviceDetailPage />} />
             <Route path="/gallery" element={<div />} />
-            <Route path="/register" element={<RegisterDevice/>}/>
+            <Route path="/camera" element={<RegisterDevice/>}/>
           </Routes>
         </div>
       </div>

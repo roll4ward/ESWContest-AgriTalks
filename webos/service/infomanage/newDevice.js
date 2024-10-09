@@ -3,6 +3,7 @@ const EventEmitter = require('events');
 
 const {uuid : UUID, command : COMMAND, status: STATUS, thread_role : ROLE} = require("./ble_info.json");
 let scanSubscription = null;
+let scanSignal = new EventEmitter();
 
 function Respond(returnValue, results) {
     this.returnValue = returnValue,
@@ -20,6 +21,7 @@ module.exports = (service) => {
             subscribe: true,
             serviceUuid: {uuid: UUID.COMMISSION_SERVICE}
         });
+        scanSignal = new EventEmitter();
 
         scanSubscription.on("response", (response) => {
             if (response.payload.returnValue && response.payload.devices) {
@@ -27,6 +29,10 @@ module.exports = (service) => {
                 message.respond(new Respond(true, result))
             }
         });
+
+        scanSignal.addListener("stopScan", ()=>{
+            message.cancel();
+        })
     });
 
     service.register("newDevice/stopScan", (message) => {
@@ -36,7 +42,9 @@ module.exports = (service) => {
         }
 
         scanSubscription.cancel();
+        scanSignal.emit("stopScan");
         scanSubscription = null;
+        scanSignal = null;
 
         message.respond(new Respond(true, "Stopped scanning successfully"));
     });

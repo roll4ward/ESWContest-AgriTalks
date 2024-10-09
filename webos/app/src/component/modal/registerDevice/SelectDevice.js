@@ -2,22 +2,28 @@ import styled from "styled-components";
 import LoadingIcon from "./LoadingIcon";
 import { ScannedDevice } from "./ScannedDevice";
 import { useEffect, useState } from "react";
+import { startBLEScan } from "../../../api/newDevice";
 
-export const SelectDevice = () => {
-    const [scannedDevice, setScannedDevice] = useState([
-        new DeviceInfo("준희", "주소1", -70),
-        new DeviceInfo("준희", "주소2", -70),
-        new DeviceInfo("준희", "주소3", -70),
-        new DeviceInfo("준희", "주소4", -70),
-    ]);
+export const SelectDevice = ({address}) => {
+    const [scannedDevice, setScannedDevice] = useState([]);
 
     const [selected, setSelected] = useState("");
 
-    function DeviceInfo (name, address, rssi){
-        this.name = name;
-        this.address = address;
-        this.rssi = rssi;
-    }
+    useEffect(()=> {
+        startBLEScan((results)=>{
+            setScannedDevice(results);
+            console.log(results);
+        });
+        console.log("call scan");
+    }, []);
+
+    useEffect(()=> {
+        if (!scannedDevice.some(({address})=> address === selected)) setSelected("");
+    }, [scannedDevice]);
+
+    useEffect(()=>{
+        address.current = selected;
+    }, [selected]);
     
     return (
         <Container>

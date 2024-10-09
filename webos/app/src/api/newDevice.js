@@ -3,7 +3,7 @@
  * @param {*} method 
  * @returns 서비스의 URL
  */
-const getServiceURL = (method) => `xyz.rollforward.app.infomanage/${method}`;
+const getServiceURL = (method) => `luna://xyz.rollforward.app.infomanage/${method}`;
 
 if (typeof WebOSServiceBridge === "undefined") {
     globalThis.WebOSServiceBridge = function() {
@@ -15,3 +15,35 @@ if (typeof WebOSServiceBridge === "undefined") {
     }
 }
 
+export function startBLEScan(callback) {
+    let bridge = new WebOSServiceBridge();
+    bridge.onservicecallback = (msg) => {
+        msg = JSON.parse(msg);
+        if(!msg.returnValue) {
+            console.log(`Service call failed : ${msg.results}`);
+            return;
+        }
+        if(msg.results){
+            if(callback) callback(msg.results);
+        }
+    }
+
+    bridge.call(getServiceURL("newDevice/startScan"), '{"subscribe" : true}');
+    console.log("start Scan ", getServiceURL("newDevice/startScan"));
+}
+
+export function stopBLEScan(callback) {
+    let bridge = new WebOSServiceBridge();
+    bridge.onservicecallback = (msg) => {
+        msg = JSON.parse(msg);
+        if(!msg.returnValue) {
+            console.log(`Service call failed : ${msg.results}`);
+            return;
+        }
+        if(msg.results){
+            if(callback) callback(msg.results);
+        }
+    }
+
+    bridge.call(getServiceURL("newDevice/stopScan"), '{}');
+}
