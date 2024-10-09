@@ -14,7 +14,11 @@ export const SelectDevice = () => {
                 </Scanning>
             </Notice>
             <DeviceSelectBox>
-                <ScannedDevice select = "true" name = {"준희"} rssi = {-70}></ScannedDevice>
+                <ScannedDevice name = {"준희"} rssi = {-70}></ScannedDevice>
+                <ScannedDevice name = {"준희"} rssi = {-70}></ScannedDevice>
+                <ScannedDevice name = {"준희"} rssi = {-70}></ScannedDevice>
+                <ScannedDevice name = {"준희"} rssi = {-70}></ScannedDevice>
+                <ScannedDevice name = {"준희"} rssi = {-70}></ScannedDevice>
                 <ScannedDevice name = {"준희"} rssi = {-70}></ScannedDevice>
             </DeviceSelectBox>
         </Container>
@@ -44,10 +48,11 @@ const Scanning = styled.div`
 `;
 
 const DeviceSelectBox = styled.div`
-    background: #d9d9d9;
+    background: #FFFFFF;
     width: 100%;
+    height: 400px;
     flex-grow: 1;
     border-radius: 25px;
     overflow-y: auto;
-    padding: 40px;
+    padding: 0 20px;
 `;

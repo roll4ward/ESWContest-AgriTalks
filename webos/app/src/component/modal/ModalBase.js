@@ -19,7 +19,7 @@ export const ModalBase = ({show, children}) => {
             borderRadius: "40px",
             backgroundColor: "white",
             justifyContent: "center",
-            overflow: "auto",
+            overflow: "hidden",
             position: 'absolute', 
             top: '50%',
             left: '50%',
