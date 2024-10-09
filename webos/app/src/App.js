@@ -42,7 +42,7 @@ function App() {
             <Route path="/devices/:areaID" element={<DeviceOverView />} />
             <Route path="/detail/:deviceID" element={<DeviceDetailPage />} />
             <Route path="/gallery" element={<div />} />
-            <Route path="/camera" element={<RegisterDevice/>}/>
+            <Route path="/camera" element={<RegisterDevice show={true}/>}/>
           </Routes>
         </div>
       </div>

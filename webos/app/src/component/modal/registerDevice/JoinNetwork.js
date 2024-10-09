@@ -1,9 +1,35 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import styled from "styled-components";
 import { StatusText } from "./StatusText";
+import { connectDevice, registerDevice } from "../../../api/newDevice";
+import { createToast } from "../../../api/toast";
 
-export const JoinNetwork = ({address}) => {
+export const JoinNetwork = ({address, onFailed}) => {
   const [status, setStatus] = useState(0);
+
+  useEffect(()=>{
+    connectDevice(address.current,
+      (results) => {
+        setStatus(results.status);
+        registerDevice(results.clientId, address.current,
+          (results) => {
+            setStatus(results.status);
+          },
+          // 기기 등록 실패 콜백 (연결 이후)
+          (results) => {
+            console.log(results);
+            createToast(results.errorText);
+            onFailed();
+          }
+        )
+      },
+      // 연결 실패 콜백
+      (results)=>{ 
+        console.log(results);
+        createToast(results.errorText);
+        onFailed();
+      })
+  }, []);
 
   return (
     <Container>

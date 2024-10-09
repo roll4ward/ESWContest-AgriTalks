@@ -13,10 +13,11 @@ const PAGE = {
   INITIALIZE_DEVICE: 2,
 };
 
-export const RegisterDevice = () => {
-    const [page, setPage] = useState(PAGE.JOIN_NETWORK);
+export const RegisterDevice = ({show}) => {
+    const [page, setPage] = useState(PAGE.SELECT_DEVICE);
     const address = useRef("");
     const [hiddenCancel, setHiddenCancel] = useState(false);
+    const [active, setActive] = useState(show);
 
     function ConfirmButtonCallback() {
         switch(page){
@@ -36,17 +37,35 @@ export const RegisterDevice = () => {
         }
     }
 
+    function CancelButtonCallback() {
+      switch(page){
+        case PAGE.SELECT_DEVICE:
+            stopBLEScan();
+            setActive(false);
+            break;
+        case PAGE.JOIN_NETWORK:
+            break;
+        case PAGE.INITIALIZE_DEVICE:
+            break;
+      }
+    }
+
+    function onRegisterFailed() {
+      address.current = "";
+      setActive(false);
+    }
+
     return (
-        <ModalBase show>
+        <ModalBase show={active}>
             <Container>
                 <Title>기기 추가</Title>
                 <PageContainer>
                      {page == PAGE.SELECT_DEVICE && <SelectDevice address={address}/>}
-                     {page == PAGE.JOIN_NETWORK && <JoinNetwork address={address}/>}
+                     {page == PAGE.JOIN_NETWORK && <JoinNetwork address={address} onFailed={onRegisterFailed}/>}
                      {page == PAGE.INITIALIZE_DEVICE && <InitializeDevice/>}
                 </PageContainer>
                 <ButtonWrap>
-                    <Button hidden={hiddenCancel}>취소</Button>
+                    <Button hidden={hiddenCancel} onClick={CancelButtonCallback}>취소</Button>
                     <Button primary="true" onClick={ConfirmButtonCallback}>확인</Button>
                 </ButtonWrap>
             </Container>

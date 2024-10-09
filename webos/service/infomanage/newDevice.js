@@ -83,7 +83,7 @@ module.exports = (service) => {
                     disconnect(service, clientId);
                     message.respond(new Respond(false, {
                         status: 0,
-                        errorText: "Service discover failed"
+                        errorText: "블루투스 서비스 탐색에 실패했습니다."
                     }));
                     return;
                 }
@@ -116,7 +116,7 @@ module.exports = (service) => {
             (error) => {
                 console.error("Networkkey query error ", error);
                 message.respond(new Respond(false, {
-                    errorText: "Can not get Thread Network key",
+                    errorText: "Thread 네트워크 키를 확인할 수 없습니다.",
                     status: 1
                 }));
                 message.cancel();
@@ -130,12 +130,12 @@ module.exports = (service) => {
             .catch((reason)=>{
                 console.log("Monitoring GATT Error ", reason);
                 message.respond(new Respond(false, {
-                    errorText: "Failed to monitor status",
+                    errorText: "네트워크 참여에 실패했습니다.",
                     status: 2
                 }));
                 message.cancel();
                 disconnect(service, clientId);
-                return;
+                throw new Error("Failed to join")
             });
 
         // Write Network key and Join Network Command
@@ -146,7 +146,7 @@ module.exports = (service) => {
         catch (error) {
             console.error("GATT Write Error ", error);
             message.respond(new Respond(false, {
-                errorText: "Failed to write command",
+                errorText: "네트워크 참여 명령을 전송할 수 없습니다.",
                 status: 1
             }));
             message.cancel();
@@ -160,7 +160,18 @@ module.exports = (service) => {
             status: 2
         }));
 
-        await checkStatus;
+        setTimeout(()=>{
+            haltSignal.emit("stop");
+            console.log("timeout");
+        }, 60000);
+        
+        try {
+            await checkStatus;
+        }
+        catch {
+            return;
+        }
+
 
         message.respond(new Respond(true, {
             message: "Network Joinning Done",
@@ -174,7 +185,7 @@ module.exports = (service) => {
         .catch((err)=> {
             console.log("Error while reading device info", err);
             message.respond(new Respond(false, {
-                errorText: "Failed to read deviceinfo",
+                errorText: "기기의 정보를 확인할 수 없습니다.",
                 status: 3
             }));
             message.cancel();
