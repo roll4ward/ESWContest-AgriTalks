@@ -5,11 +5,15 @@ const service = new Service(pkg_info.name);
 
 // 저장된 이미지 경로 리스트 전체 쿼리
 service.register('image/readAll', function(message) {
-    service.call('luna://com.webos.service.mediaindexer/requestMediaScan', {"path": "/media/multimedia"}, (Rresponse) => {
+    service.call('luna://com.webos.service.mediaindexer/requestMediaScan', {"path": ""}, (Rresponse) => {
         if (Rresponse.payload.returnValue) {
             service.call('luna://com.webos.service.mediaindexer/getImageList', {}, (Iresponse) => {
+                let images = Iresponse.payload.imageList.results.map(image =>{
+                    return(image.file_path.replace("file://",""));
+                });
+
                 if (Iresponse.payload.returnValue) {
-                    message.respond({ returnValue: true, result:Iresponse.payload.imageList.results});
+                    message.respond({ returnValue: true, result:images});
                 } else {
                     message.respond({ returnValue: false, result: Iresponse.errorText });
                 }

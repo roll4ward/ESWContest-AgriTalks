@@ -9,6 +9,7 @@
   "allowVideoCapture": true,
   "allowAudioCapture": true,
   "enableWebOSVDA": true,
+  "trustLevel": "trusted",
   "requiredPermissions": [
     "time.query",
     "activity.operation",

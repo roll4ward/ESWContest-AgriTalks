@@ -9,6 +9,7 @@ import { Home } from "./page/Home";
 import DeviceDetailPage from "./page/DeviceDetailPage";
 import { DeviceOverView } from "./page/DeviceOverView";
 import { SideBar } from "./component/SideBar";
+import GalleryPreviewPage from "./page/GalleryPreviewPage";
 
 function App() {
   return (
@@ -38,6 +39,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/chat" element={<ChatPage />} />
             <Route path="/camera" element={<Camera />} />
+            <Route path="/gallery" element={<GalleryPreviewPage />} />
             <Route path="/devices/:areaID" element={<DeviceOverView />} />
             <Route path="/detail/:deviceID" element={<DeviceDetailPage />} />
             <Route path="/setting" element={<div />} />

@@ -137,7 +137,7 @@ export function speak() {
  * @param { string } text 대화내용 이름
  * @param { string } type user or ai
  */
-export function createConversation(text, type) {
+export function createConversation(text, type, image) {
   let bridge = new WebOSServiceBridge();
   bridge.onservicecallback = (msg) => {
       msg = JSON.parse(msg);
@@ -149,7 +149,8 @@ export function createConversation(text, type) {
 
   let query = {
       text : text,
-      type : type
+      type : type,
+      image : image
   }
   bridge.call(getServiceURL("aitalk", "create"), JSON.stringify(query));
 }
