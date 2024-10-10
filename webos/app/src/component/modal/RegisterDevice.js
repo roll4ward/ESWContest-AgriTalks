@@ -6,6 +6,7 @@ import { JoinNetwork } from "./registerDevice/JoinNetwork";
 import { InitializeDevice } from "./registerDevice/InitializeDevice";
 import { createToast } from "../../api/toast";
 import { stopBLEScan } from "../../api/newDevice";
+import { deleteDevice } from "../../api/infomanageService";
 
 const PAGE = {
   SELECT_DEVICE: 0,
@@ -13,27 +14,40 @@ const PAGE = {
   INITIALIZE_DEVICE: 2,
 };
 
-export const RegisterDevice = ({show}) => {
+export const RegisterDevice = ({show, setShow, areaId}) => {
     const [page, setPage] = useState(PAGE.SELECT_DEVICE);
     const address = useRef("");
-    const [hiddenCancel, setHiddenCancel] = useState(false);
-    const [active, setActive] = useState(show);
+    const newDevices = useRef([]);
+    const isRegisterDone = useRef(false);
+    const [cancelVisible, setCancelVisible] = useState(true);
 
     function ConfirmButtonCallback() {
         switch(page){
             case PAGE.SELECT_DEVICE:
-                if (!address.current) {
-                    createToast("기기를 선택해주세요!");
-                    return;
-                }
-                stopBLEScan();
-                setPage(PAGE.JOIN_NETWORK);
-                setHiddenCancel(true);
-                break;
+              if (!address.current) {
+                  createToast("기기를 선택해주세요!");
+                  return;
+              }
+              stopBLEScan();
+              setPage(PAGE.JOIN_NETWORK);
+              setCancelVisible(false);
+              break;
             case PAGE.JOIN_NETWORK:
-                break;
+              if (newDevices.current.length < 1) {
+                createToast("기기 등록이 완료될 때까지 기다려주세요.");
+                return;
+              }
+              setPage(PAGE.INITIALIZE_DEVICE);
+              setCancelVisible(true);
+              break;
             case PAGE.INITIALIZE_DEVICE:
-                break;
+              if (!isRegisterDone.current) {
+                createToast("모든 기기에 정보를 입력해주세요!");
+                return;
+              }
+              createToast("기기 등록이 완료되었습니다!");
+              closeModal();
+              break;
         }
     }
 
@@ -41,32 +55,44 @@ export const RegisterDevice = ({show}) => {
       switch(page){
         case PAGE.SELECT_DEVICE:
             stopBLEScan();
-            setActive(false);
+            closeModal();
             break;
         case PAGE.JOIN_NETWORK:
             break;
         case PAGE.INITIALIZE_DEVICE:
+            newDevices.current.forEach((deviceId) => {
+              deleteDevice(deviceId);
+            });
+            createToast("기기 등록을 취소하였습니다.");
+            closeModal();
             break;
       }
     }
 
-    function onRegisterFailed() {
+    function closeModal() {
+      console.log("Start Close Modal");
       address.current = "";
-      setActive(false);
+      newDevices.current = [];
+      isRegisterDone.current = false;
+      setShow(false);
+      setPage(PAGE.SELECT_DEVICE);
+      setCancelVisible(true);
+      stopBLEScan();
+      console.log("End Close Modal");
     }
 
     return (
-        <ModalBase show={active}>
+        <ModalBase show={show}>
             <Container>
                 <Title>기기 추가</Title>
                 <PageContainer>
-                     {page == PAGE.SELECT_DEVICE && <SelectDevice address={address}/>}
-                     {page == PAGE.JOIN_NETWORK && <JoinNetwork address={address} onFailed={onRegisterFailed}/>}
-                     {page == PAGE.INITIALIZE_DEVICE && <InitializeDevice/>}
+                     {page == PAGE.SELECT_DEVICE && <SelectDevice address={address} show={show}/>}
+                     {page == PAGE.JOIN_NETWORK && <JoinNetwork address={address} onFailed={closeModal} devices={newDevices}/>}
+                     {page == PAGE.INITIALIZE_DEVICE && <InitializeDevice devicesRef={newDevices} areaId={areaId} isDone={isRegisterDone}/>}
                 </PageContainer>
                 <ButtonWrap>
-                    <Button hidden={hiddenCancel} onClick={CancelButtonCallback}>취소</Button>
-                    <Button primary="true" onClick={ConfirmButtonCallback}>확인</Button>
+                    <Button visible={cancelVisible} onClick={CancelButtonCallback}>취소</Button>
+                    <Button visible={true} primary="true" onClick={ConfirmButtonCallback}>확인</Button>
                 </ButtonWrap>
             </Container>
         </ModalBase>
@@ -106,6 +132,7 @@ const Button = styled.button`
   font-size: 50px;
   text-align: center;
   color: white;
+  visibility: ${(props) => (props.visible ? "visible" : "hidden")};
   background-color: ${(props) => (props.primary ? "#448569" : "#D9D9D9")};
 `;
 

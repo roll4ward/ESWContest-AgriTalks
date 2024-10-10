@@ -148,13 +148,14 @@ export function readDevicewithID(deviceID, callback) {
     let bridge = new WebOSServiceBridge();
     bridge.onservicecallback = (msg) => {
         msg = JSON.parse(msg);
+        console.log(msg);
         if (!msg.returnValue) {
             console.log(`Service call failed : ${msg.results}`);
             return;
         }
 
         if (callback) callback(msg.results[0]);
-        console.log("callback called", callback);
+        console.log("callback called", callback, msg);
     };
 
     let query = {
@@ -162,6 +163,32 @@ export function readDevicewithID(deviceID, callback) {
     }
 
     bridge.call(getServiceURL("infomanage", "device/read"), JSON.stringify(query));
+}
+
+/**
+ *  기기의 ID배열을 사용하여 기기를 쿼리
+ *  @param { [string] } deviceID 기기의 ID
+ *  @param { (result : Object)=>void } callback 쿼리한 결과를 처리할 콜백 함수
+ */
+export function readDevicewithIDs(deviceIDs, callback) {
+    let bridge = new WebOSServiceBridge();
+    bridge.onservicecallback = (msg) => {
+        msg = JSON.parse(msg);
+        console.log(msg);
+        if (!msg.returnValue) {
+            console.log(`Service call failed : ${msg.results}`);
+            return;
+        }
+
+        if (callback) callback(msg.results);
+        console.log("callback called", callback, msg);
+    };
+
+    let query = {
+        ids : deviceIDs
+    }
+
+    bridge.call(getServiceURL("infomanage", "device/read/ids"), JSON.stringify(query));
 }
 
 /**

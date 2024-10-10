@@ -1,23 +1,27 @@
 import styled from "styled-components";
 import { Chips } from "../../shared/Chips";
+import DEVICE_TYPE from "../../../device_type.json";
 
-export const DeviceInfoCard = () => {
+const TYPE = DEVICE_TYPE.TYPE;
+const SUBTYPE = DEVICE_TYPE.SUBTYPE;
+
+export const DeviceInfoCard = ({deviceInfo, isInit, onEdit, areaNameInfo}) => {
   return (
     <Containter>
       <InformationContaienr>
         <DeviceName>
-          새로운 기기
-          <DeviceDescription>기기 설명을 추가해 주세요</DeviceDescription>
+          {deviceInfo.name}
+          <DeviceDescription>{deviceInfo.desc ? deviceInfo.desc: "기기 설명을 추가해 주세요"}</DeviceDescription>
         </DeviceName>
 
         <ChipsContainer>
-          <Chips text={"구역을 지정해 주세요"} />
-          <Chips text={"작동기"} />
-          <Chips text={"펌프"} />
+          <Chips text={areaNameInfo[deviceInfo.areaId] } />
+          <Chips text={TYPE[deviceInfo.type]} />
+          <Chips text={SUBTYPE[deviceInfo.subtype]} />
         </ChipsContainer>
       </InformationContaienr>
 
-      <Button>정보 입력</Button>
+      <Button onClick={onEdit}>{isInit ? "정보 수정": "정보 입력"}</Button>
     </Containter>
   );
 };

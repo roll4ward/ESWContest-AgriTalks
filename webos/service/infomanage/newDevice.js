@@ -160,13 +160,14 @@ module.exports = (service) => {
             status: 2
         }));
 
-        setTimeout(()=>{
+        let waitTimeout = setTimeout(()=>{
             haltSignal.emit("stop");
             console.log("timeout");
-        }, 60000);
+        }, 30000);
         
         try {
             await checkStatus;
+            clearTimeout(waitTimeout);
         }
         catch {
             return;
@@ -291,6 +292,7 @@ function getThreadNetworkkey() {
             if (error) {
                 console.log(error);
                 rej();
+                return;
             }
     
             let result = stdout.match(/\[(.*?)\]/)[1];
@@ -368,6 +370,7 @@ function readGATTCharacteristic(service, clientId, characteristics) {
                             break;
                     }
                 })
+                console.log("GATT read : ", result);
                 res(result);
             }
         );
@@ -392,88 +395,31 @@ function byteArrayToString(byteArray) {
   }
 
 function waitForJoiningNetwork(service, clientId, haltSignal) {
-    let subscription;
-    return new Promise((res, rej) => {
-        let isJoiningDone = false;
-        let status, role;
-
-        readGATTCharacteristic(service, clientId, [
-            UUID.COMMISSION_STATUS, UUID.COMMISSION_ROLE
-        ]).then((data)=>{
-            role = data.role;
-            status = data.status;
-
-            if (role >= 2 && status == 3) {
-                res();
-                return;
-            }
-            
-        }).catch((err) => {
-            rej("Monitoring Failed");
-        })
-
-        subscription = service.subscribe("luna://com.webos.service.bluetooth2/gatt/monitorCharacteristics",
-            {
-               service: UUID.COMMISSION_SERVICE,
-               characteristics : [
-                   UUID.COMMISSION_STATUS,
-                   UUID.COMMISSION_ROLE
-               ],
-               clientId: clientId,
-               subscribe: true
-            });
-
-        subscription.on("response", (response) => {
-            console.log(response);
-            if (!response.payload.returnValue) {
-                console.log("Error while monitoring ", response);
-                subscription.cancel();
+    return new Promise(async (res, rej) => {
+        let pollingInterval = setInterval(()=>{
+            readGATTCharacteristic(service, clientId, [
+                UUID.COMMISSION_ROLE,
+                UUID.COMMISSION_STATUS
+            ])
+            .then(({status, role})=>{
+                if (role >= ROLE.CHILD && status == STATUS.DONE) {
+                    console.log(`Complete Joining role : ${role} status : ${status}`);
+                    clearInterval(pollingInterval);
+                    res();
+                }
+            })
+            .catch((reason)=>{
+                console.log("Error while monitoring ", reason);
+                clearInterval(pollingInterval);
                 rej("Monitoring Failed");
-                return;
-            }
-
-            if (!response.payload.changed) return;
-
-            let {characteristic, value} = response.payload.changed;
-            value = value.bytes;
-            console.log(characteristic);
-            console.log(value[0]);
-
-            if ((!isJoiningDone) && characteristic == UUID.COMMISSION_ROLE) {
-                isJoiningDone = (value[0] >= ROLE.CHILD);
-                console.log(isJoiningDone);
-            }
-
-            if (isJoiningDone) {
-                readGATTCharacteristic(service, clientId, [
-                    UUID.COMMISSION_STATUS, UUID.COMMISSION_ROLE
-                ]).then((data)=>{
-                    role = data.role;
-                    status = data.status;
-        
-                    if (role >= 2 && status == 3) {
-                        console.log(role, status);
-                        res();
-                        return;
-                    }
-
-                    else {
-                        console.log(role, status);
-                        rej("Invalid monitoring");
-                    }
-                    
-                }).catch((err) => {
-                    rej("Monitoring Failed");
-                }).finally(()=>{
-                    subscription.cancel();
-                });
-            }
-        });
+            }) 
+        }, 1000);
 
         haltSignal.addListener("stop", ()=>{
             console.log("Monitoring Halted");
+            clearInterval(pollingInterval);
             rej("Monitoring Halted");
-        })
+        });
     });
 }
 
@@ -516,12 +462,7 @@ function createNewDevice(service, deviceInfo) {
                     return;
                 }
 
-                res(
-                    {
-                        deviceId: response.payload.results,
-                        subtype: subtype
-                    }
-                );
+                res(response.payload.results);
             });
     });
 }
@@ -560,3 +501,27 @@ function disconnect(service, clientId) {
         );
     });
 } 
+
+function enableIndicate(service, clientId, characteristic) {
+    return new Promise((res, rej) => {
+        service.call("luna://com.webos.service.bluetooth2/gatt/writeDescriptorValue", 
+            {
+                clientId: clientId,
+                service: UUID.COMMISSION_SERVICE, 
+                characteristic: characteristic,
+                descriptor: "00002902-0000-1000-8000-00805f9b34fb",
+                value: {bytes: [2, 0]}
+            },    
+            (response) => {
+                if (!response.payload.returnValue) {
+                    console.log(response.payload);
+                    console.log("Failed to enable indicate", response.payload);
+                    rej("Failed to enable indicate");
+                    return;
+                }
+
+                res();
+            }
+        );
+    });
+}

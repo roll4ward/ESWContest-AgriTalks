@@ -4,10 +4,12 @@ import { DeviceMonitorBox } from "../component/controlDevices/DeviceMonitorBox";
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { readAllAreas, readDeviceswithArea } from "../api/infomanageService"
+import { RegisterDevice } from "../component/modal/RegisterDevice";
 
 export const DeviceOverView = () => {
   const [areaID, setAreaID] = useState(useParams().areaID);
   const [areas, setAreas] = useState([]);
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
 
   const today = new Date();
 
@@ -44,7 +46,7 @@ export const DeviceOverView = () => {
                 value={areaID}>
           { areas.map((area)=>(<option value={area.areaID}>{area.name}</option>)) }
         </select>
-        <Button>
+        <Button onClick={()=>{setShowRegisterModal(true)}}>
           <img src={add} alt="" width={48} height={48} />
           {"기기 추가"}
         </Button>
@@ -57,6 +59,7 @@ export const DeviceOverView = () => {
         {/* 작동기 */}
         <DeviceMonitorBox areaID={areaID} />
       </DeviceMonitorWapprer>
+      <RegisterDevice show={showRegisterModal} setShow={setShowRegisterModal} areaId={areaID}/>
     </Container>
   );
 };

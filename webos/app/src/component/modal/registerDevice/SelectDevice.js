@@ -4,17 +4,22 @@ import { ScannedDevice } from "./ScannedDevice";
 import { useEffect, useState } from "react";
 import { startBLEScan } from "../../../api/newDevice";
 
-export const SelectDevice = ({address}) => {
+export const SelectDevice = ({address, show}) => {
     const [scannedDevice, setScannedDevice] = useState([]);
 
     const [selected, setSelected] = useState("");
 
     useEffect(()=> {
-        startBLEScan((results)=>{
-            setScannedDevice(results);
-            console.log(results);
-        });
-        console.log("call scan");
+        if (show){
+            startBLEScan((results)=>{
+                setScannedDevice(results);
+                console.log(results);
+            });
+            console.log("call scan");
+        }
+        else {
+            setScannedDevice([]);
+        }
     }, []);
 
     useEffect(()=> {

@@ -1,0 +1,17 @@
+{
+    "TYPE" : {
+        "actuator" : "작동기",
+        "sensor" : "센서"
+    },
+
+    "SUBTYPE" : {
+        "pump" : "펌프",
+        "temp" : "임시",
+        "motor" : "모터",
+        "temperature" : "온도",
+        "humidity" : "습도",
+        "soil_humidity" : "토양 습도",
+        "light" : "광량",
+        "camera" : "카메라"
+    }
+}

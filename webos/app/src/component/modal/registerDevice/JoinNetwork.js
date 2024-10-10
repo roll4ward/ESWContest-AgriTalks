@@ -4,7 +4,7 @@ import { StatusText } from "./StatusText";
 import { connectDevice, registerDevice } from "../../../api/newDevice";
 import { createToast } from "../../../api/toast";
 
-export const JoinNetwork = ({address, onFailed}) => {
+export const JoinNetwork = ({address, onFailed, devices}) => {
   const [status, setStatus] = useState(0);
 
   useEffect(()=>{
@@ -14,6 +14,9 @@ export const JoinNetwork = ({address, onFailed}) => {
         registerDevice(results.clientId, address.current,
           (results) => {
             setStatus(results.status);
+            if (results.status == 5 && results.devices) {
+              devices.current = results.devices;
+            }
           },
           // 기기 등록 실패 콜백 (연결 이후)
           (results) => {

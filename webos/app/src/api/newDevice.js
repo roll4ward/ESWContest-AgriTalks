@@ -105,3 +105,28 @@ export function registerDevice(clientId, address, onSuccess, onFail) {
 
     bridge.call(getServiceURL("newDevice/register"), JSON.stringify(params));
 }
+
+export function initializeDevice({deviceId, areaId, name, description}, callback) {
+    let bridge = new WebOSServiceBridge();
+    bridge.onservicecallback = (msg) => {
+        msg = JSON.parse(msg);
+
+        if(!msg.returnValue) {
+            console.log(`Service call failed : ${msg.results}`);
+            if (onFail) {
+                console.log(msg.results.errorText);
+            }
+            return;
+        }
+        if(callback) callback();
+    }
+
+    const params = {
+        deviceId: deviceId,
+        areaId: areaId,
+        name: name,
+        desc: description
+    }
+
+    bridge.call(getServiceURL("newDevice/initialize"), JSON.stringify(params));
+}

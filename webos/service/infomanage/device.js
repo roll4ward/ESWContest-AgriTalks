@@ -82,6 +82,12 @@ const registerDeviceMethod = (service) => {
             query.where.push({ prop: '_id', op: '=', val: message.payload.id });
         }
 
+        if (message.payload.ids) {
+            message.payload.ids.forEach(element => {
+                query.where.push({prop: "_id", op: '=', val: element});
+            });
+        }
+
         if (message.payload.subtype) {
             query.where.push({ prop: 'subtype', op: '=', val: message.payload.subtype });
         }
@@ -102,6 +108,27 @@ const registerDeviceMethod = (service) => {
             }
         });
     });
+
+    service.register('device/read/ids', function(message) {
+        if (!message.payload.ids) {
+            message.respond({ returnValue: false, results: "ids are required" });
+            return;
+        }
+
+        const query = {
+            ids: message.payload.ids
+        };
+        
+
+        service.call('luna://com.webos.service.db/get', query, (response) => {
+            if (response.payload.returnValue) {
+                message.respond({ returnValue: true, results: response.payload.results });
+            } else {
+                message.respond({ returnValue: false, results: response.error });
+            }
+        });
+    });
+
     // 기기 정보 데이터 Update
     service.register('device/update', function(message) {
         const updatedItem = {
