@@ -10,6 +10,8 @@ export const DeviceOverView = () => {
   const [areaID, setAreaID] = useState(useParams().areaID);
   const [areas, setAreas] = useState([]);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [sensors, setSensors] = useState([]);
+  const [actuators, setActuators] = useState([]);
 
   const today = new Date();
 
@@ -28,7 +30,26 @@ export const DeviceOverView = () => {
     readAllAreas((result) => {
       setAreas(result.map(area => ({ name: area.name, areaID: area.areaID })));
     });
+    loadDevices();
   }, []);
+
+  function loadDevices() {
+    readDeviceswithArea(areaID, (result)=> {
+      console.log(result);
+      setActuators(result.filter(device => device.type === "actuator"));
+      setSensors(result.filter(device => device.type === "sensor"));
+    });
+  }
+
+  useEffect(()=>{
+    if (!showRegisterModal) {
+      loadDevices();
+    }
+  }, [showRegisterModal]);
+
+  useEffect(()=>{
+    loadDevices();
+  })
 
   return (
     <Container>
@@ -54,10 +75,10 @@ export const DeviceOverView = () => {
 
       <DeviceMonitorWapprer>
         {/* 센서 */}
-        <DeviceMonitorBox isSensor areaID={areaID} />
+        <DeviceMonitorBox isSensor devices={sensors} loadDevices={loadDevices} />
 
         {/* 작동기 */}
-        <DeviceMonitorBox areaID={areaID} />
+        <DeviceMonitorBox devices={actuators} loadDevices={loadDevices} />
       </DeviceMonitorWapprer>
       <RegisterDevice show={showRegisterModal} setShow={setShowRegisterModal} areaId={areaID}/>
     </Container>

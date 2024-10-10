@@ -5,27 +5,12 @@ import { useEffect, useState } from "react";
 import { deleteDevice, readDeviceswithArea, updateDeviceInfo, updateDeviceParentArea } from "../../api/infomanageService";
 import { createToast } from "../../api/toast";
 
-export const DeviceMonitorBox = ({ isSensor, areaID }) => {
+export const DeviceMonitorBox = ({ isSensor, devices, loadDevices }) => {
   const currentTime = new Date().toLocaleTimeString("ko-KR", {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
   });
-  const [devices, setDevices] = useState([]);
-
-  useEffect(() => {
-    loadDevices();
-  }, [areaID]);
-
-  function loadDevices() {
-    readDeviceswithArea(areaID, (result)=> {
-      console.log(result);
-      setDevices( isSensor ? 
-        result.filter(device => device.type === "sensor") :
-        result.filter(device => device.type === "actuator")
-      );
-    })
-  }
 
   function onDeviceEdit(deviceID, name, description, area) {
     if(!name) return;
