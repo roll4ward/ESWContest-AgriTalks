@@ -33,11 +33,11 @@ export const DeviceOverView = () => {
     loadDevices();
   }, []);
 
-  function loadDevices() {
+  function loadDevices(flag) {
     readDeviceswithArea(areaID, (result)=> {
       console.log(result);
-      setActuators(result.filter(device => device.type === "actuator"));
-      setSensors(result.filter(device => device.type === "sensor"));
+      if(flag==="actuator" || !flag) setActuators(result.filter(device => device.type === "actuator"));
+      if(flag==="sensor" || !flag) setSensors(result.filter(device => device.type === "sensor"));
     });
   }
 

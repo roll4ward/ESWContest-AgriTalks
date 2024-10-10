@@ -25,6 +25,10 @@ export default function DeviceDetail({ deviceID }) {
       });
     });
 
+    loadLastValue();
+  }, []);
+
+  function loadLastValue() {
     readLatestValue(deviceID, (result) => {
       let time = new Date(Date.parse(result.time));
       const formatter = new Intl.DateTimeFormat("ko-KR", {
@@ -41,7 +45,7 @@ export default function DeviceDetail({ deviceID }) {
         lastupdatetime: formatter.format(time),
       });
     });
-  }, []);
+  }
 
   return (
     <MainWrap>
@@ -55,7 +59,7 @@ export default function DeviceDetail({ deviceID }) {
       <ValueConiner>
         <StyledRow>
           <UpdateTitle>마지막 업데이트 시간</UpdateTitle>
-          <StyledIcon src={RefreshIcon} alt="RefreshIcon" />
+          <StyledIcon onClick={loadLastValue} src={RefreshIcon} alt="RefreshIcon" />
         </StyledRow>
 
         <LastUpdateTime>{valueInfo.lastupdatetime}</LastUpdateTime>

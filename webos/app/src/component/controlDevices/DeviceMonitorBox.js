@@ -6,11 +6,12 @@ import { deleteDevice, readDeviceswithArea, updateDeviceInfo, updateDeviceParent
 import { createToast } from "../../api/toast";
 
 export const DeviceMonitorBox = ({ isSensor, devices, loadDevices }) => {
-  const currentTime = new Date().toLocaleTimeString("ko-KR", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  function onRefresh() {
+    setCurrentTime(new Date());
+    loadDevices(isSensor ? "sensor" : "actuator");
+  }
 
   function onDeviceEdit(deviceID, name, description, area) {
     if(!name) return;
@@ -43,8 +44,18 @@ export const DeviceMonitorBox = ({ isSensor, devices, loadDevices }) => {
         <Title>{isSensor ? "센서" : "작동기"}</Title>
 
         <ControllWrapper>
-          <Time>{currentTime}</Time>
-          <img src={refresh} alt="" width={48} height={48} />
+          <Time>
+            { 
+              currentTime.toLocaleTimeString("ko-KR", 
+                {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: false,
+                }
+              )
+            }
+          </Time>
+          <img onClick={onRefresh} src={refresh} alt="" width={48} height={48} />
         </ControllWrapper>
       </TitleWrapper>
 
