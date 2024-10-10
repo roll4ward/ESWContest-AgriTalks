@@ -45,11 +45,12 @@ export const InitializeDevice = ({devicesRef, isDone, areaId}) => {
 
   function loadAreas() {
     readAllAreas((results)=> {
+      console.log("Areas : ", results);
       const area_name_info = results.reduce((acc, cur) => {
-        acc[cur.areaId] = cur.name;
+        acc[cur.areaID] = cur.name;
         return acc;
       }, {});
-
+      console.log("area_name_info : ", area_name_info);
       setAreaInfos(area_name_info);
     })
   }

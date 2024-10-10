@@ -45,12 +45,8 @@ export const DeviceOverView = () => {
     if (!showRegisterModal) {
       loadDevices();
     }
-  }, [showRegisterModal]);
-
-  useEffect(()=>{
-    loadDevices();
-  })
-
+  }, [showRegisterModal, areaID]);
+  
   return (
     <Container>
       <TitleWrapper>

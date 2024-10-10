@@ -6,6 +6,7 @@ const TYPE = DEVICE_TYPE.TYPE;
 const SUBTYPE = DEVICE_TYPE.SUBTYPE;
 
 export const DeviceInfoCard = ({deviceInfo, isInit, onEdit, areaNameInfo}) => {
+  console.log(areaNameInfo);
   return (
     <Containter>
       <InformationContaienr>
@@ -15,7 +16,7 @@ export const DeviceInfoCard = ({deviceInfo, isInit, onEdit, areaNameInfo}) => {
         </DeviceName>
 
         <ChipsContainer>
-          <Chips text={areaNameInfo[deviceInfo.areaId] } />
+          <Chips text={ areaNameInfo[deviceInfo.areaId] ? areaNameInfo[deviceInfo.areaId] : "구역을 입력해주세요"} />
           <Chips text={TYPE[deviceInfo.type]} />
           <Chips text={SUBTYPE[deviceInfo.subtype]} />
         </ChipsContainer>
