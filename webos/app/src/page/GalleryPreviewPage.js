@@ -6,6 +6,7 @@ import { readAllImages } from "../api/mediaService";
 export default function GalleryPreviewPage() {
   const [images, setImages] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null); // 선택한 이미지
+  const [selectedImageDesc, setSelectedImageDesc] = useState("이게뭐야?"); // 선택한 이미지
   const navigate = useNavigate();
 
   useEffect( () => {
@@ -24,7 +25,7 @@ export default function GalleryPreviewPage() {
 
   const handleCompleteSelection = () => {
     if (selectedImage) {
-      navigate("/chat", { state: { selectedImage } });
+      navigate("/chat", { state: { selectedImage, selectedImageDesc } });
     } else {
       alert("이미지를 선택하세요!");
     }

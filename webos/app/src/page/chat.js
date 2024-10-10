@@ -18,6 +18,7 @@ export default function ChatPage() {
 
   const location = useLocation();
   const selectedImage = location.state?.selectedImage;
+  const selectedImageDesc = location.state?.selectedImageDesc;
 
   useEffect(() => {
     readAllConversation((result)=> {
@@ -37,19 +38,25 @@ export default function ChatPage() {
         localStorage.setItem('recorderId', result);
       });
     }
+    
+    // 이미지가 있으면 메세지 전송
+    if (selectedImage) {
+      handleSendMessage(selectedImage, selectedImageDesc);
+    }
+
   }, []);
 
-  const handleSendMessage = (image) => {
+  const handleSendMessage = (image, imageDesc) => {
 
     // 질문창이 공백이면 return
     if (prompt == "" && !image) {
       return;
     }
-
+    console.log(image? imageDesc : prompt, image)
     // 사용자 메시지 저장
-    const newMessages = [...messages, { type: "user", text: prompt, image: image}];
+    const newMessages = [...messages, { type: "user", text: image? imageDesc : prompt, image: image}];
     setMessages(newMessages);
-    createConversation(prompt, "user", image);
+    createConversation(image ? imageDesc : prompt, "user", image);
     setPrompt("");
 
     // ai의 대답창을 우선 "..."으로 초기화
@@ -57,7 +64,7 @@ export default function ChatPage() {
     let aiMessage = { type: "ai", text: ""};
     
     // 스트림 질문 전송 함수
-    askToAiStream(prompt, image, (askResult)=> {
+    askToAiStream(image? imageDesc : prompt, image, (askResult)=> {
       // 스트림의 마지막 토큰이 수신되면 ai의 대답 전문을 저장 및 tts & speak
       if(!askResult.is_streaming){
         createConversation(aiMessage.text, "ai");
