@@ -34,6 +34,9 @@ export default function RecorderModal({ show, handleClose, recorderId }) {
 
     return () => {
       console.log("모달 닫힘: clean-up 처리 중");
+      if(!isSendEnabled){
+        stopRecord(rId);
+      }
       stopTimer(); // 타이머 정지
       setIsRecording(false); // 녹음 상태 초기화
       setSeconds(0); // 타이머 초기화
