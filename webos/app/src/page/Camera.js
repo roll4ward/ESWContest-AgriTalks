@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Button } from "react-bootstrap";
 import styled from "styled-components";
 import cameraIcon from "../assets/icon/cameraIcon.svg";
 import {captureImage, initCamera} from "../api/mediaService";
@@ -79,7 +78,7 @@ const Container = styled.div`
   position: relative;
 `;
 
-const CameraButton = styled(Button)`
+const CameraButton = styled.div`
   border-color: white;
   border-radius: 50%;
   z-index: 99;
@@ -89,6 +88,13 @@ const CameraButton = styled(Button)`
   height: 150px;
   width: 150px;
   background-color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  &:active {
+    background-color: gray;
+  }
 `;
 
 const VideoContainer = styled.video`
