@@ -1,5 +1,3 @@
-import { useState } from "react"
-import { Button } from "react-bootstrap"
 import Modal from "react-modal"
 
 export const ModalBase = ({show, children}) => {
@@ -21,7 +19,7 @@ export const ModalBase = ({show, children}) => {
             borderRadius: "40px",
             backgroundColor: "white",
             justifyContent: "center",
-            overflow: "auto",
+            overflow: "hidden",
             position: 'absolute', 
             top: '50%',
             left: '50%',

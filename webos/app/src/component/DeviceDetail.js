@@ -5,56 +5,70 @@ import { readDevicewithID } from "../api/infomanageService";
 import { readLatestValue } from "../api/coapService";
 
 export default function DeviceDetail({ deviceID }) {
-  const [deviceInfo, setDeviceInfo] = useState({ name : "기기", description : "기기설명", unit : ""});
-  const [valueInfo, setValueInfo] = useState({ lastupdatetime : "측정 값 없음", value : "X"});
+  const [deviceInfo, setDeviceInfo] = useState({
+    name: "기기명",
+    description: "기기설명을 추가해 주세요.",
+    unit: "",
+  });
+  const [valueInfo, setValueInfo] = useState({
+    lastupdatetime: "측정 값 없음",
+    value: "X",
+  });
 
-  useEffect(()=> {
-    readDevicewithID(deviceID, (result)=> {
+  useEffect(() => {
+    readDevicewithID(deviceID, (result) => {
       console.log(result);
       setDeviceInfo({
         name: result.name,
         description: result.desc,
-        unit: result.unit
+        unit: result.unit,
       });
     });
+
+    loadLastValue();
+  }, []);
+
+  function loadLastValue() {
     readLatestValue(deviceID, (result) => {
-      let time = new Date(Date.parse(result.time));
-      const formatter = new Intl.DateTimeFormat('ko-KR', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: 'numeric',
+      let time = new Date(result.time);
+      const formatter = new Intl.DateTimeFormat("ko-KR", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "numeric",
+        minute: "numeric",
         hour12: false,
       });
 
       setValueInfo({
         value: result.value,
-        lastupdatetime: formatter.format(time)
-      })
-    })
-  }, []);
-  
+        lastupdatetime: formatter.format(time),
+      });
+    });
+  }
+
   return (
     <MainWrap>
-      <InfoWrap>
+      {/* 좌측 기기명 박스 */}
+      <DeviceInfoContainer>
+        <DeviceName>{deviceInfo.name}</DeviceName>
+        <DeviceInfo>{deviceInfo.description}</DeviceInfo>
+      </DeviceInfoContainer>
+
+      {/* 우측 기기값 박스 */}
+      <ValueConiner>
         <StyledRow>
-          <StyledName>{deviceInfo.name}</StyledName>
+          <UpdateTitle>마지막 업데이트 시간</UpdateTitle>
+          <StyledIcon onClick={loadLastValue} src={RefreshIcon} alt="RefreshIcon" />
         </StyledRow>
-        <StyledRow>
-          <StyledContent>{deviceInfo.description}</StyledContent>
-        </StyledRow>
-      </InfoWrap>
-      <ValueWrap>
-        <StyledRow>
-          <div style={{ fontWeight: "600", color: "#717171", fontSize: "2rem" }}>
-            마지막 업데이트 시간
-          </div>
-          <StyledIcon src={RefreshIcon} alt="RefreshIcon"/>
-        </StyledRow>
-        <div style={{ color: "#717171", fontSize: "2rem" }}>{valueInfo.lastupdatetime}</div>
-        <StyledValue>{valueInfo.value}{valueInfo.value === "X" ? "" : deviceInfo.unit}</StyledValue>
-      </ValueWrap>
+
+        <LastUpdateTime>{valueInfo.lastupdatetime}</LastUpdateTime>
+
+        <StyledValue>
+          {valueInfo.value}
+          {valueInfo.value === "X" ? "" : deviceInfo.unit}
+        </StyledValue>
+      </ValueConiner>
     </MainWrap>
   );
 }
@@ -62,18 +76,39 @@ export default function DeviceDetail({ deviceID }) {
 const MainWrap = styled.div`
   display: flex;
   justify-content: space-between;
-  margin-bottom: 20px;
 `;
-const InfoWrap = styled.div`
+const DeviceInfoContainer = styled.div`
   display: flex;
   align-items: center;
+  width: 65%;
   flex-direction: column;
-  margin: 50px;
-  width: 40%;
+  padding: 40px;
+  white-space: nowrap;
+`;
+const DeviceName = styled.div`
+  color: #448569;
+  font-size: 75px;
+  align-items: center;
+  font-weight: 600;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
 `;
 
-const ValueWrap = styled.div`
-  width: 50%;
+const DeviceInfo = styled.div`
+  color: #717171;
+  font-size: 32px;
+  white-space: normal; /* 텍스트가 길어지면 자동으로 줄바꿈 */
+  text-overflow: ellipsis; /* 텍스트가 너무 길면 말줄임표로 표시 */
+  max-height: 200px;
+  overflow-y: auto;
+  justify-content: center;
+`;
+
+const ValueConiner = styled.div`
+  flex-grow: 1;
+  padding: 40px 10px;
   background-color: #f5f5f5;
   border-radius: 20px;
   display: flex;
@@ -82,40 +117,28 @@ const ValueWrap = styled.div`
   justify-content: center;
 `;
 
-const StyledRow = styled.div`
-  display: flex;
-  align-items: center;
-
-  & > * {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
-  }
+const UpdateTitle = styled.div`
+  color: #717171;
+  font-size: 32px;
 `;
 
-const StyledName = styled.div`
-  color: #448569;
-  font-size: 7.5rem;
+const LastUpdateTime = styled.span`
+  color: #717171;
+  font-size: 32px;
   font-weight: 600;
-  margin-bottom: 10px;
+`;
+
+const StyledRow = styled.div`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
 `;
 
 const StyledValue = styled.div`
-  font-size: 7.5rem;
+  font-size: 128px;
   font-weight: 800;
 `;
-const StyledContent = styled.div`
-  color: #717171;
-  font-size: 2.5rem;
-  word-wrap: break-word; /* 긴 단어가 있을 경우 자동 줄바꿈 */
-  white-space: normal; /* 텍스트가 길어지면 자동으로 줄바꿈 */
-  max-width: 300px; /* 너비 제한 */
-  overflow: hidden; /* 넘치는 내용을 숨김 */
-  text-overflow: ellipsis; /* 텍스트가 너무 길면 말줄임표로 표시 */
-  height: auto; /* 높이는 자동 조절 */
-  max-height: 200px; /* 최대 높이 지정, 넘으면 스크롤 생성 */
-  overflow-y: auto; /* 세로로 스크롤 생성 */
-`;
+
 const StyledIcon = styled.img`
   width: 2rem;
   height: 2rem;
