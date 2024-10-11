@@ -295,12 +295,27 @@ aitalk_service.register("stt", async function(msg) {
   ))
 
   // 다 사용한 파일 삭제 추가 -geonha
-  try {
-    fs.unlinkSync(msg.payload.voice_path);
-    console.log(`File ${msg.payload.voice_path} has been deleted.`);
-  } catch (err) {
-    console.error(`Error deleting file ${msg.payload.voice_path}: ${err}`);
-  }
+  fs.readdir("/media/internal", (err, files) => {
+    if (err) {
+      console.error('Directory reading error:', err);
+      return;
+    }
+
+    // 파일들 중에서 "audio"로 시작하는 파일들 필터링
+    const audioFiles = files.filter(file => file.startsWith('Audio'));
+
+    // 필터된 파일들을 삭제
+    audioFiles.forEach(file => {
+      const filePath = path.join("/media/internal", file);
+      fs.unlink(filePath, err => {
+        if (err) {
+          console.error(`Error deleting file ${file}:`, err);
+        } else {
+          console.log(`Successfully deleted ${file}`);
+        }
+      });
+    });
+  });
 });
 
 aitalk_service.register("tts", async function (msg) {
