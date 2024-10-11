@@ -29,15 +29,15 @@ export default function ChatPage() {
       }
     });
 
-    const storedRecorderId = localStorage.getItem('recorderId');
-    if (storedRecorderId) {
-      setRecorderId(storedRecorderId);
-    } else {
-      initRecord((result)=> {
-        setRecorderId(result); 
-        localStorage.setItem('recorderId', result);
-      });
-    }
+    // const storedRecorderId = localStorage.getItem('recorderId');
+    // if (storedRecorderId) {
+    //   setRecorderId(storedRecorderId);
+    // } else {
+    initRecord((result)=> {
+      setRecorderId(result); 
+      // localStorage.setItem('recorderId', result);
+    });
+    // }
     
     // 이미지가 있으면 메세지 전송
     if (selectedImage) {
