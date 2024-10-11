@@ -157,20 +157,25 @@ export function createConversation(text, type, image) {
 
 /**
  * 모든 대화내용을 쿼리
+ * @param { string } page 이전 쿼리에서 전달받은 next 페이지
  * @param { (result : string)=>void } callback 서비스 호출 후 처리할 콜백 함수
  */
-export function readAllConversation (callback) {
+export function readConversation (page, callback) {
   let bridge = new WebOSServiceBridge();
   bridge.onservicecallback = (msg) => {
       msg = JSON.parse(msg);
       if (!msg.returnValue) {
-          console.log(`readAllConversation Service call failed : ${msg.result}`);
+          console.log(`readConversation Service call failed : ${msg.result}`);
           return null;
       }
       if (callback) callback(msg.result);
   };
+  
+  let query = {};
 
-  bridge.call(getServiceURL("aitalk", "read"), "{}");
+  if(page) query.page = page;
+
+  bridge.call(getServiceURL("aitalk", "read"), JSON.stringify(query));
 }
 
 /**

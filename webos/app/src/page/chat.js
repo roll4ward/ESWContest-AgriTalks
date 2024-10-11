@@ -5,13 +5,14 @@ import MessageBox from "../component/MessageBox";
 import { Button, Form, InputGroup, Card } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import styled from "styled-components";
-import { askToAiStream, TTS, STT, speak, createConversation, readAllConversation, deleteAllConversation } from "../api/aiService";
+import { askToAiStream, TTS, STT, speak, createConversation, readConversation, deleteAllConversation } from "../api/aiService";
 import { initRecord} from "../api/mediaService";
 import RecordModal from "../component/modal/RecorderModal";
 import { FaMicrophone } from "react-icons/fa";
 
 export default function ChatPage() {
   const [messages, setMessages] = useState([]);
+  const [page, setPage] = useState("");
   const [prompt, setPrompt] = useState("");
   const [showRecordModal, setShowRecordModal] = useState(false);
   const [recorderId, setRecorderId] = useState("");
@@ -21,12 +22,9 @@ export default function ChatPage() {
   const selectedImageDesc = location.state?.selectedImageDesc;
 
   useEffect(() => {
-    readAllConversation((result)=> {
-      if(result){
-        setMessages(result.map((msg) => ({ type: msg.type, text: msg.text, image:msg.image })));
-      }else{
-        console.log("이전에 대화 기록 없음");
-      }
+    readConversation(null, (result)=> {
+      setMessages(result.texts.map((msg) => ({ type: msg.type, text: msg.text, image:msg.image })));
+      if(result.page) setPage(result.page)
     });
 
     initRecord((result)=> {
@@ -43,6 +41,26 @@ export default function ChatPage() {
   const handleSendMessage = (_ , image, imageDesc) => {
     // 질문창이 공백이면 return
     if (prompt == "" && !image) {
+
+      // -----------------------------------------------------------
+      // 임시 태스트용 코드
+      // 대화 내용이 10개 초과로 있어야 태스트 가능
+      // 다음 페이지가 있는 경우 이전 대화내용 10개 추가로 불러오는 함수
+      // 스크롤바가 맨 위로 이동하는 이벤트에 이 함수를 넣어주면 됨 
+      if(page){
+        readConversation(page, (result)=> {
+          const list = result.texts.map((msg) => ({ type: msg.type, text: msg.text, image:msg.image }))
+          setMessages([...list , ...messages]);
+          if(result.page){
+            setPage(result.page);
+          }else{
+            setPage("");
+          }
+        });
+      }
+      // ~ 임시 태스트용 코드
+      // -----------------------------------------------------------
+
       return;
     }
     
