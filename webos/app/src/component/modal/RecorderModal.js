@@ -1,55 +1,77 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button, Modal } from "react-bootstrap";
 import styled, { keyframes } from "styled-components";
 import { FaMicrophone, FaStop } from "react-icons/fa";
 import { startRecord, pauseRecord, resumeRecord, stopRecord } from "../../api/mediaService";
+
 export default function RecorderModal({ show, handleClose, recorderId }) {
   const [rId, setRId] = useState(false);
   const [isRecording, setIsRecording] = useState(true);
   const [recordedAudio, setRecordedAudio] = useState(null);
   const [seconds, setSeconds] = useState(0);
+  const [isSendEnabled, setIsSendEnabled] = useState(false); // 전송 버튼 비활성화 상태
+  const intervalRef = useRef(null); // 타이머 ID를 저장할 ref
   useEffect(() => {
-    let interval;
-    if (isRecording) {
-      interval = setInterval(() => {
-        setSeconds((prev) => prev + 1);
-      }, 1000);
-    } else if (!isRecording && seconds !== 0) {
-      clearInterval(interval);
-    }
-    return () => clearInterval(interval);
-  }, [isRecording, seconds]);
-  useEffect(() => {
-    // 래코드 id 저장
     if(recorderId) setRId(recorderId);
-    // 모달이 열릴 때마다 상태 초기화
+
     if (show) {
-      setIsRecording(false);
-      setRecordedAudio(null);
-      setSeconds(0);
-    }
-  }, [show, recorderId]);
-  const handleToggleRecording = () => {
-    if (isRecording) {
-      setIsRecording(false);
-      // stopRecord(rId, (result)=> {
-      //   if(result){
-      //     setRecordedAudio(result);
-      //   }else{
-      //     console.log("녹음 종료 실패");
-      //   }
-      // });
+      console.log("모달 열림: 녹음 시작");
+      setIsRecording(true);
+      startTimer(); // 타이머 시작
+
+      startRecord(rId, (result)=> {
+        if(!result){
+          console.log("녹음 시작 실패");
+        }
+      });
 
     } else {
-      setSeconds(0);
-      // startRecord(rId, (result)=> {
-      //   if(!result){
-      //     console.log("녹음 시작 실패");
-      //   }
-      // });
-      setIsRecording(true);
+      stopTimer(); // 모달이 닫힐 때 타이머 정지
+      setSeconds(0); // 타이머 초기화
+      setIsRecording(false); // 녹음 상태 초기화
+      setIsSendEnabled(false); // 전송 버튼 비활성화
+    }
+
+    return () => {
+      console.log("모달 닫힘: clean-up 처리 중");
+      stopTimer(); // 타이머 정지
+      setIsRecording(false); // 녹음 상태 초기화
+      setSeconds(0); // 타이머 초기화
+    };
+  }, [show, recorderId]);
+
+  // 타이머 시작 함수
+  const startTimer = () => {
+    if (intervalRef.current) return; // 이미 타이머가 작동 중이면 다시 시작하지 않음
+    intervalRef.current = setInterval(() => {
+      setSeconds((prev) => prev + 1);
+    }, 1000);
+  };
+
+  // 타이머 정지 함수
+  const stopTimer = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current); // 타이머 중지
+      intervalRef.current = null; // ref 초기화
     }
   };
+
+  // 녹음 중지
+  const handleStopRecording = () => {
+    stopTimer(); // 타이머 정지
+    setIsRecording(false); // 녹음 중지
+    setIsSendEnabled(true); // 전송 버튼 활성화
+    
+    stopRecord(rId, (result)=> {
+      if(result){
+        setRecordedAudio(result);
+      }else{
+        console.log("녹음 종료 실패");
+      }
+    });
+  };
+
+  // 오디오 전송
   const handleSendAudio = () => {
     if (recordedAudio) {
       handleClose(recordedAudio);
@@ -57,8 +79,14 @@ export default function RecorderModal({ show, handleClose, recorderId }) {
       handleClose(null);
     }
   };
+
+  // 녹음 취소
+  const handleCancelAudio = () => {
+    handleClose(null); // 취소 시 모달을 닫음
+  };
+
   return (
-    <Modal show={show} onHide={handleClose} centered>
+    <Modal show={show} onHide={handleCancelAudio} centered>
       {/* <Modal.Header closeButton> */}
       <Modal.Header>
         <Modal.Title>녹음하기</Modal.Title>
@@ -66,30 +94,45 @@ export default function RecorderModal({ show, handleClose, recorderId }) {
       <Modal.Body>
         {isRecording && (
           <WaveContainer>
-            <Wave />
-            <Wave />
-            <Wave />
+            <Wave isRecording={isRecording} />
+            <Wave isRecording={isRecording} />
+            <Wave isRecording={isRecording} />
           </WaveContainer>
         )}
-        {(isRecording || seconds > 0) && (
-          <Timer>
-            {`${Math.floor(seconds / 60)
-              .toString()
-              .padStart(2, "0")}:${(seconds % 60).toString().padStart(2, "0")}`}
-          </Timer>
-        )}
+
+        <Timer>
+          {`${Math.floor(seconds / 60)
+            .toString()
+            .padStart(2, "0")}:${(seconds % 60).toString().padStart(2, "0")}`}
+        </Timer>
+
         <RecordingButton
-          onClick={handleToggleRecording}
-          recording={isRecording}
+          onClick={handleStopRecording}
+          disabled={!isRecording} // 녹음 중일 때만 중지 가능
         >
         <FaStop style={{ color: "black" }} />
         </RecordingButton>
-        <SendButton variant="success" onClick={handleSendAudio} disabled={!recordedAudio}> 전송 </SendButton>
-        <ExitButton variant="secondary" onClick={handleSendAudio} disabled={!recordedAudio}> 취소 </ExitButton>
+        {/* 전송 버튼 */}
+        <SendButton
+          variant="success"
+          onClick={handleSendAudio}
+          disabled={!isSendEnabled} // 녹음 중지 후에만 활성화
+        >
+          전송
+        </SendButton>
+
+        {/* 취소 버튼 */}
+        <ExitButton
+          variant="secondary"
+          onClick={handleCancelAudio} // 취소 시 모달을 닫음
+        >
+          취소
+        </ExitButton>
       </Modal.Body>
     </Modal>
   );
 }
+
 const waveAnimation = keyframes`
   0% {
     transform: scaleY(1);
@@ -101,6 +144,7 @@ const waveAnimation = keyframes`
     transform: scaleY(1);
   }
 `;
+
 const WaveContainer = styled.div`
   display: flex;
   justify-content: space-around;
@@ -108,12 +152,17 @@ const WaveContainer = styled.div`
   margin: 20px 0;
   height: 60px;
 `;
+
 const Wave = styled.div`
   width: 5px;
   height: 100%;
   background-color: #007bff;
   border-radius: 50px;
   animation: ${waveAnimation} 0.6s infinite ease-in-out;
+  animation-play-state: ${({ isRecording }) =>
+    isRecording
+      ? "running"
+      : "paused"}; // 애니메이션 상태를 녹음 상태에 맞춰 실행/정지
   &:nth-child(2) {
     animation-delay: 0.2s;
   }
@@ -121,12 +170,14 @@ const Wave = styled.div`
     animation-delay: 0.4s;
   }
 `;
+
 const Timer = styled.div`
   font-size: 1.5rem;
   text-align: center;
   margin-top: 10px;
   margin-bottom: 20px;
 `;
+
 const RecordingButton = styled.button`
   display: flex;
   justify-content: center;
@@ -134,8 +185,8 @@ const RecordingButton = styled.button`
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  border: 3px solid ${({ recording }) => (recording ? "gray" : "gray")};
-  background-color: ${({ recording }) => (recording ? "white" : "white")};
+  border: 3px solid gray;
+  background-color: white;
   cursor: pointer;
   margin: 20px auto;
 `;
@@ -152,6 +203,6 @@ const ExitButton = styled(Button)`
   width: 47%;
   margin-top: 20px;
   margin-left: 10px;
-  background-color: ${({ disabled }) => (disabled ? "#ccc" : "#448569")};
-  cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
+  background-color: #ccc;
+  cursor: pointer;
 `;

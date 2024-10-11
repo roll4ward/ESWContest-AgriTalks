@@ -110,6 +110,10 @@ export default function ChatPage() {
       });
     }
   };
+  
+  const handleOpenRecordModal = () => {
+    setShowRecordModal(true); // 녹음 모달 열기
+  };
 
   return (
     <Container>
@@ -135,10 +139,15 @@ export default function ChatPage() {
             </Button>
 
             <Button
-              style={{ backgroundColor: "grey", color: "#fff" }}
-              onClick={() => setShowRecordModal(true)}
+              style={{
+                backgroundColor: "#FF6F61",
+                color: "#fff",
+                width: "5%",
+                fontSize: "30px",
+              }}
+              onClick={handleOpenRecordModal} // 녹음 모달 열기 버튼
             >
-              <FaMicrophone />
+              <FaMicrophone size={30} />
             </Button>
           </InputGroup>
         </CardFooter>
