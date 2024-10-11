@@ -54,21 +54,7 @@ service.register('create', function(message) {
             results: "Value & deviceId is required"
         })
     }
-    const dataToStore = {
-        _kind: DB_KIND,
-        deviceId: message.payload.deviceId,
-        time: new Date().toISOString(),
-        value: message.payload.value
-    };
-
-    service.call('luna://com.webos.service.db/put', { objects: [dataToStore] }, (response) => {
-        console.log(response);
-        if (response.payload.returnValue) {
-            message.respond({ returnValue: true, results: response.payload.results[0].id});
-        } else {
-            message.respond({ returnValue: false, results: response.error});
-        }
-    });
+    saveSensorData(service, message.payload.deviceId, message.payload.value);
 });
 
 // 센서 값 데이터 Update (임시)
@@ -181,44 +167,129 @@ service.register('delete', function(message) {
 // CoAP 관련 함수
 
 // 센서 데이터 저장 함수
-function storeSensorData(sensorData) {
-    const dataToStore = {
-        _kind: DB_KIND,
-        deviceId: sensorData.deviceId,
-        value: sensorData.value,
-        time: new Date().toISOString()
-    };
-
-    service.call('luna://com.webos.service.db/put', { objects: [dataToStore] }, (response) => {
-        // if (response.payload.returnValue) {
-        //     message.respond({ returnValue: true, results: response.payload.results[0].id});
-        // } else {
-        //     message.respond({ returnValue: false, results: response.error});
-        // }
+function saveSensorData(deviceId, value) {
+    return new Promise((res, rej) => {
+        const dataToStore = {
+            _kind: DB_KIND,
+            deviceId: deviceId,
+            time: new Date().toISOString(),
+            value: value
+        };
+    
+        service.call('luna://com.webos.service.db/put', { objects: [dataToStore] }, (response) => {
+            console.log(response);
+            if (response.payload.returnValue) {
+                res();
+            } else {
+                rej();
+            }
+        });
     });
 }
 
 // CoAP 메시지 전송 및 데이터 저장 함수
-function sendCoapMessageAndStore(hostIP) {
-    const req = coap.request({
-        host: hostIP,
-        port: 5683,
-        method: 'GET',
-        pathname: 'sensor'
-    });
+function sendCoapMessage(hostIP, method, pathname, payload) {
+    return new Promise((res, rej) => {
+        let timeout;
+        const req = coap.request({
+            host: hostIP,
+            port: 6000,
+            method: method,
+            pathname: pathname,
+        });
+    
+        req.on('response', function(response) {
+            console.log('Response from CoAP server:', response.payload.toString());
+            res(response.payload.readDoubleLE(0));
+            clearTimeout(timeout);
+            timeout = null;
+        });
 
-    req.on('response', function(res) {
-        console.log('Response from CoAP server:', res.payload.toString());
-        try {
-            const sensorData = JSON.parse(res.payload.toString());
-            storeSensorData(sensorData);
-        } catch (error) {
-            console.error('Error parsing sensor data:', error);
+        req.on('error', (err) => {
+            console.log("Error occured : ", err);
+            rej(err);
+            clearTimeout(timeout);
+            timeout = null;
+        })
+
+        if(typeof payload !== "undefined") {
+            req.pipe(payload);
         }
+    
+        req.end();
+        timeout = setTimeout(()=>{
+            req.emit("error", "timeout");
+        }, 5000);
     });
-
-    req.end();
 }
+
+function getDeviceInfo(service, deviceId) {
+    return new Promise((res, rej) => {
+        service.call(
+            "luna://xyz.rollforward.app.infomanage/device/read",
+            { id : deviceId },
+            (response) => {
+                if (!response.payload.returnValue) {
+                    console.error(response.payload.results);
+                    rej(response.payload.results);
+                    return;
+                }
+                res(response.payload.results[0]);
+            }
+        );
+    });
+}
+
+service.register("send", async (message) => {
+    if (!message.payload.deviceId) {
+        message.respond({
+            returnValue: false,
+            results: "deviceId is required"
+        });
+        return;
+    }
+
+    let deviceInfo;
+    try {
+        deviceInfo = await getDeviceInfo(service, message.payload.deviceId);
+    }
+    catch (err) {
+        console.log(err);
+        message.respond({
+            returnValue: false,
+            results: "Failed to get device info"
+        });
+        return;
+    }
+    
+    let response_value
+    try {
+        response_value = await sendCoapMessage(deviceInfo.ip, "GET", deviceInfo.subtype);
+    }
+    catch (err) {
+        message.respond({
+            returnValue: false,
+            results: err
+        });
+        return;
+    }
+
+    try {
+        await saveSensorData(message.payload.deviceId, response_value);
+    }
+    catch (err) {
+        message.respond({
+            returnValue: false,
+            results: "Failed to save data"
+        });
+        return;
+    }
+
+    message.respond({
+        returnValue: true,
+        results : response_value
+    });
+});
 
 // 서비스 메소드: CoAP 메시지 전송 시작
 service.register("startSending", (message) => {
