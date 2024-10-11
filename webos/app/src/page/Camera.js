@@ -20,11 +20,9 @@ export const Camera = () => {
   }, []);
 
   const startVideoStream = () => {
-    console.log("startVideoStream");
     navigator.mediaDevices.getUserMedia({video: true, audio: false})
       .then((stream) => {
         setStream(stream);
-        console.log(stream);
         videoRef.current.srcObject = stream;
       })
       .catch((err) => {
@@ -33,9 +31,7 @@ export const Camera = () => {
   };
 
   const stopVideoStream = (callback) => {
-    console.log("stopVideoStream");
     if (stream) {
-      console.log("스트림이있다.");
       stream.getTracks().forEach(track => track.stop());
       setStream(null);
       videoRef.current.srcObject = null;
