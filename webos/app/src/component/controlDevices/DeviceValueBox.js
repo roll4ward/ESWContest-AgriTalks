@@ -8,7 +8,7 @@ import arrowRight from "../../assets/icon/arrowRight.png";
 import { CheckDelete } from "../modal/CheckDelete";
 import { DeviceInfoInput } from "../modal/DeviceInfoInput";
 
-export const DeviceValueBox = ({ device, onEdit, onDelete }) => {
+export const DeviceValueBox = ({ device, onEdit, onDelete, refreshFlag }) => {
   const navigate = useNavigate();
   const { _id, name, unit, areaId, desc } = device;
   const [value, setValue] = useState("X");
@@ -19,7 +19,7 @@ export const DeviceValueBox = ({ device, onEdit, onDelete }) => {
     readLatestValue(_id, (result) => {
       setValue(`${result.value}${unit}`);
     });
-  }, []);
+  }, [refreshFlag]);
 
   console.log("devices : ", device);
   return (

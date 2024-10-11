@@ -7,10 +7,12 @@ import { createToast } from "../../api/toast";
 
 export const DeviceMonitorBox = ({ isSensor, devices, loadDevices }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [refreshFlag, setRefreshFlag] = useState(0);
 
   function onRefresh() {
     setCurrentTime(new Date());
     loadDevices(isSensor ? "sensor" : "actuator");
+    setRefreshFlag(refreshFlag > 2 ? 0 : refreshFlag + 1);
   }
 
   function onDeviceEdit(deviceID, name, description, area) {
@@ -67,7 +69,8 @@ export const DeviceMonitorBox = ({ isSensor, devices, loadDevices }) => {
             return (
               <DeviceValueBox device={device}
                 onDelete={onDeviceDelete}
-                onEdit={onDeviceEdit.bind(null, device._id)} />
+                onEdit={onDeviceEdit.bind(null, device._id)}
+                refreshFlag={refreshFlag}/>
             );
           })
         )}
