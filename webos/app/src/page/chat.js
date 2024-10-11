@@ -29,30 +29,23 @@ export default function ChatPage() {
       }
     });
 
-    // const storedRecorderId = localStorage.getItem('recorderId');
-    // if (storedRecorderId) {
-    //   setRecorderId(storedRecorderId);
-    // } else {
     initRecord((result)=> {
       setRecorderId(result); 
-      // localStorage.setItem('recorderId', result);
     });
-    // }
     
     // 이미지가 있으면 메세지 전송
     if (selectedImage) {
-      handleSendMessage(selectedImage, selectedImageDesc);
+      handleSendMessage("",selectedImage, selectedImageDesc);
     }
 
   }, []);
 
-  const handleSendMessage = (image, imageDesc) => {
-
+  const handleSendMessage = (_ , image, imageDesc) => {
     // 질문창이 공백이면 return
     if (prompt == "" && !image) {
       return;
     }
-    console.log(image? imageDesc : prompt, image)
+    
     // 사용자 메시지 저장
     const newMessages = [...messages, { type: "user", text: image? imageDesc : prompt, image: image}];
     setMessages(newMessages);
