@@ -5,6 +5,9 @@ const coap = require('coap');
 const service = new Service(pkg_info.name);
 const DB_KIND = 'xyz.rollforward.app.coap:1';
 let interval = {};
+let heartbeat_subscription = {};
+let heartbeat_message = [];
+let heartbeat_interval;
 
 // 센서 값 데이터베이스 생성 (임시)
 service.register('createKind', function(message) {
@@ -225,6 +228,11 @@ function getDeviceInfo(deviceId) {
                     rej("failed to get device info");
                     return;
                 }
+                if (!response.payload.results[0]) {
+                    rej("failed to get device info");
+                    return;
+                }
+                console.log(response.payload.results[0]);
                 res(response.payload.results[0]);
             }
         );
@@ -301,8 +309,21 @@ service.register("startSending", (message) => {
 
     if (!interval[deviceId]) {
         interval[deviceId] = setInterval(() => {
-            sendMessageAndSave(deviceId);
+            sendMessageAndSave(deviceId)
+            .catch((reason) => {
+                console.log(reason);
+            });
         }, message.payload.interval * 1000);
+
+        let sub = service.subscribe("luna://xyz.rollforward.app.coap/heartbeat" , {subscribe: true});
+
+        sub.on("response", (response)=> {
+            console.log(response.payload.event);
+        });
+
+        heartbeat_subscription[deviceId] = sub;
+        console.log(heartbeat_subscription);
+        console.log(interval);
 
         message.respond({
             returnValue: true,
@@ -330,6 +351,8 @@ service.register("stopSending", (message) => {
     if (interval[deviceId])  {
         clearInterval(interval[deviceId]);
         delete interval[deviceId];
+        heartbeat_subscription[deviceId].cancel();
+        delete heartbeat_subscription[deviceId];
         message.respond({
             returnValue: true,
             message: "Stopped sending CoAP messages and storing data"
@@ -341,3 +364,43 @@ service.register("stopSending", (message) => {
         });
     }
 });
+
+service.register("heartbeat",
+    (message) => {
+        message.respond({
+            returnValue: true,
+            event: "beat"
+        });
+
+        if (message.isSubscription) {
+            heartbeat_message[message.uniqueToken] = message;
+            console.log(heartbeat_message);
+            if (!heartbeat_interval) createHeartbeatInterval();
+        }
+    },
+    (message) => {
+        delete heartbeat_subscription[message.uniqueToken];
+        if (heartbeat_subscription.length === 0) {
+            clearInterval(heartbeat_interval);
+            heartbeat_interval = null;
+        }
+    });
+
+function createHeartbeatInterval() {
+    if (heartbeat_interval) {
+        return;
+    }
+    
+    heartbeat_interval = setInterval(()=>{
+        sendResponseToSubscribers();
+    }, 1000);
+}
+
+function sendResponseToSubscribers() {
+    heartbeat_message.forEach((message) => {
+        message.respond({
+            returnValue: true,
+            event: "beat"
+        });
+    });
+}
