@@ -10,6 +10,7 @@ import DeviceDetailPage from "./page/DeviceDetailPage";
 import { DeviceOverView } from "./page/DeviceOverView";
 import { SideBar } from "./component/SideBar";
 import GalleryPreviewPage from "./page/GalleryPreviewPage";
+import { RegisterDevice } from "./component/modal/RegisterDevice";
 
 function App() {
   return (
@@ -20,7 +21,7 @@ function App() {
           flexDirection: "row",
           height: "100vh",
           width: "1920px",
-          padding: "25px"
+          padding: "25px",
         }}
       >
         {/* 사이드 메뉴 */}
@@ -42,7 +43,8 @@ function App() {
             <Route path="/gallery" element={<GalleryPreviewPage />} />
             <Route path="/devices/:areaID" element={<DeviceOverView />} />
             <Route path="/detail/:deviceID" element={<DeviceDetailPage />} />
-            <Route path="/setting" element={<div />} />
+            <Route path="/gallery" element={<div />} />
+
           </Routes>
         </div>
       </div>

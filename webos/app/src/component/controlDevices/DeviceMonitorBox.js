@@ -5,26 +5,12 @@ import { useEffect, useState } from "react";
 import { deleteDevice, readDeviceswithArea, updateDeviceInfo, updateDeviceParentArea } from "../../api/infomanageService";
 import { createToast } from "../../api/toast";
 
-export const DeviceMonitorBox = ({ isSensor, areaID }) => {
-  const currentTime = new Date().toLocaleTimeString("ko-KR", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
-  const [devices, setDevices] = useState([]);
+export const DeviceMonitorBox = ({ isSensor, devices, loadDevices }) => {
+  const [currentTime, setCurrentTime] = useState(new Date());
 
-  useEffect(() => {
-    loadDevices();
-  }, [areaID]);
-
-  function loadDevices() {
-    readDeviceswithArea(areaID, (result)=> {
-      console.log(result);
-      setDevices( isSensor ? 
-        result.filter(device => device.type === "sensor") :
-        result.filter(device => device.type === "actuator")
-      );
-    })
+  function onRefresh() {
+    setCurrentTime(new Date());
+    loadDevices(isSensor ? "sensor" : "actuator");
   }
 
   function onDeviceEdit(deviceID, name, description, area) {
@@ -58,8 +44,18 @@ export const DeviceMonitorBox = ({ isSensor, areaID }) => {
         <Title>{isSensor ? "센서" : "작동기"}</Title>
 
         <ControllWrapper>
-          <Time>{currentTime}</Time>
-          <img src={refresh} alt="" width={48} height={48} />
+          <Time>
+            { 
+              currentTime.toLocaleTimeString("ko-KR", 
+                {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: false,
+                }
+              )
+            }
+          </Time>
+          <img onClick={onRefresh} src={refresh} alt="" width={48} height={48} />
         </ControllWrapper>
       </TitleWrapper>
 

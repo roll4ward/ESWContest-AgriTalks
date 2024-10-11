@@ -49,6 +49,8 @@ const registerAreaMethod = (service) => {
         if (!dataToStore.name) {
             return message.respond({ returnValue: false, results: 'name is required.' });
         }
+
+
         service.call('luna://com.webos.service.db/put', { objects: [dataToStore] }, (response) => {
             if (response.payload.returnValue) {
                 message.respond({ returnValue: true, results: response.payload.results[0].id});
@@ -63,15 +65,19 @@ const registerAreaMethod = (service) => {
             from: AREAKIND,
             where: []
         };
+
         if (message.payload.id) {
             Aquery.where.push({ prop: '_id', op: '=', val: message.payload.id });
         }
+
         if (message.payload.desc) {
             Aquery.where.push({ prop: 'desc', op: '=', val: message.payload.desc });
         }
+
         if (message.payload.name) {
             Aquery.where.push({ prop: 'name', op: '=', val: message.payload.name });
         }
+
         service.call('luna://com.webos.service.db/find', { query: Aquery }, (response) => {
             if (response.payload.returnValue) {
                 const areas = [];
@@ -107,8 +113,10 @@ const registerAreaMethod = (service) => {
             _id: message.payload.id,
             _kind: AREAKIND
         };
+
         if (message.payload.name) updatedItem.name = message.payload.name;
         if (message.payload.desc) updatedItem.desc = message.payload.desc;
+
         service.call('luna://com.webos.service.db/merge', { objects: [updatedItem] }, (response) => {
             if (response.payload.returnValue) {
                 message.respond({ returnValue: true, results: 'Item updated successfully' });

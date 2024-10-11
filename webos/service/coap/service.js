@@ -48,11 +48,17 @@ service.register('deleteKind', function(message) {
 
 // 센서 값 데이터 Create (임시)
 service.register('create', function(message) {
+    if (!(message.payload.deviceId && typeof message.payload.value !== 'undefined')) {
+        message.respond({
+            returnValue: false,
+            results: "Value & deviceId is required"
+        })
+    }
     const dataToStore = {
         _kind: DB_KIND,
-        deviceId: "SER123456",
+        deviceId: message.payload.deviceId,
         time: new Date().toISOString(),
-        value: 38.1
+        value: message.payload.value
     };
 
     service.call('luna://com.webos.service.db/put', { objects: [dataToStore] }, (response) => {
