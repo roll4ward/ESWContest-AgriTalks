@@ -24,7 +24,7 @@ function App() {
         }}
       >
         {/* 사이드 메뉴 */}
-        <div style={{ width: "250px" }}>
+        <div style={{ width: "250px", height: "100%" }}>
           <SideBar />
         </div>
 
