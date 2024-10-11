@@ -31,16 +31,6 @@ export default function RecorderModal({ show, handleClose, recorderId }) {
       setIsRecording(false); // 녹음 상태 초기화
       setIsSendEnabled(false); // 전송 버튼 비활성화
     }
-
-    return () => {
-      console.log("모달 닫힘: clean-up 처리 중");
-      if(!isSendEnabled){
-        stopRecord(rId);
-      }
-      stopTimer(); // 타이머 정지
-      setIsRecording(false); // 녹음 상태 초기화
-      setSeconds(0); // 타이머 초기화
-    };
   }, [show, recorderId]);
 
   // 타이머 시작 함수
@@ -86,6 +76,13 @@ export default function RecorderModal({ show, handleClose, recorderId }) {
   // 녹음 취소
   const handleCancelAudio = () => {
     handleClose(null); // 취소 시 모달을 닫음
+    console.log("모달 닫힘: clean-up 처리 중");
+      if(!isSendEnabled){
+        stopRecord(rId);
+      }
+      stopTimer(); // 타이머 정지
+      setIsRecording(false); // 녹음 상태 초기화
+      setSeconds(0); // 타이머 초기화
   };
 
   return (
