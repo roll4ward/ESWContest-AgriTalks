@@ -223,7 +223,7 @@ function sendCoapMessage(hostIP, method, pathname, payload) {
     });
 }
 
-function getDeviceInfo(service, deviceId) {
+function getDeviceInfo(deviceId) {
     return new Promise((res, rej) => {
         service.call(
             "luna://xyz.rollforward.app.infomanage/device/read",
@@ -231,7 +231,7 @@ function getDeviceInfo(service, deviceId) {
             (response) => {
                 if (!response.payload.returnValue) {
                     console.error(response.payload.results);
-                    rej(response.payload.results);
+                    rej("failed to get device info");
                     return;
                 }
                 res(response.payload.results[0]);
@@ -240,7 +240,40 @@ function getDeviceInfo(service, deviceId) {
     });
 }
 
-service.register("send", async (message) => {
+function sendMessageAndSave(deviceId) {
+    return new Promise(async (res, rej) => {
+        let deviceInfo;
+        try {
+            deviceInfo = await getDeviceInfo(deviceId);
+        }
+        catch (err) {
+            console.log("failed to get device info");
+            rej(err);
+            return;
+        }
+        
+        let response_value
+        try {
+            response_value = await sendCoapMessage(deviceInfo.ip, "GET", deviceInfo.subtype);
+        }
+        catch (err) {
+            rej(err);
+            return;
+        }
+
+        try {
+            await saveSensorData(deviceId, response_value);
+        }
+        catch (err) {
+            rej("Failed to save data");
+            return;
+        }
+
+        res(response_value);
+    });
+}
+
+service.register("send", (message) => {
     if (!message.payload.deviceId) {
         message.respond({
             returnValue: false,
@@ -249,46 +282,19 @@ service.register("send", async (message) => {
         return;
     }
 
-    let deviceInfo;
-    try {
-        deviceInfo = await getDeviceInfo(service, message.payload.deviceId);
-    }
-    catch (err) {
-        console.log(err);
+    sendMessageAndSave(message.payload.deviceId)
+    .then((response) => {
+        message.respond({
+            returnValue: true,
+            results : response
+        });
+    })
+    .catch((err) => {
         message.respond({
             returnValue: false,
-            results: "Failed to get device info"
+            results : err
         });
-        return;
-    }
-    
-    let response_value
-    try {
-        response_value = await sendCoapMessage(deviceInfo.ip, "GET", deviceInfo.subtype);
-    }
-    catch (err) {
-        message.respond({
-            returnValue: false,
-            results: err
-        });
-        return;
-    }
-
-    try {
-        await saveSensorData(message.payload.deviceId, response_value);
-    }
-    catch (err) {
-        message.respond({
-            returnValue: false,
-            results: "Failed to save data"
-        });
-        return;
-    }
-
-    message.respond({
-        returnValue: true,
-        results : response_value
-    });
+    })
 });
 
 // 서비스 메소드: CoAP 메시지 전송 시작
