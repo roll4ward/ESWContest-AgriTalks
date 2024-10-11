@@ -4,7 +4,7 @@ const coap = require('coap');
 
 const service = new Service(pkg_info.name);
 const DB_KIND = 'xyz.rollforward.app.coap:1';
-let interval;
+let interval = {};
 
 // 센서 값 데이터베이스 생성 (임시)
 service.register('createKind', function(message) {
@@ -299,8 +299,20 @@ service.register("send", (message) => {
 
 // 서비스 메소드: CoAP 메시지 전송 시작
 service.register("startSending", (message) => {
-    if (!interval) {
-        interval = setInterval(() => sendCoapMessageAndStore(message.payload.ip), message.payload.interval * 1000);
+    if (!(message.payload.deviceId && message.payload.interval)) {
+        message.respond({
+            returnValue: false,
+            results: "deviceId, interval are required"
+        });
+    }
+
+    const deviceId = message.payload.deviceId;
+
+    if (!interval[deviceId]) {
+        interval[deviceId] = setInterval(() => {
+            sendMessageAndSave(deviceId);
+        }, message.payload.interval * 1000);
+
         message.respond({
             returnValue: true,
             message: "Started sending CoAP messages and storing data"
@@ -315,9 +327,18 @@ service.register("startSending", (message) => {
 
 // 서비스 메소드: CoAP 메시지 전송 중지
 service.register("stopSending", (message) => {
-    if (interval) {
-        clearInterval(interval);
-        interval = null;
+    if (!(message.payload.deviceId)) {
+        message.respond({
+            returnValue: false,
+            results: "deviceId is required"
+        });
+    }
+
+    const deviceId = message.payload.deviceId;
+
+    if (interval[deviceId])  {
+        clearInterval(interval[deviceId]);
+        delete interval[deviceId];
         message.respond({
             returnValue: true,
             message: "Stopped sending CoAP messages and storing data"
