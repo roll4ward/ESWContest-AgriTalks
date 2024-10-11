@@ -64,17 +64,7 @@ export const Camera = () => {
   return (
     <Container>
       <VideoContainer autoPlay={true} ref={videoRef}/>
-      <CameraButton
-        style={{
-          backgroundColor: "#fff",
-          borderColor: "#fff",
-          borderRadius: "50%",
-          height: "150px",
-          width: "150px",
-          marginRight: "80px",
-        }}
-        onClick={capture}
-      >
+      <CameraButton onClick={capture}>
         <img src={cameraIcon} alt="Camera" />
       </CameraButton>
     </Container>
@@ -82,19 +72,25 @@ export const Camera = () => {
 };
 
 const Container = styled.div`
-  display: flex;
+  display: block;
   width: 100%;
-  height: 988px;
+  height: 100%;
   background-color: #d3d3d3;
-  justify-content: flex-end;
-  align-items: center;
+  position: relative;
 `;
 
 const CameraButton = styled(Button)`
+  border-color: white;
+  border-radius: 50%;
   z-index: 99;
+  position: absolute;
+  top: calc(50% - 75px);
+  right: 50px;
+  height: 150px;
+  width: 150px;
+  background-color: #fff;
 `;
 
 const VideoContainer = styled.video`
   width: 100%;
-  height: 988px;
 `;

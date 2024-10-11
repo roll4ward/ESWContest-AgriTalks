@@ -10,7 +10,6 @@ import DeviceDetailPage from "./page/DeviceDetailPage";
 import { DeviceOverView } from "./page/DeviceOverView";
 import { SideBar } from "./component/SideBar";
 import GalleryPreviewPage from "./page/GalleryPreviewPage";
-import { RegisterDevice } from "./component/modal/RegisterDevice";
 
 function App() {
   return (
@@ -25,7 +24,7 @@ function App() {
         }}
       >
         {/* 사이드 메뉴 */}
-        <div style={{ width: "250px" }}>
+        <div style={{ width: "250px", height: "100%" }}>
           <SideBar />
         </div>
 

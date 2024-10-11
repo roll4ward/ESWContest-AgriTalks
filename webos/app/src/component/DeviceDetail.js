@@ -30,7 +30,7 @@ export default function DeviceDetail({ deviceID }) {
 
   function loadLastValue() {
     readLatestValue(deviceID, (result) => {
-      let time = new Date(Date.parse(result.time));
+      let time = new Date(result.time);
       const formatter = new Intl.DateTimeFormat("ko-KR", {
         year: "numeric",
         month: "long",

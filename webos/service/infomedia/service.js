@@ -137,7 +137,6 @@ service.register('record/init', function(message) {
             service.call('luna://com.webos.service.mediarecorder/open', {audio: true}, (response) => {
                 if (response.payload.returnValue) {
                     const recorderId = response.payload.recorderId;
-                    console.log(recorderId);
 
                     const fomat = {
                         recorderId: recorderId,
