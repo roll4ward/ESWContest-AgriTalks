@@ -11,7 +11,6 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-// import graphData from "../graphdata";
 import { useEffect, useState } from "react";
 import { readAllValues } from "../api/coapService";
 
@@ -56,10 +55,16 @@ export default function GraphContainer({ deviceID, deviceData }) {
       ],
     };
 
-    // newData의 labels와 datasets를 설정
     for (let i = 0; i < data.length; i++) {
-      newData.labels.push(data[i].time);
-      newData.datasets[0].data.push(data[i].value);
+      const targetDate = new Date(data[i].time);
+      const now = new Date();
+      const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+      // 24시간 내의 데이터만 추가
+      if (targetDate >= twentyFourHoursAgo && targetDate <= now) {
+        newData.labels.push(data[i].time);
+        newData.datasets[0].data.push(data[i].value);
+      }
     }
     console.log("newData : ", newData);
     setGraphData(newData);
@@ -100,7 +105,13 @@ export default function GraphContainer({ deviceID, deviceData }) {
 
   return (
     <GraphWrap>
-      {graphData && <Line data={graphData} options={options} />}
+      {graphData?.label?.length > 0 ? (
+        <Line data={graphData} options={options} />
+      ) : (
+        <NoDataText>
+          측정된 데이터가 없어요. 센서 연결을 확인해 주세요.
+        </NoDataText>
+      )}
     </GraphWrap>
   );
 }
@@ -115,4 +126,12 @@ const GraphWrap = styled.div`
   margin-top: 20px;
   flex-wrap: wrap;
   overflow: hidden;
+`;
+
+const NoDataText = styled.span`
+  display: flex;
+  font-size: 50px;
+  color: #4c4c4c;
+  width: 100%;
+  justify-content: center;
 `;
