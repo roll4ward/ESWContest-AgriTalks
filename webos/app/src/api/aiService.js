@@ -88,7 +88,7 @@ export function TTS(text, callback) {
 /**
  * m4a 음성파일을 text로 변환하고 반환
  * @param {string} prompt 변환 할 음성파일
- * @param {*} callback 쿼리한 결과를 처리할 콜백 함수
+ * @param {*} callback 결과를 처리할 콜백 함수
  */
 export function STT(text, callback) {
   let bridge = new WebOSServiceBridge();
@@ -108,16 +108,18 @@ export function STT(text, callback) {
 }
 
 /**
- * text를 음성파일 PCM으로 변환하고 자동으로 저장
+ * 음성파일 재생
+ * @param {*} callback 결과를 처리할 콜백 함수
  */
-export function speak() {
+export function audioStart(callback) {
   let bridge = new WebOSServiceBridge();
   bridge.onservicecallback = (msg) => {
       msg = JSON.parse(msg);
       if(!msg.returnValue) {
-          console.log(`speak Service call failed : ${msg.result}`);
+          console.log(`audioStart Service call failed : ${msg.result}`);
           return;
       }
+      if(callback) callback(msg.playbackId);
   }
 
   const service = "luna://com.webos.service.audio/playSound";
@@ -127,6 +129,28 @@ export function speak() {
     sampleRate: 32000,
     format: "PA_SAMPLE_S16LE",
     channels: 1
+  };
+
+  bridge.call(service, JSON.stringify(query));
+}
+
+/**
+ * 음성파일 종료
+ */
+export function audioStop(id) {
+  let bridge = new WebOSServiceBridge();
+  bridge.onservicecallback = (msg) => {
+      msg = JSON.parse(msg);
+      if(!msg.returnValue) {
+          console.log(`speak Service call failed : ${msg.result}`);
+          return;
+      }
+  }
+
+  const service = "luna://com.webos.service.audio/controlPlayback";
+  let query = {
+    playbackId: id,
+    requestType: "stop"
   };
 
   bridge.call(service, JSON.stringify(query));
