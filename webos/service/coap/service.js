@@ -17,7 +17,7 @@ service.register('createKind', function(message) {
                 _id: { type: 'string' },
                 deviceId: { type: 'string' },
                 value: { type: 'number' },
-                time: { type: 'string' }
+                time: { type: 'number' }
             },
             required: ['deviceId', 'time', 'value']
         },
@@ -114,7 +114,9 @@ service.register('read', function(message) {
 service.register('read/latest', function(message) {
     const query = {
         from: DB_KIND,
-        where: []
+        where: [],
+        desc: true,
+        limit: 1
     };
 
     if (!message.payload.deviceId) {
@@ -123,20 +125,9 @@ service.register('read/latest', function(message) {
     query.where.push({ prop: 'deviceId', op: '=', val: message.payload.deviceId });
 
     service.call('luna://com.webos.service.db/find', { query: query }, (response) => {
+        console.log(response);
         if (response.payload.returnValue) {
             let result = response.payload.results;
-            console.log(result);
-            if (result.length < 1) message.respond({returnValue: false, results: "No Data"});
-
-            result.sort((a, b) => {
-                const dateA = new Date(Date.parse(a.time));
-                const dateB = new Date(Date.parse(b.time));
-
-                if (dateA > dateB) return 1;
-                if (dateA < dateB) return -1;
-                return 0;
-            });
-            result.reverse();
 
             console.log(result);
             
@@ -172,7 +163,7 @@ function saveSensorData(deviceId, value) {
         const dataToStore = {
             _kind: DB_KIND,
             deviceId: deviceId,
-            time: new Date().toISOString(),
+            time: Date.now(),
             value: value
         };
     
