@@ -11,7 +11,9 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import graphData from "../graphdata";
+// import graphData from "../graphdata";
+import { useEffect, useState } from "react";
+import { readAllValues } from "../api/coapService";
 
 ChartJS.register(
   CategoryScale,
@@ -23,7 +25,46 @@ ChartJS.register(
   Legend
 );
 
-export default function GraphContainer() {
+export default function GraphContainer({ deviceID, deviceData }) {
+  const [graphData, setGraphData] = useState(null);
+
+  useEffect(() => {
+    console.log("deviceData에는 뭐가있을까요 : ", deviceData);
+    if (!deviceID) {
+      return;
+    }
+
+    // 기기 내 값들 불러오기
+    readAllValues(deviceID, (result) => {
+      console.log("result in Graph : ", result);
+      setGraphValues(result);
+    });
+  }, [deviceID]);
+
+  const setGraphValues = (data) => {
+    if (!data) {
+      return;
+    }
+    // newData 초기화
+    let newData = {
+      labels: [],
+      datasets: [
+        {
+          label: "측정값",
+          data: [],
+        },
+      ],
+    };
+
+    // newData의 labels와 datasets를 설정
+    for (let i = 0; i < data.length; i++) {
+      newData.labels.push(data[i].time);
+      newData.datasets[0].data.push(data[i].value);
+    }
+    console.log("newData : ", newData);
+    setGraphData(newData);
+  };
+
   // 차트 옵션 설정
   const options = {
     responsive: true,
@@ -59,7 +100,7 @@ export default function GraphContainer() {
 
   return (
     <GraphWrap>
-      <Line data={graphData} options={options} />
+      {graphData && <Line data={graphData} options={options} />}
     </GraphWrap>
   );
 }
