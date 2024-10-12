@@ -74,8 +74,8 @@ export function TTS(text, callback) {
           console.log(`TTS Service call failed : ${msg.result}`);
           return;
       }
-
-      if(callback) callback();
+      console.log(msg.result);
+      if(callback) callback(msg.result.store_path);
   }
 
   let query = {
@@ -88,7 +88,7 @@ export function TTS(text, callback) {
 /**
  * m4a 음성파일을 text로 변환하고 반환
  * @param {string} prompt 변환 할 음성파일
- * @param {*} callback 쿼리한 결과를 처리할 콜백 함수
+ * @param {*} callback 결과를 처리할 콜백 함수
  */
 export function STT(text, callback) {
   let bridge = new WebOSServiceBridge();
@@ -108,9 +108,37 @@ export function STT(text, callback) {
 }
 
 /**
- * text를 음성파일 PCM으로 변환하고 자동으로 저장
+ * 음성파일 재생
+ * @param {string} ttsFile ttsFile 위치
+ * @param {*} callback 결과를 처리할 콜백 함수
  */
-export function speak() {
+export function audioStart(ttsFile, callback) {
+  let bridge = new WebOSServiceBridge();
+  bridge.onservicecallback = (msg) => {
+      msg = JSON.parse(msg);
+      if(!msg.returnValue) {
+          console.log(`audioStart Service call failed : ${msg.result}`);
+          return;
+      }
+      if(callback) callback(msg.playbackId);
+  }
+
+  const service = "luna://com.webos.service.audio/playSound";
+  let query = {
+    fileName: ttsFile,
+    sink: "default1",
+    sampleRate: 32000,
+    format: "PA_SAMPLE_S16LE",
+    channels: 1
+  };
+
+  bridge.call(service, JSON.stringify(query));
+}
+
+/**
+ * 음성파일 종료
+ */
+export function audioStop(id) {
   let bridge = new WebOSServiceBridge();
   bridge.onservicecallback = (msg) => {
       msg = JSON.parse(msg);
@@ -120,13 +148,10 @@ export function speak() {
       }
   }
 
-  const service = "luna://com.webos.service.audio/playSound";
+  const service = "luna://com.webos.service.audio/controlPlayback";
   let query = {
-    fileName: "/home/developer/media/tts.pcm",
-    sink: "default1",
-    sampleRate: 32000,
-    format: "PA_SAMPLE_S16LE",
-    channels: 1
+    playbackId: id,
+    requestType: "stop"
   };
 
   bridge.call(service, JSON.stringify(query));
@@ -157,20 +182,25 @@ export function createConversation(text, type, image) {
 
 /**
  * 모든 대화내용을 쿼리
+ * @param { string } page 이전 쿼리에서 전달받은 next 페이지
  * @param { (result : string)=>void } callback 서비스 호출 후 처리할 콜백 함수
  */
-export function readAllConversation (callback) {
+export function readConversation (page, callback) {
   let bridge = new WebOSServiceBridge();
   bridge.onservicecallback = (msg) => {
       msg = JSON.parse(msg);
       if (!msg.returnValue) {
-          console.log(`readAllConversation Service call failed : ${msg.result}`);
+          console.log(`readConversation Service call failed : ${msg.result}`);
           return null;
       }
       if (callback) callback(msg.result);
   };
+  
+  let query = {};
 
-  bridge.call(getServiceURL("aitalk", "read"), "{}");
+  if(page) query.page = page;
+
+  bridge.call(getServiceURL("aitalk", "read"), JSON.stringify(query));
 }
 
 /**
