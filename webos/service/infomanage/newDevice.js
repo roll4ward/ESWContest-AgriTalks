@@ -163,7 +163,7 @@ module.exports = (service) => {
         let waitTimeout = setTimeout(()=>{
             haltSignal.emit("stop");
             console.log("timeout");
-        }, 30000);
+        }, 60000);
         
         try {
             await checkStatus;
