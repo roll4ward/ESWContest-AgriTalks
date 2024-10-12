@@ -1,6 +1,6 @@
 const pkg_info = require("./package.json");
 const Service = require('webos-service');
-
+const { exec } = require("child_process");
 const service = new Service(pkg_info.name);
 
 // 저장된 이미지 경로 리스트 전체 쿼리
@@ -20,6 +20,17 @@ service.register('image/readAll', function(message) {
             });
         } else {
             message.respond({ returnValue: false, result: Rresponse.errorText });
+        }
+    });
+});
+
+service.register('image/convertJpg', function(message) {
+    exec("python3 /home/developer/imageCon.py",(err, stdout, stderr) => {
+        if (err) {
+            console.error(`Error during conversion: ${stderr}`);
+            message.respond({ returnValue: false, result: stderr });
+        } else {
+            message.respond({ returnValue: true, result: "success"});
         }
     });
 });

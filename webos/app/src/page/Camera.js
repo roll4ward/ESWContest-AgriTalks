@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import styled from "styled-components";
 import cameraIcon from "../assets/icon/cameraIcon.svg";
 import { openCamera, captureCamera, closeCamera } from "../api/camera";
+import { convertJpg } from "../api/mediaService";
 
 export const Camera = () => {
   const [stream, setStream] = useState(null);
@@ -46,6 +47,10 @@ export const Camera = () => {
   const capture = () => {
     if(!handle) return;
     captureCamera(handle);
+    
+    // 캡쳐가 끝나고 jpg 변환 실행
+    // callback 함수로 처리해야하는지 검토필요
+    convertJpg();
   };
 
   return (
