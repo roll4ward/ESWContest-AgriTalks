@@ -223,8 +223,8 @@ module.exports = (service) => {
                     status: 5
                 }));
             })
-            .catch((err)=> {
-                console.log("failed to write DISABLE_BLE command");
+            .finally(()=> {
+                console.log("start disconnecting by host");
                 disconnect(service, clientId)
                 .then(()=>{
                     message.respond(new Respond(true, {
