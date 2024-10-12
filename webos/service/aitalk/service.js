@@ -336,16 +336,17 @@ aitalk_service.register("tts", async function (msg) {
     speed: 1.2
   });
 
-  console.log("audio file will be stored to " + config.store_path);
+  const tts_path = path.resolve(__dirname, "./tts.pcm");
+  console.log("audio file will be stored to " + tts_path);
   const buffer = Buffer.from(await mp3.arrayBuffer());
-  await fs.promises.writeFile(config.store_path, buffer);
+  await fs.promises.writeFile(tts_path, buffer);
   console.log("TTS done.");
 
-  exec("python3 /home/developer/audioCon.py " + config.store_path + " 24000 " + config.store_path + " 32000",(err, stdout, stderr) => {
+  exec("python3 ./audioCon.py " + "./tts.pcm" + " 24000 " + "./tts.pcm" + " 32000",(err, stdout, stderr) => {
       if (err) {
         console.error(`Error during conversion: ${stderr}`);
       } else {
-        msg.respond(new aitalk_response({ store_path: config.store_path}));
+        msg.respond(new aitalk_response({ store_path: tts_path}));
       }
     }
   );

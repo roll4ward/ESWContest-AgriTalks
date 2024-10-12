@@ -25,7 +25,7 @@ service.register('image/readAll', function(message) {
 });
 
 service.register('image/convertJpg', function(message) {
-    exec("python3 /home/developer/imageCon.py",(err, stdout, stderr) => {
+    exec("python3 ./imageCon.py",(err, stdout, stderr) => {
         if (err) {
             console.error(`Error during conversion: ${stderr}`);
             message.respond({ returnValue: false, result: stderr });

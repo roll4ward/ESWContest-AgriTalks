@@ -74,8 +74,8 @@ export function TTS(text, callback) {
           console.log(`TTS Service call failed : ${msg.result}`);
           return;
       }
-
-      if(callback) callback();
+      console.log(msg.result);
+      if(callback) callback(msg.result.store_path);
   }
 
   let query = {
@@ -109,9 +109,10 @@ export function STT(text, callback) {
 
 /**
  * 음성파일 재생
+ * @param {string} ttsFile ttsFile 위치
  * @param {*} callback 결과를 처리할 콜백 함수
  */
-export function audioStart(callback) {
+export function audioStart(ttsFile, callback) {
   let bridge = new WebOSServiceBridge();
   bridge.onservicecallback = (msg) => {
       msg = JSON.parse(msg);
@@ -124,7 +125,7 @@ export function audioStart(callback) {
 
   const service = "luna://com.webos.service.audio/playSound";
   let query = {
-    fileName: "/home/developer/media/tts.pcm",
+    fileName: ttsFile,
     sink: "default1",
     sampleRate: 32000,
     format: "PA_SAMPLE_S16LE",
