@@ -13,11 +13,7 @@ const OpenAI = require("openai");
 const path = require("path");
 const Events = require("events")
 
-// const AITalkEventHandler = require("./aitalkEventHandler.js");
-
 const openai = new OpenAI({apiKey: config.openai_api_key});
-
-// const aitalkEventHandler = AITalkEventHandler(openai);
 
 var thread = null;
 
@@ -72,20 +68,17 @@ class AITalkEventHandler extends Events.EventEmitter {
       try {
           const toolOutputs = 
               await Promise.all(data.required_action.submit_tool_outputs.tool_calls.map(async (toolCall) => {
-                  if (toolCall.function.name === "activate_water_valve") 
-                  {
+                  if (toolCall.function.name === "activate_water_valve") {
                     this.msg.respond(new aitalk_response({
                       chunks: "물 밸브 동작을 시도하고 있습니다. 잠시만 기다려주세요.",
                       isStreaming: true
                     }))
-
                     return {
                         tool_call_id: toolCall.id,
                         output: JSON.stringify({success: true}),
                     };
                   } 
-                  else if (toolCall.function.name === "getAreaList")
-                  {
+                  else if (toolCall.function.name === "getAreaList") {
                     this.msg.respond(new aitalk_response({
                       chunks: "등록하신 Area의 정보를 읽고 있습니다.. 잠시만 기다려주세요.",
                       isStreaming: true
@@ -101,8 +94,28 @@ class AITalkEventHandler extends Events.EventEmitter {
                     console.log("payload: ", payload)
                     return payload 
                   } 
-                  else 
-                  {
+                  else if (toolCall.function.name === "getDeviceList") {
+                    this.msg.respond(new aitalk_response({
+                      chunks: "Area 정보를 바탕으로 Devices 의 정보를 읽고 있습니다.. 잠시만 기다려주세요.",
+                      isStreaming: true
+                    }));
+
+                    console.log("toolCall.function", toolCall.function)
+
+                    const response = await getDeviceList("hello", aitalk_service)
+                    console.log("response", response)
+                    const payload = {
+                      tool_call_id: toolCall.id,
+                      output: JSON.stringify(response)
+                    }
+                    console.log("toolCall: ", toolCall)
+                    console.log("payload: ", payload)
+                    return payload 
+                  }
+                  else if (toolCall.function.name === "controlDevice") {
+                    ...
+                  }
+                  else {
                       return {
                           tool_call_id: toolCall.id, 
                           output: JSON.stringify({success: false})
@@ -121,8 +134,6 @@ class AITalkEventHandler extends Events.EventEmitter {
     try {
       // Use the submitToolOutputsStream helper
       console.log("in submitToolOutputs", toolOutputs.output)
-
-
       const stream = this.client.beta.threads.runs.submitToolOutputsStream(
         threadId,
         runId,
@@ -482,30 +493,67 @@ aitalk_service.register('delete', function(message) {
 // xyz.rollforward.app.infomanage/area/read 서비스를 활용하여 그대로 return 
 function getAreaList(service) 
 {
+  console.log("getAreaList is invoked")
   return new Promise((resolve, reject) => {
-    console.log("getAreaList is invoked")
     service.call("luna://xyz.rollforward.app.infomanage/area/read", {}, (response) => {
-      if (response.payload.returnValue) 
-      {
+      if (response.payload.returnValue) {
         console.log(response.payload)
         resolve({success: true, response: response.payload})
-      }
-      else
-      {
+      } else {
         reject({success: false})
       }
     })
   })
 }
 
-
 // getDeviceList([AreaIds]) => [Device0, Device1, ...]
 // xyz.rollforward.app.infomanage/device/read 서비스를 활용하여 
 // AreaIds 속한 AreaId를 갖는 device들만 return (파싱이 필요) 
+function getDeviceList(areaId, service) 
+{
+  console.log("getDeviceList is invoked")
+  const DEVKIND = "xyz.rollforward.app.infomanage:2";
+  const whereClause = {
+    prop: "areaId",
+    op: "=",
+    val: areaId
+  }
+  // const query = {
+  //   select: ["_id", "areaId", "name", "type", "desc"],
+  //   from: DEVKIND,
+  //   where: [whereClause]
+  // }
+  const query = {
+    select: ["_id", "areaId", "name", "type", "desc"],
+    areaId: areaId
+  }
 
+  console.log("query: ", query)
+  return new Promise((resolve, reject) => {
+    service.call("luna://xyz.rollforward.app.infomanage/device/read", query, (response) => {
+      console.log("getDeviceList response: ", response)
+      if (response.payload.returnValue) {
+        resolve({success: true, response: response.payload})
+      } else {
+        reject({success: false})
+      }
+    })
+  });
+}; 
 
 // controlDevice(deviceId, level: 0-100(int))
 // deviceId 를 사용하여 actuator를 0부터 100 사이의 값을 갖도록 조작함.
-
-
-
+function controlDevice(deviceId, level, service) 
+{
+  console.log("controlDevice is invoked")
+  return new Promise((resolve, reject) => {
+    service.call("luna://xyz.rollforward.app.infomanage/area/read", {}, (response) => {
+      if (response.payload.returnValue) {
+        console.log(response.payload)
+        resolve({success: true, response: response.payload})
+      } else {
+        reject({success: false})
+      }
+    })
+  })
+}
