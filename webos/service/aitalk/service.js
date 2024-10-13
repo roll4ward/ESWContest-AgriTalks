@@ -530,22 +530,10 @@ function getAreaList(service)
 function getDeviceList(areaId, service) 
 {
   console.log("getDeviceList is invoked")
-  // const DEVKIND = "xyz.rollforward.app.infomanage:2";
-  // const whereClause = {
-  //   prop: "areaId",
-  //   op: "=",
-  //   val: areaId
-  // }
-  // const query = {
-  //   select: ["_id", "areaId", "name", "type", "desc"],
-  //   from: DEVKIND,
-  //   where: [whereClause]
-  // }
   const query = {
     select: ["_id", "areaId", "name", "type", "desc"],
     areaId: areaId
   }
-
   console.log("query: ", query)
   return new Promise((resolve, reject) => {
     service.call("luna://xyz.rollforward.app.infomanage/device/read", query, (response) => {
@@ -564,12 +552,17 @@ function getDeviceList(areaId, service)
 function controlDevices(deviceId, level, service) 
 {
   console.log("controlDevice is invoked")
+  const payload = {
+    deviceId: deviceId,
+    payload: level
+  }
   return new Promise((resolve, reject) => {
-    service.call("luna://xyz.rollforward.app.infomanage/area/read", {}, (response) => {
+    service.call("luna://xyz.rollforward.app.coap/send", payload, (response) => {
       if (response.payload.returnValue) {
         console.log(response.payload)
         resolve({success: true, response: response.payload})
       } else {
+        console.log("fail: ", response)
         reject({success: false})
       }
     })
