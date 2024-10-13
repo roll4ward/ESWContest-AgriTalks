@@ -1,6 +1,8 @@
 const pkg_info = require("./package.json");
 const Service = require('webos-service');
 const coap = require('coap');
+const { Buffer } = require('node:buffer');
+const { Readable } = require('stream');
 
 const service = new Service(pkg_info.name);
 const DB_KIND = 'xyz.rollforward.app.coap:1';
@@ -207,7 +209,13 @@ function sendCoapMessage(hostIP, method, pathname, payload) {
         })
 
         if(typeof payload !== "undefined") {
-            req.pipe(payload);
+            const buf = Buffer.allocUnsafe(8);
+    
+            buf.writeDoubleLE(payload);
+
+            const stream = Readable.from(buf);
+
+            stream.pipe(req);
         }
     
         req.end();
@@ -239,7 +247,7 @@ function getDeviceInfo(deviceId) {
     });
 }
 
-function sendMessageAndSave(deviceId) {
+function sendMessageAndSave(deviceId, payload) {
     return new Promise(async (res, rej) => {
         let deviceInfo;
         try {
@@ -253,7 +261,12 @@ function sendMessageAndSave(deviceId) {
         
         let response_value
         try {
-            response_value = await sendCoapMessage(deviceInfo.ip, "GET", deviceInfo.subtype);
+            if (typeof payload === "undefined") {
+                response_value = await sendCoapMessage(deviceInfo.ip, "POST", deviceInfo.subtype, payload);
+            }
+            else {
+                response_value = await sendCoapMessage(deviceInfo.ip, "GET", deviceInfo.subtype);
+            }
         }
         catch (err) {
             rej(err);
@@ -281,7 +294,7 @@ service.register("send", (message) => {
         return;
     }
 
-    sendMessageAndSave(message.payload.deviceId)
+    sendMessageAndSave(message.payload.deviceId, message.payload.payload)
     .then((response) => {
         message.respond({
             returnValue: true,
