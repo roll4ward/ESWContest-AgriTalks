@@ -86,7 +86,7 @@ export default function ChatPage() {
     // 스트림 질문 전송 함수
     askToAiStream(image? imageDesc : prompt, image, (askResult)=> {
       // 스트림의 마지막 토큰이 수신되면 ai의 대답 전문을 저장 및 tts & audioStart
-      if(!askResult.is_streaming){
+      if(!askResult.isStreaming){
         createConversation(aiMessage.text, "ai");
         TTS(aiMessage.text, (path)=> {
           audioStart(path ,(result)=> {
@@ -119,7 +119,7 @@ export default function ChatPage() {
         // 스트림 질문 전송 함수
         askToAiStream(result, "", (askResult)=> {
           // 스트림의 마지막 토큰이 수신되면 ai의 대답 전문을 저장 및 tts & audioStart
-          if(!askResult.is_streaming){
+          if(!askResult.isStreaming){
             createConversation(aiMessage.text, "ai", "");
             TTS(aiMessage.text, (path)=> { 
               audioStart(path, (result)=> {
