@@ -48,9 +48,9 @@ class AITalkEventHandler extends Events.EventEmitter {
           console.log(this.snapshot)
           this.msg.respond(new aitalk_response({
               chunks: this.snapshot.replace(/【\d+:\d+†[^】]+】/g, ""),
-              is_streaming: true
+              isStreaming: true
           }))
-      } else if (event.event === "done") {
+      } else if (event.event === "thread.run.completed") {
           this.snapshot = "";
           this.msg.respond(new aitalk_response({
               chunks: "",
@@ -361,7 +361,7 @@ aitalk_service.register("briefing", async function(msg) {
         console.log(snapshot)
         msg.respond(new aitalk_response({
           chunks: snapshot.replace(/【\d+:\d+†[^】]+】/g, ""),
-          is_streaming: true
+          isStreaming: true
         }))
       })
       .on('end', () => {
