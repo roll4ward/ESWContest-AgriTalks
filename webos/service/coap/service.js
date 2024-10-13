@@ -203,7 +203,7 @@ function sendCoapMessage(hostIP, method, pathname, payload) {
 
         req.on('error', (err) => {
             console.log("Error occured : ", err);
-            rej(err);
+            rej("CoAP ERROR");
             clearTimeout(timeout);
             timeout = null;
         })
@@ -212,13 +212,16 @@ function sendCoapMessage(hostIP, method, pathname, payload) {
             const buf = Buffer.allocUnsafe(8);
     
             buf.writeDoubleLE(payload);
+            console.log(buf);
 
             const stream = Readable.from(buf);
 
             stream.pipe(req);
         }
-    
-        req.end();
+        else {
+            req.end();
+        }
+
         timeout = setTimeout(()=>{
             req.emit("error", "timeout");
         }, 5000);
@@ -261,7 +264,7 @@ function sendMessageAndSave(deviceId, payload) {
         
         let response_value
         try {
-            if (typeof payload === "undefined") {
+            if (typeof payload !== "undefined") {
                 response_value = await sendCoapMessage(deviceInfo.ip, "POST", deviceInfo.subtype, payload);
             }
             else {
