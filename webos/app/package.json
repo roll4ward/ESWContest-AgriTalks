@@ -31,6 +31,7 @@
     "webos-pack": "ares-package -o ipk build",
     "info-update": "cp webos/* build/",
     "prepare-tts": "ares-push ./audioCon.py /home/developer && ares-shell -r 'mkdir -p /home/developer/media'",
+    "prepare-camara": "ares-push ./imageCon.py /home/developer && ares-shell -r 'mkdir -p /home/developer/media'",
     "create-kind": "ares-push ./create_kind.sh /home/developer && ares-shell -r 'sh /home/developer/create_kind.sh'"
   },
   "eslintConfig": {

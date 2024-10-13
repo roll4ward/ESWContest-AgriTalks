@@ -256,16 +256,17 @@ aitalk_service.register("tts", async function (msg) {
     speed: 1.2
   });
 
-  console.log("audio file will be stored to " + config.store_path);
+  const tts_path = path.resolve(__dirname, "./tts.pcm");
+  console.log("audio file will be stored to " + tts_path);
   const buffer = Buffer.from(await mp3.arrayBuffer());
-  await fs.promises.writeFile(config.store_path, buffer);
+  await fs.promises.writeFile(tts_path, buffer);
   console.log("TTS done.");
 
-  exec("python3 /home/developer/audioCon.py " + config.store_path + " 24000 " + config.store_path + " 32000",(err, stdout, stderr) => {
+  exec("python3 ./audioCon.py " + "./tts.pcm" + " 24000 " + "./tts.pcm" + " 32000",(err, stdout, stderr) => {
       if (err) {
         console.error(`Error during conversion: ${stderr}`);
       } else {
-        msg.respond(new aitalk_response({ store_path: config.store_path}));
+        msg.respond(new aitalk_response({ store_path: tts_path}));
       }
     }
   );
@@ -437,15 +438,19 @@ aitalk_service.register('create', function(message) {
 aitalk_service.register('read', function(message) {
   const query  = {
       from: CONVESKIND,
-      where: []
+      where: [],
+      limit: 10,
+      desc: true
   };
+
+  if(message.payload.page) query.page = message.payload.page
   
   aitalk_service.call('luna://com.webos.service.db/find', { query: query }, (response) => {
     if(response.payload.returnValue){
       if (response.payload.results.length > 0) {
-          message.respond({ returnValue: true, result: response.payload.results });
+          message.respond({ returnValue: true, result: {texts:response.payload.results.reverse(), page:response.payload.next}});
       } else {
-          message.respond({ returnValue: true, result: null });
+          message.respond({ returnValue: true, result: {texts:[], page:null} });
       }
     }else{
         message.respond({ returnValue: false, result: 'cannot found conversation' });

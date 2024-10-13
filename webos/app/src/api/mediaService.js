@@ -24,6 +24,24 @@ export function readAllImages(callback) {
   bridge.call(getServiceURL("infomedia", "image/readAll"), "{}");
 }
 
+/**
+ * 저장된 이미지 경로에 yuv파일을 jpg로 변환
+ * @param {*} callback 쿼리한 결과를 처리할 콜백 함수
+ */
+export function convertJpg(callback) {
+    let bridge = new WebOSServiceBridge();
+    bridge.onservicecallback = (msg) => {
+        msg = JSON.parse(msg);
+        if(!msg.returnValue) {
+            console.log(`convertJpg Service call failed : ${msg.result}`);
+            return;
+        }
+    
+        if(callback) callback(msg.result);
+    }
+    bridge.call(getServiceURL("infomedia", "image/convertJpg"), "{}");
+  }
+
 
 /**
  * 카메라 초기화
