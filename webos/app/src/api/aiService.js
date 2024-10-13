@@ -61,7 +61,7 @@ export function askToAiStream(prompt, image_path, callback) {
     subscribe: true
   };
 
-  if(image_path) query.image_path = image_path
+  if(image_path) query.imagePaths = image_path
   
   bridge.call(getServiceURL("aitalk", "ask_stream"), JSON.stringify(query));
 }

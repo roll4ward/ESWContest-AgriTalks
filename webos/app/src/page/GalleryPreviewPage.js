@@ -25,7 +25,7 @@ export default function GalleryPreviewPage() {
 
   const handleCompleteSelection = () => {
     if (selectedImage) {
-      navigate("/chat", { state: { selectedImage, selectedImageDesc } });
+      navigate("/chat", { state: { selectedImage: [selectedImage], selectedImageDesc } });
     } else {
       alert("이미지를 선택하세요!");
     }
