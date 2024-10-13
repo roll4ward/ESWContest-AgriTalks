@@ -99,10 +99,11 @@ class AITalkEventHandler extends Events.EventEmitter {
                       chunks: "Area 정보를 바탕으로 Devices 의 정보를 읽고 있습니다.. 잠시만 기다려주세요.",
                       isStreaming: true
                     }));
-
+                    
+                    const areaId = JSON.parse(toolCall.function.arguments).areaId
                     console.log("toolCall.function", toolCall.function)
 
-                    const response = await getDeviceList("hello", aitalk_service)
+                    const response = await getDeviceList(areaId, aitalk_service)
                     console.log("response", response)
                     const payload = {
                       tool_call_id: toolCall.id,
@@ -112,8 +113,20 @@ class AITalkEventHandler extends Events.EventEmitter {
                     console.log("payload: ", payload)
                     return payload 
                   }
-                  else if (toolCall.function.name === "controlDevice") {
-                    ...
+                  else if (toolCall.function.name === "controlDevices") {
+                    console.log("controlDevive invoked")
+                    console.log("toolCall, ", toolCall.function.name)
+
+                    const args = JSON.parse(toolCall.function.arguments)
+                    console.log("controlDevice args: ", args)
+                    const response = await controlDevices(args.deviceId, args.level, aitalk_service)
+
+                    const payload = {
+                      tool_call_id: toolCall.id,
+                      output: JSON.stringify(response)
+                    }
+                    console.log("payload: ", payload)
+                    return payload 
                   }
                   else {
                       return {
@@ -517,12 +530,12 @@ function getAreaList(service)
 function getDeviceList(areaId, service) 
 {
   console.log("getDeviceList is invoked")
-  const DEVKIND = "xyz.rollforward.app.infomanage:2";
-  const whereClause = {
-    prop: "areaId",
-    op: "=",
-    val: areaId
-  }
+  // const DEVKIND = "xyz.rollforward.app.infomanage:2";
+  // const whereClause = {
+  //   prop: "areaId",
+  //   op: "=",
+  //   val: areaId
+  // }
   // const query = {
   //   select: ["_id", "areaId", "name", "type", "desc"],
   //   from: DEVKIND,
@@ -548,7 +561,7 @@ function getDeviceList(areaId, service)
 
 // controlDevice(deviceId, level: 0-100(int))
 // deviceId 를 사용하여 actuator를 0부터 100 사이의 값을 갖도록 조작함.
-function controlDevice(deviceId, level, service) 
+function controlDevices(deviceId, level, service) 
 {
   console.log("controlDevice is invoked")
   return new Promise((resolve, reject) => {
