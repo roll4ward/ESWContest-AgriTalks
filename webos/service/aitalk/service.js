@@ -179,7 +179,6 @@ aitalk_service.register("ask_stream", async function(msg) {
   let contents = [];
   contents.push({"type": "text", "text": msg.payload.prompt});
 
-  msg.payload.imagePaths = ["/home/developer/media/tomato.jpg", "/home/developer/media/napaCabbage.jpg", "/home/developer/media/eggPlant.jpg"]
   if (msg.payload.imagePaths) {
     const uploadPromises = msg.payload.imagePaths.map(async (image_path) => {
       const img_file = await openai.files.create({
