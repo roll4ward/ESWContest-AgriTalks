@@ -43,12 +43,18 @@ export function askToAiStream(prompt, image_path, callback) {
   let bridge = new WebOSServiceBridge();
   bridge.onservicecallback = (msg) => {
       msg = JSON.parse(msg);
+      if(msg.subscribed == false){
+        bridge.cancel();
+        return;
+      }
+      
       if(!msg.returnValue) {
           console.log(`ask_stream Service call failed : ${msg.result}`);
           return;
       }
   
       if(callback) callback(msg.result);
+      
   }
 
   let query = {

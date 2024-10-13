@@ -56,7 +56,7 @@ class AITalkEventHandler extends Events.EventEmitter {
               chunks: "",
               isStreaming: false
           }))
-          this.msg.cancle();
+          this.msg.cancel();
       }
     } catch (e) {
       this.msg.respond(new error("Error handling event:"))
