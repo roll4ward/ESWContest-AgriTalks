@@ -56,7 +56,7 @@ class AITalkEventHandler extends Events.EventEmitter {
               chunks: "",
               isStreaming: false
           }))
-          this.msg.cancle();
+          this.msg.cancel();
       }
     } catch (e) {
       this.msg.respond(new error("Error handling event:"))
@@ -137,9 +137,9 @@ class AITalkEventHandler extends Events.EventEmitter {
               }));
       // Submit all the tool outputs at the same time
       await this.submitToolOutputs(toolOutputs, runId, threadId);
-    } catch (error) {
-      this.msg.respond(new error("Error processing required action:", error))
-      console.error("Error processing required action:", error);
+    } catch (err) {
+      this.msg.respond(new error("Error processing required action:", err))
+      console.error("Error processing required action:", err);
     }
   }
 
