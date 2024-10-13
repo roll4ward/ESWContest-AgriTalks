@@ -11,7 +11,7 @@ const http = config.api_url.startsWith("https") ? require("https") : require("ht
 const Service = require("webos-service");
 const OpenAI = require("openai");
 const path = require("path");
-const Events = require("events")
+const Events = require("events");
 
 const openai = new OpenAI({apiKey: config.openai_api_key});
 
@@ -56,7 +56,7 @@ class AITalkEventHandler extends Events.EventEmitter {
               chunks: "",
               isStreaming: false
           }))
-          this.msg.cancle();
+          this.msg.cancel();
       }
     } catch (e) {
       this.msg.respond(new error("Error handling event:"))
@@ -165,13 +165,12 @@ aitalk_service.register("ask_stream", async function(msg) {
   const aitalkEventHandler = new AITalkEventHandler(openai, msg);
   aitalkEventHandler.on("event", aitalkEventHandler.onEvent.bind(aitalkEventHandler));
 
-  if (thread == null) 
-  {
+  if (!thread) {
     thread = await openai.beta.threads.create();    
   };
 
-  if (!("prompt" in msg.payload)) 
-  {
+  console.log(msg)
+  if (!msg.payload.prompt) {
     msg.respond(new error('prompt is required.'));
     return;
   }
@@ -179,17 +178,23 @@ aitalk_service.register("ask_stream", async function(msg) {
   // build contents for "ask"
   let contents = [];
   contents.push({"type": "text", "text": msg.payload.prompt});
-  if (msg.payload.image_paths)
-  { // image prompting function
-    var img_file = await openai.files.create({
-      file: fs.createReadStream(msg.payload.image_path),
-      purpose: "assistants"
-    })
-    contents.push({"type": "image_file", "image_file": {"file_id": img_file.id}})
+
+  msg.payload.imagePaths = ["/home/developer/media/tomato.jpg", "/home/developer/media/napaCabbage.jpg", "/home/developer/media/eggPlant.jpg"]
+  if (msg.payload.imagePaths) {
+    const uploadPromises = msg.payload.imagePaths.map(async (image_path) => {
+      const img_file = await openai.files.create({
+        file: fs.createReadStream(image_path),
+        purpose: "assistants"
+      });
+      console.log("img_file: ", img_file);
+      contents.push({ "type": "image_file", "image_file": { "file_id": img_file.id } });
+    });
+    // Wait for all uploads to complete
+    await Promise.all(uploadPromises);
   }
 
+  console.log("content: ", contents)
   const threadMessages = await openai.beta.threads.messages.create(thread.id, { role: "user", content: contents});
-
   const stream = await openai.beta.threads.runs.stream(
     thread.id,
     { assistant_id: config.openai_assistant_id },
@@ -556,6 +561,7 @@ function controlDevices(deviceId, level, service)
     deviceId: deviceId,
     payload: level
   }
+
   return new Promise((resolve, reject) => {
     service.call("luna://xyz.rollforward.app.coap/send", payload, (response) => {
       if (response.payload.returnValue) {
