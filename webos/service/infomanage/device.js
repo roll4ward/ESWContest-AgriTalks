@@ -99,6 +99,10 @@ const registerDeviceMethod = (service) => {
         if (message.payload.areaId) {
             query.where.push({ prop: 'areaId', op: '=', val: message.payload.areaId });
         }
+
+        if (message.payload.select) {
+            query.select = message.payload.select;
+        }
         
         service.call('luna://com.webos.service.db/find', { query: query }, (response) => {
             if (response.payload.returnValue) {

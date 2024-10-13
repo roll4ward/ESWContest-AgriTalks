@@ -13,15 +13,12 @@ const OpenAI = require("openai");
 const path = require("path");
 const Events = require("events")
 
-// const AITalkEventHandler = require("./aitalkEventHandler.js");
-
 const openai = new OpenAI({apiKey: config.openai_api_key});
-
-// const aitalkEventHandler = AITalkEventHandler(openai);
 
 var thread = null;
 
 const aitalk_service = new Service(pkg_info.name);
+
 
 
 class AITalkEventHandler extends Events.EventEmitter {
@@ -53,12 +50,13 @@ class AITalkEventHandler extends Events.EventEmitter {
               chunks: this.snapshot.replace(/【\d+:\d+†[^】]+】/g, ""),
               is_streaming: true
           }))
-      } else if (event.event === "thread.message.completed") {
+      } else if (event.event === "done") {
           this.snapshot = "";
           this.msg.respond(new aitalk_response({
               chunks: "",
               isStreaming: false
           }))
+          this.msg.cancle();
       }
     } catch (e) {
       this.msg.respond(new error("Error handling event:"))
@@ -68,27 +66,75 @@ class AITalkEventHandler extends Events.EventEmitter {
 
   async handleRequiresAction(data, runId, threadId) {
       try {
-          const toolOutputs =
-              data.required_action.submit_tool_outputs.tool_calls.map((toolCall) => {
-                  if (toolCall.function.name === "activate_water_valve") 
-                  {
+          const toolOutputs = 
+              await Promise.all(data.required_action.submit_tool_outputs.tool_calls.map(async (toolCall) => {
+                  if (toolCall.function.name === "activate_water_valve") {
                     this.msg.respond(new aitalk_response({
                       chunks: "물 밸브 동작을 시도하고 있습니다. 잠시만 기다려주세요.",
-                      is_streaming: true
+                      isStreaming: true
                     }))
-
                     return {
                         tool_call_id: toolCall.id,
                         output: JSON.stringify({success: true}),
                     };
-                  } else 
-                  {
+                  } 
+                  else if (toolCall.function.name === "getAreaList") {
+                    this.msg.respond(new aitalk_response({
+                      chunks: "등록하신 Area의 정보를 읽고 있습니다.. 잠시만 기다려주세요.",
+                      isStreaming: true
+                    }));
+
+                    const response = await getAreaList(aitalk_service)
+                    console.log("response", response)
+                    const payload = {
+                      tool_call_id: toolCall.id,
+                      output: JSON.stringify(response)
+                    }
+                    console.log("toolCall: ", toolCall)
+                    console.log("payload: ", payload)
+                    return payload 
+                  } 
+                  else if (toolCall.function.name === "getDeviceList") {
+                    this.msg.respond(new aitalk_response({
+                      chunks: "Area 정보를 바탕으로 Devices 의 정보를 읽고 있습니다.. 잠시만 기다려주세요.",
+                      isStreaming: true
+                    }));
+                    
+                    const areaId = JSON.parse(toolCall.function.arguments).areaId
+                    console.log("toolCall.function", toolCall.function)
+
+                    const response = await getDeviceList(areaId, aitalk_service)
+                    console.log("response", response)
+                    const payload = {
+                      tool_call_id: toolCall.id,
+                      output: JSON.stringify(response)
+                    }
+                    console.log("toolCall: ", toolCall)
+                    console.log("payload: ", payload)
+                    return payload 
+                  }
+                  else if (toolCall.function.name === "controlDevices") {
+                    console.log("controlDevive invoked")
+                    console.log("toolCall, ", toolCall.function.name)
+
+                    const args = JSON.parse(toolCall.function.arguments)
+                    console.log("controlDevice args: ", args)
+                    const response = await controlDevices(args.deviceId, args.level, aitalk_service)
+
+                    const payload = {
+                      tool_call_id: toolCall.id,
+                      output: JSON.stringify(response)
+                    }
+                    console.log("payload: ", payload)
+                    return payload 
+                  }
+                  else {
                       return {
                           tool_call_id: toolCall.id, 
                           output: JSON.stringify({success: false})
                       };
                   }
-              });
+              }));
       // Submit all the tool outputs at the same time
       await this.submitToolOutputs(toolOutputs, runId, threadId);
     } catch (error) {
@@ -100,6 +146,7 @@ class AITalkEventHandler extends Events.EventEmitter {
   async submitToolOutputs(toolOutputs, runId, threadId) {
     try {
       // Use the submitToolOutputsStream helper
+      console.log("in submitToolOutputs", toolOutputs.output)
       const stream = this.client.beta.threads.runs.submitToolOutputsStream(
         threadId,
         runId,
@@ -132,7 +179,7 @@ aitalk_service.register("ask_stream", async function(msg) {
   // build contents for "ask"
   let contents = [];
   contents.push({"type": "text", "text": msg.payload.prompt});
-  if (msg.payload.image_path) 
+  if (msg.payload.image_paths)
   { // image prompting function
     var img_file = await openai.files.create({
       file: fs.createReadStream(msg.payload.image_path),
@@ -153,120 +200,6 @@ aitalk_service.register("ask_stream", async function(msg) {
     aitalkEventHandler.emit("event", event);
   }
 });
-
-
-// aitalk_service.register("ask_stream", async function(msg) {
-//   if (!("prompt" in msg.payload)) 
-//   {
-//     msg.respond(new error('prompt is required.'));
-//     return;
-//   }
-//   const prompt = msg.payload.prompt;
-
-//   if (thread == null) 
-//   {
-//     thread = await openai.beta.threads.create();    
-//   } 
-//   console.log("thread_id", thread.id);
-
-//   if (msg.payload.image_path) {
-//     // 예외 처리 추가
-
-//     const img_file = await openai.files.create({
-//       file: fs.createReadStream(msg.payload.image_path),
-//       purpose: "assistants"
-//     })
-//     const threadMessages = await openai.beta.threads.messages.create(
-//       thread.id, 
-//       { 
-//         role: "user", 
-//         content: [
-//           {
-//             "type": "text",
-//             "text": prompt  
-//           },
-//           {
-//             "type": "image_file",
-//             "image_file": {"file_id": img_file.id}
-//           },
-//         ]
-//       });
-//   } else {
-//     const threadMessages = await openai.beta.threads.messages.create(
-//       thread.id, 
-//       { 
-//         role: "user", 
-//         content: prompt 
-//       });
-//   }
-
-//   var snapshot = "";
-//   await new Promise((resolve, reject) => {
-//     try {
-//       const stream = openai.beta.threads.runs.stream(thread.id, {
-//         assistant_id: config.openai_assistant_id
-//       })
-//       .on("event", (event) => {
-//         console.log(event)
-//         if (event.event === "thread.run.in_progress") {
-//           msg.respond(new aitalk_response({
-//             chunks: "Thinking...",
-//             is_streaming: true
-//           }))
-//         } else if (event.event === "thread.message.delta") {
-//           snapshot += event.data.delta.content[0].text.value;
-//           msg.respond(new aitalk_response({
-//             chunks: snapshot.value.replace(/【\d+:\d+†[^】]+】/g, ""),
-//             is_streaming: true
-//           }))
-//         } else if (event.event === "thread.run.requires_action") {
-
-          
-//           msg.respond(new aitalk_response({
-//             chunks: "물 밸브 동작을 시도하고 있습니다. 잠시만 기다려주세요.",
-//             is_streaming: true
-//           }))
-//         } else if (event.event === "thread.message.completed") {
-//           msg.respond(new aitalk_response({
-//             chunks: "",
-//             is_streaming: false
-//           }))
-//         }});
-//         resolve();
-//     } catch (err){
-//       msg.respond(new error({error: err}));
-//       reject();
-//     }
-//       // })
-//       // .on("thread.message.delta", (data) => {
-//       //   console.log("thread.message.delta!!!!")
-//       //   console.log(data)
-//       // })
-//       // .on('textCreated', (text) => {
-//       //   console.log(text)
-//       // })
-//       // .on('textDelta', (textDelta, snapshot) => {
-//         // msg.respond(new aitalk_response({
-//         //   chunks: snapshot.value.replace(/【\d+:\d+†[^】]+】/g, ""),
-//         //   is_streaming: true
-//         // }))
-//       // })
-//       // .on('end', () => {
-//       //   console.log('\nStream has ended.');
-//       //   msg.respond(new aitalk_response({
-//       //     chunks: "",
-//       //     isStreaming: false
-//       //   }))
-//       //   resolve();
-//       // })
-
-//     //   console.log(stream)
-//     // } catch (err) {
-//     //   console.error(err)
-//     //   reject()
-//     // }
-//   })
-// });
 
 aitalk_service.register("stt", async function(msg) {
   // 0. check msg contains "voice_path"
@@ -571,127 +504,67 @@ aitalk_service.register('delete', function(message) {
 });
 
 
+/////////////////////////////////// Control functions ////////////////////////////////////
 
+// getAreaList() => [Area0, Area1, ...]
+// 입력은 인자는 없고 Area에 대한 정보를 
+// xyz.rollforward.app.infomanage/area/read 서비스를 활용하여 그대로 return 
+function getAreaList(service) 
+{
+  console.log("getAreaList is invoked")
+  return new Promise((resolve, reject) => {
+    service.call("luna://xyz.rollforward.app.infomanage/area/read", {}, (response) => {
+      if (response.payload.returnValue) {
+        console.log(response.payload)
+        resolve({success: true, response: response.payload})
+      } else {
+        reject({success: false})
+      }
+    })
+  })
+}
 
+// getDeviceList([AreaIds]) => [Device0, Device1, ...]
+// xyz.rollforward.app.infomanage/device/read 서비스를 활용하여 
+// AreaIds 속한 AreaId를 갖는 device들만 return (파싱이 필요) 
+function getDeviceList(areaId, service) 
+{
+  console.log("getDeviceList is invoked")
+  const query = {
+    select: ["_id", "areaId", "name", "type", "desc"],
+    areaId: areaId
+  }
+  console.log("query: ", query)
+  return new Promise((resolve, reject) => {
+    service.call("luna://xyz.rollforward.app.infomanage/device/read", query, (response) => {
+      console.log("getDeviceList response: ", response)
+      if (response.payload.returnValue) {
+        resolve({success: true, response: response.payload})
+      } else {
+        reject({success: false})
+      }
+    })
+  });
+}; 
 
-
-
-
-
-
-
-
-
-
-
-
-///////////////////////////////////////////////////////////////////
-//
-// !!!!!!!!!!!!! Deprecated !!!!!!!!!!!!!!!
-//
-//
-// aitalk method
-// aitalk_service.register("ask", async function(msg) { 
-//   if (!("prompt" in msg.payload)) 
-//   {
-//     msg.respond(new error('prompt is required.'));
-//     return;
-//   }
-//   const prompt = msg.payload.prompt;
-
-//   if (thread == null) 
-//   {
-//     thread = await openai.beta.threads.create();    
-//   } 
-//   console.log("thread_id", thread.id);
-//
-//   if (msg.payload.image_path) {
-//     if (msg.payload.image_path) {
-//       const img_file = await openai.files.create({
-//         file: fs.createReadStream(msg.payload.image_path),
-//         purpose: "assistants"
-//       })
-//       const threadMessages = await openai.beta.threads.messages.create(
-//         thread.id, 
-//         { 
-//           role: "user", 
-//           content: [
-//             {
-//               "type": "text",
-//               "text": prompt  
-//             },
-//             {
-//               "type": "image_file",
-//               "image_file": {"file_id": img_file.id}
-//             },
-//           ]
-//         });
-//     } else {
-//       const threadMessages = await openai.beta.threads.messages.create(
-//         thread.id, 
-//         { 
-//           role: "user", 
-//           content: prompt 
-//         });
-//     }
-//   } else {
-//     const threadMessages = await openai.beta.threads.messages.create(
-//       thread.id, 
-//       { 
-//         role: "user", 
-//         content: prompt 
-//       });
-//   }
-//
-//   let run = await openai.beta.threads.runs.createAndPoll(
-//       thread.id,
-//       {assistant_id: config.openai_assistant_id}
-//   );
-//   const messages = await openai.beta.threads.messages.list(
-//       run.thread_id
-//   );
-//
-//   let answer = messages.data[0].content[0].text.value;
-//   answer = answer.replace(/【\d+:\d+†[^】]+】/g, "");
-//   msg.respond(new aitalk_response(answer))
-// });
-///////////////////////////////////////////////////////////////////
-
-
-//////////////////////////////////////////////////////////////////
-//
-// !!!!!!!!!!!!!!!!!!! Deprecated !!!!!!!!!!!!!!!!!
-//
-//
-// aitalk_service.register("voice_ask", async function(msg) {
-//   // 0. check msg contains "voice_path"
-//   if (!("voice_path" in msg.payload)) {
-//     msg.respond(new error('It requires voice_path (e.g. voice_text.mp3).'));
-//     return;
-//   }
-//
-//   // 1. check is voice file (e.g. mp3) is exist
-//   // 1.1. if doesn't exist, then raise RuntimeError
-//   if (!fs.existsSync(msg.payload.voice_path)) {
-//     msg.respond(new error("File not found. ", msg.payload.voice_path))
-//     return;
-//   }
-//
-//   // 2. send voice file to API servce
-//   const transcription = await openai.audio.transcriptions.create({
-//       file: fs.createReadStream(msg.payload.voice_path),
-//       model: config.openai_stt_model,
-//   });
-//
-//   // 3. return text converted from voice file
-//   const voice_prompt = transcription.text;
-//
-//   aitalk_service.call("luna://xyz.rollforward.app.aitalk/ask", {"prompt": voice_prompt}, async function(m2) {
-//     console.log("This is ask call in voice call service")
-//     msg.respond(new aitalk_response({
-//       voice_prompt: voice_prompt,
-//       answer: m2.payload.result.replace(/【\d+:\d+†[^】]+】/g, "")
-//     }))
-//   })
-// });
-//////////////////////////////////////////////////////////////////
+// controlDevice(deviceId, level: 0-100(int))
+// deviceId 를 사용하여 actuator를 0부터 100 사이의 값을 갖도록 조작함.
+function controlDevices(deviceId, level, service) 
+{
+  console.log("controlDevice is invoked")
+  const payload = {
+    deviceId: deviceId,
+    payload: level
+  }
+  return new Promise((resolve, reject) => {
+    service.call("luna://xyz.rollforward.app.coap/send", payload, (response) => {
+      if (response.payload.returnValue) {
+        console.log(response.payload)
+        resolve({success: true, response: response.payload})
+      } else {
+        console.log("fail: ", response)
+        reject({success: false})
+      }
+    })
+  })
+}
