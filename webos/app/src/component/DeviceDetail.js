@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { readDevicewithID } from "../api/infomanageService";
 import { readLatestValue } from "../api/coapService";
 
-export default function DeviceDetail({ deviceID, setRefreshFlag }) {
+export default function DeviceDetail({ deviceID, setRefreshFlag, refreshFlag }) {
   const [deviceInfo, setDeviceInfo] = useState({
     name: "기기명",
     description: "기기설명을 추가해 주세요.",
@@ -28,6 +28,10 @@ export default function DeviceDetail({ deviceID, setRefreshFlag }) {
     loadLastValue();
   }, []);
 
+  useEffect(() => {
+    loadLastValue();
+  }, [refreshFlag]);
+
   function loadLastValue() {
     readLatestValue(deviceID, (result) => {
       let time = new Date(result.time);
@@ -48,7 +52,6 @@ export default function DeviceDetail({ deviceID, setRefreshFlag }) {
   }
 
   function onRefresh() {
-    loadLastValue();
     setRefreshFlag(valueInfo.lastupdatetime);
   }
 

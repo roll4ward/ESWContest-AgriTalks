@@ -23,8 +23,8 @@ export default function DeviceDetailPage() {
 
   return (
     <Container>
-      <DeviceDetail deviceID={deviceID} setRefreshFlag={setRefreshFlag} />
-      {isActuator && <ControlPannel deviceName={deviceName} />}
+      <DeviceDetail deviceID={deviceID} setRefreshFlag={setRefreshFlag} refreshFlag={refreshFlag}/>
+      {isActuator && <ControlPannel deviceName={deviceName} deviceId = {deviceID} setRefreshFlag={setRefreshFlag}/>}
       <GraphContainer deviceID={deviceID} refreshFlag={refreshFlag}/>
     </Container>
   );

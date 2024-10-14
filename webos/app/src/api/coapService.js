@@ -90,3 +90,30 @@ export function readLatestValue(deviceID, callback) {
 
     bridge.call(getServiceURL("coap", "read/latest"), JSON.stringify(query));
 }
+
+/**
+ * 해당 기기에 값을 전송함
+ * @param {string} deviceID 
+ * @param {*} callback 
+ * @param {number} value
+ */
+export function sendValue(deviceID, value, callback) {
+    let bridge = new WebOSServiceBridge();
+    bridge.onservicecallback = (msg) => {
+        msg = JSON.parse(msg);
+        if(!msg.returnValue) {
+            console.log(`Service call failed : ${msg.results}`);
+            return;
+        }
+
+        if(callback) callback(msg.results);
+        console.log("Callback called ", callback);
+    }
+
+    let query = {
+        deviceId: deviceID,
+        payload: value
+    };
+
+    bridge.call(getServiceURL("coap", "send"), JSON.stringify(query));
+}

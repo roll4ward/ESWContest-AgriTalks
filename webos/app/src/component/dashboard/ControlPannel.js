@@ -1,7 +1,8 @@
 import styled from "styled-components";
 import React, { useState } from "react";
+import { sendValue } from "../../api/coapService";
 
-export const ControlPannel = ({ deviceName }) => {
+export const ControlPannel = ({ deviceName, deviceId, setRefreshFlag }) => {
   const [actuatorVolume, setActuatorVolume] = useState(0);
 
   /* 슬라이더 값이 변할 떄 값을 set */
@@ -12,7 +13,18 @@ export const ControlPannel = ({ deviceName }) => {
   /* 버튼 클릭시, 해당 값으로 set */
   const onClickBtn = (value) => {
     setActuatorVolume(value);
+    sendValue(deviceId, value, (result)=>{
+      console.log(result, "is written");
+      setRefreshFlag(result);
+    })
   };
+
+  const sendCurrentValue = () => {
+    sendValue(deviceId, actuatorVolume, (result)=>{
+      console.log(result, "is written");
+      setRefreshFlag(result);
+    })
+  }
 
   return (
     <Container>
@@ -31,6 +43,7 @@ export const ControlPannel = ({ deviceName }) => {
           max="100"
           value={actuatorVolume}
           onChange={onChaneVolume}
+          onTouchEnd={sendCurrentValue}
         />
         <ValueMarkers>
           <Button onClick={() => onClickBtn(0)}>OFF</Button>
