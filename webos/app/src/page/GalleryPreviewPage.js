@@ -5,31 +5,46 @@ import { readAllImages } from "../api/mediaService";
 
 export default function GalleryPreviewPage() {
   const [images, setImages] = useState([]);
-  const [selectedImage, setSelectedImage] = useState(null); // 선택한 이미지
-  const [selectedImageDesc, setSelectedImageDesc] = useState("이게뭐야?"); // 선택한 이미지
+  const [selectedImages, setSelectedImages] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
 
-  useEffect( () => {
-    readAllImages((result)=> {
-      if(result){
+  useEffect(() => {
+    readAllImages((result) => {
+      if (result) {
         setImages(result);
-      }else{
+      } else {
         console.log("저장된 이미지 없음");
       }
     });
   }, []);
 
+  // 이미지 선택 처리 함수
   const handleImageSelect = (imagePath) => {
-    setSelectedImage(imagePath); // 선택된 이미지 경로 저장
-  };
-
-  const handleCompleteSelection = () => {
-    if (selectedImage) {
-      navigate("/chat", { state: { selectedImage: [selectedImage], selectedImageDesc } });
+    if (selectedImages.includes(imagePath)) {
+      // 이미 선택된 이미지면 선택 해제
+      setSelectedImages(selectedImages.filter((img) => img !== imagePath));
+    } else if (selectedImages.length < 3) {
+      // 선택된 이미지가 3개 미만일 때 추가
+      setSelectedImages([...selectedImages, imagePath]);
     } else {
-      alert("이미지를 선택하세요!");
+      // 3개를 초과한 경우 WebOS의 Toast 메시지 호출
+      createToast("이미지는 최대 3개까지만 선택할 수 있습니다.");
     }
   };
+
+
+  const handleModalClose = () => {
+    setIsModalOpen(false); // 모달 닫기
+  };
+
+  const handleModalSend = (description) => {
+    navigate("/chat", {
+      state: { selectedImages, selectedImageDesc: description },
+    });
+    setIsModalOpen(false);
+  };
+
 
   return (
     <Container>
@@ -39,28 +54,35 @@ export default function GalleryPreviewPage() {
         {images.map((image) => (
           <ImageItem
             key={image}
-            onClick={() => handleImageSelect(image)}
-            selected={selectedImage === image} // 선택 여부에 따라 스타일 변경
+            onClick={() => handleImageSelect(image)} 
+            selected={selectedImages.includes(image)} 
           >
             <img
               src={`${image}`}
-              alt={image}
+              alt=""
               style={{
-                width: "150px",
-                height: "150px",
+                width: "100%",
+                height: "100%",
                 objectFit: "cover",
               }}
             />
-            <p>{image}</p>
           </ImageItem>
         ))}
       </GalleryGrid>
-      <Button onClick={handleCompleteSelection}>선택 완료</Button>
+      <Button onClick={handleCompleteSelection}>AI에게 물어보기</Button>
+
+    
+      {isModalOpen && (
+        <AIQueryModal
+          selectedImages={selectedImages} // 선택한 이미지 배열을 모달로 전달
+          onClose={handleModalClose}
+          onSend={handleModalSend}
+        />
+      )}
     </Container>
   );
 }
 
-// 스타일 정의
 const Container = styled.div`
   display: flex;
   flex-direction: column;
@@ -68,18 +90,16 @@ const Container = styled.div`
 `;
 
 const GalleryGrid = styled.div`
-  display: flex;
-  grid-template-columns: repeat(
-    auto-fill,
-    minmax(150px, 1fr)
-  ); /* 그리드 조정 */
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   gap: 20px;
   margin: 20px;
-  justify-items: center; /* 중앙 정렬 */
-  flex-wrap: wrap;
+  justify-items: center; 
 `;
 
 const ImageItem = styled.div`
+  width: 320px; /* 이미지 비율 640x480의 절반 */
+  height: 240px; /* 이미지 비율 640x480의 절반 */
   cursor: pointer;
   text-align: center;
   padding: 10px;
