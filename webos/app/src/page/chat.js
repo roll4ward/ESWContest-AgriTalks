@@ -5,7 +5,7 @@ import MessageBox from "../component/MessageBox";
 import { Button, Form, InputGroup, Card, Spinner } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import styled from "styled-components";
-import { askToAiStream, TTS, STT, audioStart, audioStop, createConversation, readConversation, deleteAllConversation } from "../api/aiService";
+import { askToAiStream, TTS, STT, audioStart, audioStop, createConversation, readConversation } from "../api/aiService";
 import { initRecord} from "../api/mediaService";
 import RecordModal from "../component/modal/RecorderModal";
 import { FaMicrophone, FaImage } from "react-icons/fa";

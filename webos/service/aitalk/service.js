@@ -475,39 +475,6 @@ aitalk_service.register('read', function(message) {
   });
 });
 
-// 세션 데이터 delete
-aitalk_service.register('delete', function(message) {
-  const query  = {
-      from: CONVESKIND,
-      where: []
-  };
-  
-  aitalk_service.call('luna://com.webos.service.db/find', { query: query }, (response) => {
-    if(response.payload.returnValue){
-      if (response.payload.results.length > 0) {
-        const ids = [];
-
-        for (const result of response.payload.results) {
-          ids.push(result._id);
-        }
-
-        aitalk_service.call('luna://com.webos.service.db/del', { ids: ids }, (response) => {
-          if (response.payload.returnValue) {
-              message.respond({ returnValue: true, result: 'Item deleted successfully' });
-          } else {
-              message.respond({ returnValue: false, result: response.error });
-          }
-        });
-      } else {
-          message.respond({ returnValue: true, result: null });
-      }
-    }else{
-        message.respond({ returnValue: false, result: 'cannot found conversation' });
-    }
-  });
-});
-
-
 /////////////////////////////////// Control functions ////////////////////////////////////
 
 // getAreaList() => [Area0, Area1, ...]

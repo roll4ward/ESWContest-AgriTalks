@@ -1,12 +1,10 @@
-const BASE_URL = 'luna://xyz.rollforward.app';
-
 /**
  * 서비스와 메소드에 매칭되는 URL을 생성
  * @param {string} service 
  * @param {string} method 
  * @returns {string} 서비스의 URL
  */
-export const getServiceURL = (service, method) => `${BASE_URL}.${service}/${method}`;
+export const getServiceURL = (baseURL, service, method) => `${baseURL}.${service}/${method}`;
 
 /**
  * WebOSServiceBridge를 사용하여 서비스를 호출하는 함수
@@ -15,7 +13,7 @@ export const getServiceURL = (service, method) => `${BASE_URL}.${service}/${meth
  * @param {Object} [params={}] 파라미터 객체
  * @param {Function} callback 결과를 처리할 콜백 함수
  */
-export function callService(service, method, params = {}, callback) {
+export function callService(baseURL, service, method, params = {}, callback) {
     const bridge = new WebOSServiceBridge();
     bridge.onservicecallback = (msg) => {
         const response = JSON.parse(msg);
@@ -26,5 +24,5 @@ export function callService(service, method, params = {}, callback) {
         }
         callback(response.result);
     };
-    bridge.call(getServiceURL(service, method), JSON.stringify(params));
+    bridge.call(getServiceURL(baseURL, service, method), JSON.stringify(params));
 }

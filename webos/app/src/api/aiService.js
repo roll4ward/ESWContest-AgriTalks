@@ -207,21 +207,3 @@ export function readConversation (page, callback) {
 
   bridge.call(getServiceURL("aitalk", "read"), JSON.stringify(query));
 }
-
-/**
- * 모든 대화내용을 삭제
- * @param { (result : string)=>void } callback 서비스 호출 후 처리할 콜백 함수
- */
-export function deleteAllConversation (callback) {
-  let bridge = new WebOSServiceBridge();
-  bridge.onservicecallback = (msg) => {
-      msg = JSON.parse(msg);
-      if (!msg.returnValue) {
-          console.log(`delete conversation Service call failed : ${msg.result}`);
-          return;
-      }
-      if (callback) callback(msg.result);
-  };
-
-  bridge.call(getServiceURL("aitalk", "delete"), "{}");
-}
