@@ -1,116 +1,103 @@
 const pkg_info = require("./package.json");
 const Service = require('webos-service');
 const { exec } = require("child_process");
+const { promisify } = require('util');
+
+const execAsync = promisify(exec);
+
 const service = new Service(pkg_info.name);
 
-// 저장된 이미지 경로 리스트 전체 쿼리
-service.register('image/readAll', function(message) {
-    service.call('luna://com.webos.service.mediaindexer/requestMediaScan', {"path": ""}, (Rresponse) => {
-        if (Rresponse.payload.returnValue) {
-            service.call('luna://com.webos.service.mediaindexer/getImageList', {}, (Iresponse) => {
-                let images = Iresponse.payload.imageList.results.map(image =>{
-                    return(image.file_path.replace("file://",""));
-                });
-
-                if (Iresponse.payload.returnValue) {
-                    message.respond({ returnValue: true, result:images});
-                } else {
-                    message.respond({ returnValue: false, result: Iresponse.errorText });
-                }
-            });
-        } else {
-            message.respond({ returnValue: false, result: Rresponse.errorText });
-        }
+// Helpers
+const callServiceMethod = (uri, params = {}) => {
+  return new Promise((resolve, reject) => {
+    service.call(uri, params, (response) => {
+      if (response.payload.returnValue) {
+        resolve(response.payload);
+      } else {
+        reject(new Error(response.payload.errorText || 'Unknown error'));
+      }
     });
-});
+  });
+};
 
-service.register('image/convertJpg', function(message) {
-    exec("python3 ./imageCon.py",(err, stdout, stderr) => {
-        if (err) {
-            console.error(`Error during conversion: ${stderr}`);
-            message.respond({ returnValue: false, result: stderr });
-        } else {
-            message.respond({ returnValue: true, result: "success"});
-        }
-    });
-});
+// Image handlers
+const imageHandlers = {
+  async readAll(message) {
+    try {
+      await callServiceMethod('luna://com.webos.service.mediaindexer/requestMediaScan', { path: "" });
+      const response = await callServiceMethod('luna://com.webos.service.mediaindexer/getImageList');
+      const images = response.imageList.results.map(image => image.file_path.replace("file://", ""));
+      message.respond({ returnValue: true, result: images });
+    } catch (error) {
+      message.respond({ returnValue: false, result: error.message });
+    }
+  },
 
-// record 객체 초기화 함수
-service.register('record/init', function(message) {
-    service.call('luna://com.webos.service.audio/listSupportedDevices', {}, (response) => {
-        if (response.payload.returnValue) {
-            service.call('luna://com.webos.service.mediarecorder/open', {audio: true}, (response) => {
-                if (response.payload.returnValue) {
-                    const recorderId = response.payload.recorderId;
+  async convertJpg(message) {
+    try {
+      await execAsync("python3 ./imageCon.py");
+      message.respond({ returnValue: true, result: "success" });
+    } catch (error) {
+      message.respond({ returnValue: false, result: error.stderr });
+    }
+  }
+};
 
-                    const fomat = {
-                        recorderId: recorderId,
-                        codec:"AAC",
-                        bitRate:192000,
-                        sampleRate:48000,
-                        channelCount:2
-                    }
-                    service.call('luna://com.webos.service.mediarecorder/setAudioFormat', fomat, (response) => {
-                        if (response.payload.returnValue) {
-                            console.log("Setting format success");
-                        }
-                    });
+// Record handlers
+const recordHandlers = {
+  async init(message) {
+    try {
+      const { recorderId } = await callServiceMethod('luna://com.webos.service.mediarecorder/open', { audio: true });
 
-                    const output = {
-                        recorderId: recorderId,
-                        path : "/media/internal/"
-                    }
-                    service.call('luna://com.webos.service.mediarecorder/setOutputFile', output, (response) => {
-                        if (response.payload.returnValue) {
-                            console.log("Setting output path success");
-                        }
-                    });
+      const formatSettings = [
+        { method: 'setAudioFormat', params: { codec: "AAC", bitRate: 192000, sampleRate: 48000, channelCount: 2 } },
+        { method: 'setOutputFile', params: { path: "/media/internal/" } },
+        { method: 'setOutputFormat', params: { format: "M4A" } }
+      ];
 
-                    const outputFomat = {
-                        recorderId: recorderId,
-                        format:"M4A"
-                    }
-                    service.call('luna://com.webos.service.mediarecorder/setOutputFormat', outputFomat, (response) => {
-                        if (response.payload.returnValue) {
-                            console.log("Setting format M4A success");
-                        }
-                    });
-                    message.respond({ returnValue: true, result: recorderId });
-                }
-            });
-        }
-        else{
-            console.log("Does not support audio input.")
-        }
-    });
-});
+      for (const setting of formatSettings) {
+        await callServiceMethod(`luna://com.webos.service.mediarecorder/${setting.method}`, { recorderId, ...setting.params });
+        console.log(`Setting ${setting.method} success`);
+      }
 
-// 녹음 시작 서비스
-service.register('record/start', function(message) {
+      message.respond({ returnValue: true, result: recorderId });
+    } catch (error) {
+      message.respond({ returnValue: false, result: error.message });
+    }
+  },
+
+  async start(message) {
     if (!message.payload.recorderId) {
-        return message.respond({ returnValue: false, result: "recorderId required" });
+      return message.respond({ returnValue: false, result: "recorderId required" });
     }
 
-    service.call('luna://com.webos.service.mediarecorder/start', {recorderId: message.payload.recorderId}, (response) => {
-        if (response.payload.returnValue) {
-            message.respond({ returnValue: true, result: "Start recording..." });
-        } else {
-            message.respond({ returnValue: false, result: response.payload.errorText });
-        }
-    });
-});
+    try {
+      await callServiceMethod('luna://com.webos.service.mediarecorder/start', { recorderId: message.payload.recorderId });
+      message.respond({ returnValue: true, result: "Start recording..." });
+    } catch (error) {
+      message.respond({ returnValue: false, result: error.message });
+    }
+  },
 
-// 녹음 종료 서비스
-service.register('record/stop', function(message) {
+  async stop(message) {
     if (!message.payload.recorderId) {
-        return message.respond({ returnValue: false, result: "recorderId required" });
+      return message.respond({ returnValue: false, result: "recorderId required" });
     }
 
-    service.call('luna://com.webos.service.mediarecorder/stop', {recorderId: message.payload.recorderId}, (response) => {
-        if (response.payload.returnValue) {
-            message.respond({ returnValue: true, result: response.payload.path });
-        } else {
-            message.respond({ returnValue: false, result: response.payload.errorText });
-        }
-    });
-});
+    try {
+      const response = await callServiceMethod('luna://com.webos.service.mediarecorder/stop', { recorderId: message.payload.recorderId });
+      message.respond({ returnValue: true, result: response.path });
+    } catch (error) {
+      message.respond({ returnValue: false, result: error.message });
+    }
+  }
+};
+
+// Register services
+service.register('image/readAll', imageHandlers.readAll);
+service.register('image/convertJpg', imageHandlers.convertJpg);
+service.register('record/init', recordHandlers.init);
+service.register('record/start', recordHandlers.start);
+service.register('record/stop', recordHandlers.stop);
+
+module.exports = service;
