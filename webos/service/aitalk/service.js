@@ -114,13 +114,31 @@ class AITalkEventHandler extends Events.EventEmitter {
                     return payload 
                   }
                   else if (toolCall.function.name === "controlDevices") {
+                    this.msg.respond(new aitalk_response({
+                      chunks: "Device를 제어하고 있습니다.",
+                      isStreaming: true
+                    }));
+
                     console.log("controlDevive invoked")
                     console.log("toolCall, ", toolCall.function.name)
 
                     const args = JSON.parse(toolCall.function.arguments)
                     console.log("controlDevice args: ", args)
                     const response = await controlDevices(args.deviceId, args.level, aitalk_service)
+                    const payload = {
+                      tool_call_id: toolCall.id,
+                      output: JSON.stringify(response)
+                    }
+                    console.log("payload: ", payload)
+                    return payload 
+                  }
+                  else if (toolCall.function.name === "getSensorValuesOfAreaByTimeAsCSV") {
+                    console.log("getSensorValuesOfAreaByTimeAsCSV invoked")
+                    console.log("toolCall, ", toolCall.function.name)
 
+                    const args = JSON.parse(toolCall.function.arguments)
+                    console.log("controlDevice args: ", args)
+                    const response = await getSensorValuesOfAreaByTimeAsCSV(args.areaId, args.startTime, args.endTime, aitalk_service)
                     const payload = {
                       tool_call_id: toolCall.id,
                       output: JSON.stringify(response)
@@ -137,16 +155,19 @@ class AITalkEventHandler extends Events.EventEmitter {
               }));
       // Submit all the tool outputs at the same time
       await this.submitToolOutputs(toolOutputs, runId, threadId);
-    } catch (error) {
-      this.msg.respond(new error("Error processing required action:", error))
-      console.error("Error processing required action:", error);
+    } catch (err) {
+      this.msg.respond(new error("Error processing required action:", err))
+      console.error("Error processing required action:", err);
+      return {
+          tool_call_id: toolCall.id, 
+          output: JSON.stringify({success: false, error: err})
+      };
     }
   }
 
   async submitToolOutputs(toolOutputs, runId, threadId) {
     try {
       // Use the submitToolOutputsStream helper
-      console.log("in submitToolOutputs", toolOutputs.output)
       const stream = this.client.beta.threads.runs.submitToolOutputsStream(
         threadId,
         runId,
@@ -577,3 +598,13 @@ function controlDevices(deviceId, level, service)
     resolve({success: true})
   })
 }
+
+function getSensorValuesOfAreaByTimeAsCSV(areaId, startTime, endTime, service) 
+{
+  console.log("getSensorValuesOfAreaByTimeAsCSV is invoked")
+  return new Promise((resolve, reject) => {
+    // testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest
+    const sensorValuesCSV = fs.readFileSync('/home/developer/test_sensor_values.csv', 'utf-8');
+    resolve({succes: true, sensorValues: sensorValuesCSV})
+  });
+}; 
