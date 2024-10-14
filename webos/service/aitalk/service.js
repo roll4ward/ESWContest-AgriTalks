@@ -561,15 +561,19 @@ function controlDevices(deviceId, level, service)
     payload: level
   }
 
+  // return new Promise((resolve, reject) => {
+  //   service.call("luna://xyz.rollforward.app.coap/send", payload, (response) => {
+  //     if (response.payload.returnValue) {
+  //       console.log(response.payload)
+  //       resolve({success: true, response: response.payload})
+  //     } else {
+  //       console.log("fail: ", response)
+  //       reject({success: false})
+  //     }
+  //   })
+  // })
+
   return new Promise((resolve, reject) => {
-    service.call("luna://xyz.rollforward.app.coap/send", payload, (response) => {
-      if (response.payload.returnValue) {
-        console.log(response.payload)
-        resolve({success: true, response: response.payload})
-      } else {
-        console.log("fail: ", response)
-        reject({success: false})
-      }
-    })
+    resolve({success: false})
   })
 }
