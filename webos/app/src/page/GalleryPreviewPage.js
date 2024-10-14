@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { readAllImages } from "../api/mediaService";
 
+import AIQueryModal from "../component/modal/AIQueryModal";
+import { createToast } from "../api/toast"; // WebOS createToast import
 export default function GalleryPreviewPage() {
   const [images, setImages] = useState([]);
   const [selectedImages, setSelectedImages] = useState([]);
@@ -33,6 +35,15 @@ export default function GalleryPreviewPage() {
     }
   };
 
+  const handleCompleteSelection = () => {
+    if (selectedImages.length > 3) {
+      createToast("이미지는 최대 3장까지만 선택할 수 있습니다.");
+    } else if (selectedImages.length > 0) {
+      setIsModalOpen(true);
+    } else {
+      createToast("이미지를 선택하세요!");
+    }
+  };
 
   const handleModalClose = () => {
     setIsModalOpen(false); // 모달 닫기
