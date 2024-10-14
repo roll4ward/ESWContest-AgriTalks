@@ -138,7 +138,7 @@ class AITalkEventHandler extends Events.EventEmitter {
 
                     const args = JSON.parse(toolCall.function.arguments)
                     console.log("controlDevice args: ", args)
-                    const response = await getSensorValuesOfAreaByTimeAsCSV(args.areaId, args.startTime, args.endTime, aitalk_service)
+                    const response = await getSensorValuesOfAreaByTimeAsCSV(args.areaId, args.NHoursAgo, aitalk_service)
                     const payload = {
                       tool_call_id: toolCall.id,
                       output: JSON.stringify(response)
@@ -504,10 +504,14 @@ function controlDevices(deviceId, level, service)
   })
 }
 
-function getSensorValuesOfAreaByTimeAsCSV(areaId, startTime, endTime, service) 
+function getSensorValuesOfAreaByTimeAsCSV(areaId, NHoursAgo, service) 
 {
   console.log("getSensorValuesOfAreaByTimeAsCSV is invoked")
   return new Promise((resolve, reject) => {
+
+
+
+
     // testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest
     const sensorValuesCSV = fs.readFileSync('/home/developer/test_sensor_values.csv', 'utf-8');
     resolve({succes: true, sensorValues: sensorValuesCSV, isTest: true})
