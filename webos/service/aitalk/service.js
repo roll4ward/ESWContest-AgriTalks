@@ -574,6 +574,6 @@ function controlDevices(deviceId, level, service)
   // })
 
   return new Promise((resolve, reject) => {
-    resolve({success: false})
+    resolve({success: true})
   })
 }
