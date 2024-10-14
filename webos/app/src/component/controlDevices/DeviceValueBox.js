@@ -21,7 +21,6 @@ export const DeviceValueBox = ({ device, onEdit, onDelete, refreshFlag }) => {
     });
   }, [refreshFlag]);
 
-  console.log("devices : ", device);
   return (
     <Container>
       <CheckDelete
