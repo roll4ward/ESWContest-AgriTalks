@@ -24,7 +24,7 @@ export default function DeviceDetailPage() {
     <Container>
       <DeviceDetail deviceID={deviceID} />
       {isActuator && <ControlPannel deviceName={deviceName} />}
-      <GraphContainer />
+      <GraphContainer deviceID={deviceID} />
     </Container>
   );
 }
