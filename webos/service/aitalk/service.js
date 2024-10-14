@@ -207,7 +207,9 @@ aitalk_service.register("ask_stream", async function(msg) {
 
 aitalk_service.register("stt", async function(msg) {
   // 0. check msg contains "voice_path"
+  console.log(msg.payload.voice_path);
   if (!("voice_path" in msg.payload)) {
+    console.log('It requires voice_path (e.g. voice_text.mp3).');
     msg.respond(new error('It requires voice_path (e.g. voice_text.mp3).'));
     return;
   }
@@ -215,6 +217,7 @@ aitalk_service.register("stt", async function(msg) {
   // 1. check is voice file (e.g. mp3) is exist
   // 1.1. if doesn't exist, then raise RuntimeError
   if (!fs.existsSync(msg.payload.voice_path)) {
+    console.log("File not found. ");
     msg.respond(new error("File not found. ", msg.payload.voice_path))
     return;
   }
@@ -224,9 +227,11 @@ aitalk_service.register("stt", async function(msg) {
       file: fs.createReadStream(msg.payload.voice_path),
       model: config.openai_stt_model,
   });
+  console.log("스트림생성");
 
   // 3. return text converted from voice file
   const voice_prompt = transcription.text;
+  console.log(voice_prompt);
   msg.respond(new aitalk_response(
     {voice_prompt: voice_prompt}
   ))

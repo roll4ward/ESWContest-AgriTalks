@@ -6,7 +6,6 @@ import { Button, Form, InputGroup, Card, Spinner } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import styled from "styled-components";
 import { askToAiStream, TTS, STT, audioStart, audioStop, createConversation, readConversation } from "../api/aiService";
-import { initRecord} from "../api/mediaService";
 import RecordModal from "../component/modal/RecorderModal";
 import { FaMicrophone, FaImage } from "react-icons/fa";
 
@@ -15,7 +14,6 @@ export default function ChatPage() {
   const [nextPage, setNextPage] = useState(null); // 다음 페이지 정보를 저장할 상태
   const [prompt, setPrompt] = useState("");
   const [showRecordModal, setShowRecordModal] = useState(false);
-  const [recorderId, setRecorderId] = useState("");
   const [audioId, setAudioId] = useState("");
   
   const [isLoadingMore, setIsLoadingMore] = useState(false); // 이전 대화 불러올 때 로딩 상태
@@ -67,10 +65,6 @@ export default function ChatPage() {
         scrollToBottom(); // 대화 기록이 모두 렌더링된 후 스크롤 실행
         initialLoadComplete.current = true; // 초기 로딩 완료 플래그 설정
       }, 0);
-      initRecord((result) => {
-        setRecorderId(result);
-        console.log("ChatPage: 레코더 초기화 완료.", result);
-      });
     };
     initializeChat();
   }, []);
@@ -170,6 +164,7 @@ export default function ChatPage() {
   const handleRecordModalClose = (audio) => {
     setShowRecordModal(false);
     if (audio) {
+      console.log(audio);
       STT(audio, (result) => {
         // 사용자 메시지 저장
         const newMessages = [...messages, { type: "user", text: result }];
@@ -264,7 +259,6 @@ export default function ChatPage() {
       <RecordModal
         show={showRecordModal}
         handleClose={handleRecordModalClose}
-        recorderId={recorderId}
       />
     </Container>
   );
