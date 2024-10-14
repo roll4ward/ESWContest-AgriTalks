@@ -510,6 +510,6 @@ function getSensorValuesOfAreaByTimeAsCSV(areaId, startTime, endTime, service)
   return new Promise((resolve, reject) => {
     // testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest
     const sensorValuesCSV = fs.readFileSync('/home/developer/test_sensor_values.csv', 'utf-8');
-    resolve({succes: true, sensorValues: sensorValuesCSV})
+    resolve({succes: true, sensorValues: sensorValuesCSV, isTest: true})
   });
 }; 
