@@ -7,33 +7,6 @@
 const getServiceURL = (service, method) => `luna://xyz.rollforward.app.${service}/${method}`;
 
 /**
- * ai에게 질문을 함
- * @param {string} prompt 질문할 text
- * @param {string} image_path 질문할 이미지 경로
- * @param {*} callback 쿼리한 결과를 처리할 콜백 함수
- */
-export function askToAi(prompt, image_path, callback) {
-  let bridge = new WebOSServiceBridge();
-  bridge.onservicecallback = (msg) => {
-      msg = JSON.parse(msg);
-      if(!msg.returnValue) {
-          console.log(`ask Service call failed : ${msg.result}`);
-          return;
-      }
-  
-      if(callback) callback(msg.result);
-  }
-
-  let query = {
-    prompt: prompt
-  };
-
-  if(image_path) query.image_path = image_path
-
-  bridge.call(getServiceURL("aitalk", "ask"), JSON.stringify(query));
-}
-
-/**
  * ai에게 스트림으로 질문을 함
  * @param {string} prompt 질문할 text
  * @param {string} image_path 질문할 이미지 경로
