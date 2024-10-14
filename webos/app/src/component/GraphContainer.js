@@ -26,6 +26,7 @@ ChartJS.register(
 
 export default function GraphContainer({ deviceID }) {
   const [graphData, setGraphData] = useState(null);
+  const [maxValue, setMaxValue] = useState(100);
 
   useEffect(() => {
     if (!deviceID) {
@@ -51,6 +52,8 @@ export default function GraphContainer({ deviceID }) {
         {
           label: "측정값",
           data: [],
+          backgroundColor: 'rgba(255, 99, 132, 0.2)',
+          borderColor: 'rgba(255, 99, 132, 1)',
         },
       ],
     };
@@ -60,6 +63,7 @@ export default function GraphContainer({ deviceID }) {
       newData.datasets[0].data.push(data.value)
     });
 
+    setMaxValue(Math.max(newData.datasets[0].data));
     console.log("newData : ", newData);
     setGraphData(newData);
   };
@@ -80,19 +84,52 @@ export default function GraphContainer({ deviceID }) {
     scales: {
       x: {
         ticks: {
-          font: {
-            size: 32,
+          callback: function(val, index, ticks) {
+          const now = new Date();
+          const time = new Date(this.getLabelForValue(val));
+          const diff = Math.floor((now - time) / (1000 * 60 * 60));
+
+          // 이전 라벨 값 저장
+          const prevLabel = index > 0 ? this.getLabelForValue(ticks[index - 1].value) : null;
+
+          if (diff === 0) {
+            // 이전 라벨과 같은 경우 빈 문자열 반환
+            if (prevLabel && 
+              new Date(prevLabel).getHours() === time.getHours() &&
+              new Date(prevLabel).getMinutes() === time.getMinutes()) {
+              return "";
+            }
+            return "1시간 전";
+          }
+          
+          else if (diff < 24) {
+            // 이전 라벨과 같은 경우 빈 문자열 반환
+            if (prevLabel && new Date(prevLabel).getHours() === time.getHours()) {
+              return "";
+            }
+            return `${diff +1}시간 전`;
+          } 
+          
+          else {
+            return time.toLocaleDateString();
+          }
           },
+          font: {
+            size: 20,
+          },
+        },
+        grid: {
+          display: false
         },
       },
       y: {
-        max: 100, // Y축 최대값 설정
+        max: maxValue, // Y축 최대값 설정
         min: 0, // Y축 최소값 설정
         ticks: {
           font: {
             size: 20,
           },
-        },
+        }
       },
     },
   };
@@ -111,7 +148,8 @@ export default function GraphContainer({ deviceID }) {
 }
 
 const GraphWrap = styled.div`
-  height: 600px;
+  width: 100%;
+  padding: 15px;
   background-color: #f5f5f5;
   border-radius: 20px;
   display: flex;

@@ -75,7 +75,7 @@ export function readLatestValue(deviceID, callback) {
     let bridge = new WebOSServiceBridge();
     bridge.onservicecallback = (msg) => {
         msg = JSON.parse(msg);
-        if(!msg.returnValue) {
+        if(!msg.returnValue || !msg.results) {
             console.log(`Service call failed : ${msg.results}`);
             return;
         }
