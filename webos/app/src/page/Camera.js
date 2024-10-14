@@ -91,5 +91,5 @@ const CameraButton = styled.div`
 `;
 
 const VideoContainer = styled.video`
-  width: 100%;
+  height: 100%;
 `;
