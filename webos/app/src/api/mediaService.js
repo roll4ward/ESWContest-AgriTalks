@@ -19,7 +19,6 @@ export function convertJpg(callback) {
     callService(APP_URL, 'infomedia', 'image/convertJpg', {}, callback);
 }
 
-
 // 녹음 관련 서비스 호출 부분
 /**
  * 녹음기 초기화
