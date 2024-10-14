@@ -105,7 +105,7 @@ export default function GraphContainer({ deviceID, deviceData }) {
 
   return (
     <GraphWrap>
-      {graphData?.label?.length > 0 ? (
+      {graphData?.labels?.length > 0 ? (
         <Line data={graphData} options={options} />
       ) : (
         <NoDataText>
