@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { readDevicewithID } from "../api/infomanageService";
 import { readLatestValue } from "../api/coapService";
 
-export default function DeviceDetail({ deviceID }) {
+export default function DeviceDetail({ deviceID, setRefreshFlag }) {
   const [deviceInfo, setDeviceInfo] = useState({
     name: "기기명",
     description: "기기설명을 추가해 주세요.",
@@ -47,6 +47,11 @@ export default function DeviceDetail({ deviceID }) {
     });
   }
 
+  function onRefresh() {
+    loadLastValue();
+    setRefreshFlag(valueInfo.lastupdatetime);
+  }
+
   return (
     <MainWrap>
       {/* 좌측 기기명 박스 */}
@@ -59,7 +64,7 @@ export default function DeviceDetail({ deviceID }) {
       <ValueConiner>
         <StyledRow>
           <UpdateTitle>마지막 업데이트 시간</UpdateTitle>
-          <StyledIcon onClick={loadLastValue} src={RefreshIcon} alt="RefreshIcon" />
+          <StyledIcon onClick={onRefresh} src={RefreshIcon} alt="RefreshIcon" />
         </StyledRow>
 
         <LastUpdateTime>{valueInfo.lastupdatetime}</LastUpdateTime>

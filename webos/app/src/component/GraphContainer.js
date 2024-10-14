@@ -24,7 +24,7 @@ ChartJS.register(
   Legend
 );
 
-export default function GraphContainer({ deviceID }) {
+export default function GraphContainer({ deviceID, refreshFlag }) {
   const [graphData, setGraphData] = useState(null);
   const [maxValue, setMaxValue] = useState(100);
 
@@ -39,7 +39,7 @@ export default function GraphContainer({ deviceID }) {
       
       setGraphValues(result);
     });
-  }, [deviceID]);
+  }, [deviceID, refreshFlag]);
 
   const setGraphValues = (data) => {
     if (!data) {
@@ -85,34 +85,25 @@ export default function GraphContainer({ deviceID }) {
       x: {
         ticks: {
           callback: function(val, index, ticks) {
-          const now = new Date();
-          const time = new Date(this.getLabelForValue(val));
-          const diff = Math.floor((now - time) / (1000 * 60 * 60));
+            const now = new Date();
+            const time = new Date(this.getLabelForValue(val));
+            const diff = Math.floor((now - time) / (1000 * 60 * 60));
 
-          // 이전 라벨 값 저장
-          const prevLabel = index > 0 ? this.getLabelForValue(ticks[index - 1].value) : null;
+            // 이전 라벨 값 저장
+            const prevLabel = index > 0 ? this.getLabelForValue(ticks[index - 1].value) : null;
+            const prevTime = prevLabel ? new Date(prevLabel) : null;
 
-          if (diff === 0) {
-            // 이전 라벨과 같은 경우 빈 문자열 반환
-            if (prevLabel && 
-              new Date(prevLabel).getHours() === time.getHours() &&
-              new Date(prevLabel).getMinutes() === time.getMinutes()) {
-              return "";
+            if (diff < 24) {
+              // 이전 라벨과 시간(시, 분)이 다른 경우에만 라벨 표시
+              if (!prevTime || prevTime.getHours() !== time.getHours() || prevTime.getMinutes() !== time.getMinutes()) {
+                return `${diff + 1}시간 전`;
+              } else {
+                return "";
+              }
+            } else {
+              // 24시간 이상 경과한 경우 날짜 표시
+              return time.toLocaleDateString();
             }
-            return "1시간 전";
-          }
-          
-          else if (diff < 24) {
-            // 이전 라벨과 같은 경우 빈 문자열 반환
-            if (prevLabel && new Date(prevLabel).getHours() === time.getHours()) {
-              return "";
-            }
-            return `${diff +1}시간 전`;
-          } 
-          
-          else {
-            return time.toLocaleDateString();
-          }
           },
           font: {
             size: 20,

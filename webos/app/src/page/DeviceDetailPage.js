@@ -10,6 +10,7 @@ import { useParams } from "react-router-dom";
 export default function DeviceDetailPage() {
   const [isActuator, setIsActuator] = useState(false);
   const [deviceName, setDeviceName] = useState("");
+  const [refreshFlag, setRefreshFlag] = useState(0);
   const { deviceID } = useParams();
   console.log("Device Detail : ", deviceID);
 
@@ -22,9 +23,9 @@ export default function DeviceDetailPage() {
 
   return (
     <Container>
-      <DeviceDetail deviceID={deviceID} />
+      <DeviceDetail deviceID={deviceID} setRefreshFlag={setRefreshFlag} />
       {isActuator && <ControlPannel deviceName={deviceName} />}
-      <GraphContainer deviceID={deviceID} />
+      <GraphContainer deviceID={deviceID} refreshFlag={refreshFlag}/>
     </Container>
   );
 }
