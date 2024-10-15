@@ -1,14 +1,22 @@
-// ChatPage.js
-import React, { useState, useEffect,useRef } from "react";
-import { useNavigate, useLocation } from "react-router-dom"; // useNavigate, useLocation 추가
+import React, { useState, useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import MessageBox from "../component/MessageBox";
 import { Button, Form, InputGroup, Card, Spinner } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import styled from "styled-components";
-import { initRecord} from "../api/mediaService";
-import { askToAiStream, TTS, STT, audioStart, audioStop, createConversation, readConversation } from "../api/aiService";
+import { FaStopCircle } from "react-icons/fa"; // 중단 아이콘 추가
+import {
+  askToAiStream,
+  TTS,
+  STT,
+  audioStart,
+  audioStop,
+  createConversation,
+  readConversation
+} from "../api/aiService";
+import { initRecord } from "../api/mediaService";
 import RecordModal from "../component/modal/RecorderModal";
-import { FaMicrophone, FaImage } from "react-icons/fa";
+import { FaMicrophone } from "react-icons/fa";
 
 export default function ChatPage() {
   const [messages, setMessages] = useState([]);  
@@ -21,10 +29,13 @@ export default function ChatPage() {
   const [isLoadingMore, setIsLoadingMore] = useState(false); // 이전 대화 불러올 때 로딩 상태
   const [allMessagesLoaded, setAllMessagesLoaded] = useState(false); // 더 이상 불러올 메시지가 없는 상태 추가
 
-  const navigate = useNavigate();
   const messagesEndRef = useRef(null); // 스크롤 끝을 참조할 ref 생성
   const cardBodyRef = useRef(null); // 대화 내용이 들어가는 요소에 대한 ref 생성
   const initialLoadComplete = useRef(false); // 초기 렌더링 완료 여부
+  
+  const location = useLocation();
+  const selectedImages = location.state?.selectedImages;
+  const selectedImageDesc = location.state?.selectedImageDesc;
 
   // 스크롤을 가장 아래로 이동하는 함수
   const scrollToBottom = () => {
@@ -66,12 +77,20 @@ export default function ChatPage() {
         setRecorderId(result);
         console.log("ChatPage: 레코더 초기화 완료.", result);
       });
+      readConversation(null, (result)=> {
+        console.log(result);
+        setMessages(result.texts.map((msg) => ({ type: msg.type, text: msg.text, image:msg.image })));
+        if(result.page) 
+          setNextPage(result.page)
+          setTimeout(() => {
+            scrollToBottom(); // 대화 기록이 모두 렌더링된 후 스크롤 실행
+            initialLoadComplete.current = true; // 초기 로딩 완료 플래그 설정
+          }, 0);
+      });
 
-      fetchConversation(null); // 페이지를 1로 설정하고 대화 불러오기
-      setTimeout(() => {
-        scrollToBottom(); // 대화 기록이 모두 렌더링된 후 스크롤 실행
-        initialLoadComplete.current = true; // 초기 로딩 완료 플래그 설정
-      }, 0);
+      if (selectedImages) {
+        handleSendMessage("", selectedImages, selectedImageDesc);
+      }
     };
     initializeChat();
   }, []);
@@ -105,38 +124,7 @@ export default function ChatPage() {
 
   const handleSendMessage = (_ , image, imageDesc) => {
     // 질문창이 공백이면 return
-    if (prompt == "" && !image) {
-      
-      // -----------------------------------------------------------
-      // 임시 태스트용 코드
-
-      // ai가 한창 브리핑 중에 빈 프롬프트로 메세지 전송 버튼을 누르면 오디오가 중단 됨
-      if (audioId) {
-        audioStop(audioId);
-        console.log("stop", audioId);
-        setAudioId("");
-      }
-
-      // 대화 내용이 10개 초과로 있어야 태스트 가능
-      // 다음 페이지가 있는 경우 이전 대화내용 10개 추가로 불러오는 함수
-      // 스크롤바가 맨 위로 이동하는 이벤트에 이 함수를 넣어주면 됨
-      if(nextPage){
-        readConversation(nextPage, (result)=> {
-          const list = result.texts.map((msg) => ({ type: msg.type, text: msg.text, image:msg.image }))
-          setMessages([...list , ...messages]);
-          if(result.page){
-            setNextPage(result.page);
-          }else{
-            setNextPage("");
-          }
-        });
-      }
-      // ~~ 임시 태스트용 코드
-      
-      // -----------------------------------------------------------
-
-      return;
-    }
+    if (prompt == "" && !image) return;
 
     // 사용자 메시지 저장
     const newMessages = [...messages, { type: "user", text: image? imageDesc : prompt, image: image}];
@@ -146,11 +134,13 @@ export default function ChatPage() {
 
     // ai의 대답창을 우선 "..."으로 초기화
     setMessages((prevMessages) => [...prevMessages,{type: "ai",text: "..."}]);
+    scrollToBottom();
     let aiMessage = { type: "ai", text: ""};
     
     // 스트림 질문 전송 함수
     askToAiStream(image? imageDesc : prompt, image, (askResult)=> {
       // 스트림의 마지막 토큰이 수신되면 ai의 대답 전문을 저장 및 tts & audioStart
+      scrollToBottom();
       if(!askResult.isStreaming){
         createConversation(aiMessage.text, "ai");
         TTS(aiMessage.text, (path)=> {
@@ -180,10 +170,12 @@ export default function ChatPage() {
 
         // ai의 대답창을 우선 "..."으로 초기화
         setMessages((prevMessages) => [...prevMessages,{type: "ai",text: "..."}]);
+        scrollToBottom();
         let aiMessage = { type: "ai", text: "" };
 
         // 스트림 질문 전송 함수
         askToAiStream(result, "", (askResult)=> {
+          scrollToBottom();
           // 스트림의 마지막 토큰이 수신되면 ai의 대답 전문을 저장 및 tts & audioStart
           if(!askResult.isStreaming){
             createConversation(aiMessage.text, "ai", "");
@@ -207,6 +199,14 @@ export default function ChatPage() {
   const handleOpenRecordModal = () => {
     setShowRecordModal(true); // 녹음 모달 열기
   };
+  
+  const handleStopBriefing = () => {
+    if (audioId) {
+      audioStop(audioId);
+      console.log("브리핑 중단됨:", audioId);
+      setAudioId(""); // 오디오 ID를 초기화하여 중단 처리
+    }
+  };
 
   return (
     <Container>
@@ -220,12 +220,15 @@ export default function ChatPage() {
             </SpinnerWrapper>
           )}
           {messages.map((msg, idx) => (
-            <MessageBox
-              key={idx}
-              msgType={msg.type}
-              text={msg.text}
-              image={msg.image}
-            />
+             <div key={idx} style={{ position: "relative" }}>
+              <MessageBox msgType={msg.type} text={msg.text} image={msg.image} />
+             
+              {idx === messages.length - 1 && msg.type === "ai" && audioId && (
+                <StopIcon onClick={handleStopBriefing}>
+                  <FaStopCircle size={50} color="grey" />
+                </StopIcon>
+              )}
+            </div>
           ))}
           <div ref={messagesEndRef} /> {/* 메시지 끝 ref 추가 */}
         </CardBody>
@@ -301,4 +304,12 @@ const SpinnerWrapper = styled.div`
   align-items: center;
   height: 50px;
   margin-bottom: 10px;
+`;
+
+const StopIcon = styled.div`
+  position: absolute;
+  top: 50%;
+  right: 80px; /* 버튼이 채팅 박스 바로 옆에 위치하도록 조정 */
+  transform: translateY(-50%);
+  cursor: pointer;
 `;

@@ -12,6 +12,14 @@ export function readAllImages(callback) {
 }
 
 /**
+ * 이미지 삭제
+ * @param {Function} callback 쿼리한 결과를 처리할 콜백 함수
+ */
+export function deleteImage(imagePath, callback) {
+    callService(APP_URL, 'infomedia', 'image/delete', {imagePath: imagePath}, callback);
+}
+
+/**
  * 저장된 이미지 경로에 yuv파일을 jpg로 변환
  * @param {Function} callback 쿼리한 결과를 처리할 콜백 함수
  */

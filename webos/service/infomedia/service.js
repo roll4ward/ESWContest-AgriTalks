@@ -1,6 +1,7 @@
 const pkg_info = require("./package.json");
 const Service = require('webos-service');
 const { exec } = require("child_process");
+const fs = require("fs");
 const { promisify } = require('util');
 
 const execAsync = promisify(exec);
@@ -28,6 +29,25 @@ const imageHandlers = {
       const response = await callServiceMethod('luna://com.webos.service.mediaindexer/getImageList');
       const images = response.imageList.results.map(image => image.file_path.replace("file://", ""));
       message.respond({ returnValue: true, result: images });
+    } catch (error) {
+      message.respond({ returnValue: false, result: error.message });
+    }
+  },
+
+  async delete(message) {
+    try {
+
+      if (!message.payload.imagePath) {
+        return message.respond({ returnValue: false, result: "imagePath required" });
+      }
+
+      fs.unlink(message.payload.imagePath, error => {
+        if (error) {
+          message.respond({ returnValue: false, result: error.message });
+        } else {
+          message.respond({ returnValue: true, result: message.payload.imagePath });
+        }
+      });
     } catch (error) {
       message.respond({ returnValue: false, result: error.message });
     }
@@ -96,6 +116,7 @@ const recordHandlers = {
 
 // Register services
 service.register('image/readAll', imageHandlers.readAll);
+service.register('image/delete', imageHandlers.delete);
 service.register('image/convertJpg', imageHandlers.convertJpg);
 service.register('record/init', recordHandlers.init);
 service.register('record/start', recordHandlers.start);

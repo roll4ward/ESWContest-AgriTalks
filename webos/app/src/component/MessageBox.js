@@ -8,7 +8,10 @@ export default function MessageBox({ msgType, text, image }) {
       {msgType === "ai" && <StyledRobotIcon src={RobotIcon} alt="Robot Icon" />}
       <MsgContent>
         <MsgText msgType={msgType}>{text}</MsgText>
-        {image && <MsgImage src={image} alt="Prompt Image" />}
+        {/* {image && <MsgImage src={image} alt="Prompt Image" />} */}
+        {image && image.map((value, idx) => (
+             <MsgImage src={value} alt="Prompt Image" />
+        ))}
       </MsgContent>
     </MsgWrap>
   );
