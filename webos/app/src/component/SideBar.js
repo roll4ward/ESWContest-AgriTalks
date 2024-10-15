@@ -1,6 +1,6 @@
 import styled from "styled-components";
 import arrowRight from "../assets/icon/arrowLeft.png";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import home from "./../assets/icon/home.png";
 import chat from "./../assets/icon/chat.png";
 import image from "./../assets/icon/image.png";
@@ -9,10 +9,26 @@ import { useEffect, useState } from "react";
 
 export const SideBar = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [menuIndex, setMenuIndex] = useState(0);
   useEffect(() => {
-    console.log("index : ", menuIndex);
-  }, [menuIndex]);
+    switch(location.pathname.split("/")[1]) {
+      case "":
+      case "devices":
+      case "detail":
+        setMenuIndex(0);
+        break;
+      case "chat":
+        setMenuIndex(1);
+        break;
+      case "camera":
+        setMenuIndex(2);
+        break;
+      case "gallery":
+        setMenuIndex(3);
+        break;
+    }
+  }, [location.pathname]);
 
   return (
     <Container>
@@ -20,7 +36,6 @@ export const SideBar = () => {
         {/* 대시보드 */}
         <ImgContainer
           onClick={() => {
-            setMenuIndex(0);
             navigate("/");
           }}
           style={{
@@ -34,7 +49,6 @@ export const SideBar = () => {
         {/* AI 채팅 */}
         <ImgContainer
           onClick={() => {
-            setMenuIndex(1);
             navigate("/chat");
           }}
           style={{
@@ -48,7 +62,6 @@ export const SideBar = () => {
         {/* 카메라 */}
         <ImgContainer
           onClick={() => {
-            setMenuIndex(2);
             navigate("/camera");
           }}
           style={{
@@ -62,7 +75,6 @@ export const SideBar = () => {
         {/* 이미지 선택 */}
         <ImgContainer
           onClick={() => {
-            setMenuIndex(3);
             navigate("gallery");
           }}
           style={{

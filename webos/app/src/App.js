@@ -42,7 +42,6 @@ function App() {
             <Route path="/gallery" element={<GalleryPreviewPage />} />
             <Route path="/devices/:areaID" element={<DeviceOverView />} />
             <Route path="/detail/:deviceID" element={<DeviceDetailPage />} />
-            <Route path="/gallery" element={<div />} />
 
           </Routes>
         </div>
