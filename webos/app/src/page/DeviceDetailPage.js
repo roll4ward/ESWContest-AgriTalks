@@ -21,10 +21,15 @@ export default function DeviceDetailPage() {
     });
   }, []);
 
+  function makeRefreshFlag() {
+    if (refreshFlag > 3) setRefreshFlag(0);
+    else setRefreshFlag(refreshFlag + 1);
+  }
+
   return (
     <Container>
-      <DeviceDetail deviceID={deviceID} setRefreshFlag={setRefreshFlag} refreshFlag={refreshFlag}/>
-      {isActuator && <ControlPannel deviceName={deviceName} deviceId = {deviceID} setRefreshFlag={setRefreshFlag}/>}
+      <DeviceDetail deviceID={deviceID} setRefreshFlag={makeRefreshFlag} refreshFlag={refreshFlag}/>
+      {isActuator && <ControlPannel deviceName={deviceName} deviceId = {deviceID} setRefreshFlag={makeRefreshFlag}/>}
       <GraphContainer deviceID={deviceID} refreshFlag={refreshFlag}/>
     </Container>
   );

@@ -50,11 +50,7 @@ export default function DeviceDetail({ deviceID, setRefreshFlag, refreshFlag }) 
       });
     });
   }
-
-  function onRefresh() {
-    setRefreshFlag(valueInfo.lastupdatetime);
-  }
-
+  
   return (
     <MainWrap>
       {/* 좌측 기기명 박스 */}
@@ -67,7 +63,7 @@ export default function DeviceDetail({ deviceID, setRefreshFlag, refreshFlag }) 
       <ValueConiner>
         <StyledRow>
           <UpdateTitle>마지막 업데이트 시간</UpdateTitle>
-          <StyledIcon onClick={onRefresh} src={RefreshIcon} alt="RefreshIcon" />
+          <StyledIcon onClick={setRefreshFlag} src={RefreshIcon} alt="RefreshIcon" />
         </StyledRow>
 
         <LastUpdateTime>{valueInfo.lastupdatetime}</LastUpdateTime>

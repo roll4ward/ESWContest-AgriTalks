@@ -15,14 +15,14 @@ export const ControlPannel = ({ deviceName, deviceId, setRefreshFlag }) => {
     setActuatorVolume(value);
     sendValue(deviceId, value, (result)=>{
       console.log(result, "is written");
-      setRefreshFlag(result);
+      setRefreshFlag();
     })
   };
 
   const sendCurrentValue = () => {
     sendValue(deviceId, actuatorVolume, (result)=>{
       console.log(result, "is written");
-      setRefreshFlag(result);
+      setRefreshFlag();
     })
   }
 
