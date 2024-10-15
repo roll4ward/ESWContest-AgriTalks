@@ -36,7 +36,6 @@ export default function GraphContainer({ deviceID, refreshFlag }) {
     // 기기 내 값들 불러오기
     readRecentValues(deviceID, 24, (result) => {
       console.log("result in Graph : ", result);
-      
       setGraphValues(result);
     });
   }, [deviceID, refreshFlag]);
@@ -52,18 +51,18 @@ export default function GraphContainer({ deviceID, refreshFlag }) {
         {
           label: "측정값",
           data: [],
-          backgroundColor: 'rgba(255, 99, 132, 0.2)',
-          borderColor: 'rgba(255, 99, 132, 1)',
+          backgroundColor: "rgba(255, 99, 132, 0.2)",
+          borderColor: "rgba(255, 99, 132, 1)",
         },
       ],
     };
 
-    data.forEach((data)=> {
-      newData.labels.push(data.time);
-      newData.datasets[0].data.push(data.value)
+    data.forEach((item) => {
+      newData.labels.push(item.time);
+      newData.datasets[0].data.push(item.value);
     });
 
-    setMaxValue(Math.max(newData.datasets[0].data));
+    setMaxValue(Math.max(...newData.datasets[0].data));
     console.log("newData : ", newData);
     setGraphData(newData);
   };
@@ -84,25 +83,22 @@ export default function GraphContainer({ deviceID, refreshFlag }) {
     scales: {
       x: {
         ticks: {
-          callback: function(val, index, ticks) {
-            const now = new Date();
-            const time = new Date(this.getLabelForValue(val));
-            const diff = Math.floor((now - time) / (1000 * 60 * 60));
+          autoSkip: true, 
+          maxRotation: 0,
+          // 라벨 갯수를 5~6개로 제한하기 위한 로직
+          callback: function (val, index, ticks) {
+            const divisor = Math.ceil(ticks.length / 5);
 
-            // 이전 라벨 값 저장
-            const prevLabel = index > 0 ? this.getLabelForValue(ticks[index - 1].value) : null;
-            const prevTime = prevLabel ? new Date(prevLabel) : null;
-
-            if (diff < 24) {
-              // 이전 라벨과 시간(시, 분)이 다른 경우에만 라벨 표시
-              if (!prevTime || prevTime.getHours() !== time.getHours() || prevTime.getMinutes() !== time.getMinutes()) {
-                return `${diff + 1}시간 전`;
-              } else {
-                return "";
-              }
-            } else {
-              // 24시간 이상 경과한 경우 날짜 표시
-              return time.toLocaleDateString();
+            if (index % divisor === 0) {
+              const time = new Date(this.getLabelForValue(val));
+              return new Intl.DateTimeFormat("ko-KR", {
+                hour: "numeric",
+                minute: "numeric",
+              }).format(time);
+            }
+            
+            else {
+              return null;
             }
           },
           font: {
@@ -110,7 +106,7 @@ export default function GraphContainer({ deviceID, refreshFlag }) {
           },
         },
         grid: {
-          display: false
+          display: false,
         },
       },
       y: {
@@ -120,7 +116,7 @@ export default function GraphContainer({ deviceID, refreshFlag }) {
           font: {
             size: 20,
           },
-        }
+        },
       },
     },
   };
@@ -130,9 +126,7 @@ export default function GraphContainer({ deviceID, refreshFlag }) {
       {graphData?.labels?.length > 0 ? (
         <Line data={graphData} options={options} />
       ) : (
-        <NoDataText>
-          최근 24시간 사이의 데이터가 없어요.
-        </NoDataText>
+        <NoDataText>최근 24시간 사이의 데이터가 없어요.</NoDataText>
       )}
     </GraphWrap>
   );
