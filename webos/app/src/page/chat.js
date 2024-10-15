@@ -5,6 +5,7 @@ import MessageBox from "../component/MessageBox";
 import { Button, Form, InputGroup, Card, Spinner } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import styled from "styled-components";
+import { initRecord} from "../api/mediaService";
 import { askToAiStream, TTS, STT, audioStart, audioStop, createConversation, readConversation } from "../api/aiService";
 import RecordModal from "../component/modal/RecorderModal";
 import { FaMicrophone, FaImage } from "react-icons/fa";
@@ -15,7 +16,8 @@ export default function ChatPage() {
   const [prompt, setPrompt] = useState("");
   const [showRecordModal, setShowRecordModal] = useState(false);
   const [audioId, setAudioId] = useState("");
-  
+  const [recorderId, setRecorderId] = useState("");
+
   const [isLoadingMore, setIsLoadingMore] = useState(false); // 이전 대화 불러올 때 로딩 상태
   const [allMessagesLoaded, setAllMessagesLoaded] = useState(false); // 더 이상 불러올 메시지가 없는 상태 추가
 
@@ -60,6 +62,11 @@ export default function ChatPage() {
 
   useEffect(() => {
     const initializeChat = () => {
+      initRecord((result) => {
+        setRecorderId(result);
+        console.log("ChatPage: 레코더 초기화 완료.", result);
+      });
+
       fetchConversation(null); // 페이지를 1로 설정하고 대화 불러오기
       setTimeout(() => {
         scrollToBottom(); // 대화 기록이 모두 렌더링된 후 스크롤 실행
@@ -259,6 +266,7 @@ export default function ChatPage() {
       <RecordModal
         show={showRecordModal}
         handleClose={handleRecordModalClose}
+        recorderId={recorderId}
       />
     </Container>
   );

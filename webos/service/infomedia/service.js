@@ -45,7 +45,7 @@ const imageHandlers = {
 
 // Record handlers
 const recordHandlers = {
-  async start(message) {
+  async init(message) {
     try {
       const { recorderId } = await callServiceMethod('luna://com.webos.service.mediarecorder/open', { audio: true });
 
@@ -60,9 +60,20 @@ const recordHandlers = {
         console.log(`Setting ${setting.method} success`);
       }
 
-      await callServiceMethod('luna://com.webos.service.mediarecorder/start', { recorderId: recorderId });
-
       message.respond({ returnValue: true, result: recorderId });
+    } catch (error) {
+      message.respond({ returnValue: false, result: error.message });
+    }
+  },
+
+  async start(message) {
+    if (!message.payload.recorderId) {
+      return message.respond({ returnValue: false, result: "recorderId required" });
+    }
+
+    try {
+      await callServiceMethod('luna://com.webos.service.mediarecorder/start', { recorderId: message.payload.recorderId });
+      message.respond({ returnValue: true, result: "Start recording..." });
     } catch (error) {
       message.respond({ returnValue: false, result: error.message });
     }
@@ -75,7 +86,6 @@ const recordHandlers = {
 
     try {
       const response = await callServiceMethod('luna://com.webos.service.mediarecorder/stop', { recorderId: message.payload.recorderId });
-      await callServiceMethod('luna://com.webos.service.mediarecorder/close', { recorderId: message.payload.recorderId });
 
       message.respond({ returnValue: true, result: response.path });
     } catch (error) {
@@ -87,6 +97,7 @@ const recordHandlers = {
 // Register services
 service.register('image/readAll', imageHandlers.readAll);
 service.register('image/convertJpg', imageHandlers.convertJpg);
+service.register('record/init', recordHandlers.init);
 service.register('record/start', recordHandlers.start);
 service.register('record/stop', recordHandlers.stop);
 

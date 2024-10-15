@@ -1,34 +1,56 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Button, Modal } from "react-bootstrap";
 import styled, { keyframes } from "styled-components";
+import { FaStop } from "react-icons/fa";
 import { startRecord, stopRecord } from "../../api/mediaService";
-import { useTimer } from "../shared/useTimer";
+import Timer from "../shared/Timer";
 
-export default function RecorderModal({ show, handleClose }) {
-  const [recorderId, setRecorderId] = useState(null);
-  const seconds = useTimer(show);
+const RecorderModal = ({ show, handleClose, recorderId }) => {
+  const [rId, setRId] = useState(recorderId);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordedAudio, setRecordedAudio] = useState(null);
+  const [isSendEnabled, setIsSendEnabled] = useState(false);
+  const [resetTimer, setResetTimer] = useState(false);
+
+  const startRecording = useCallback(() => {
+    console.log("모달 열림: 녹음 시작");
+    setIsRecording(true);
+    setResetTimer(false);
+    startRecord(rId, (result) => {
+      if (!result) console.log("녹음 시작 실패");
+    });
+  }, [rId]);
+
+  const stopRecording = useCallback(() => {
+    setIsRecording(false);
+    setIsSendEnabled(true);
+    stopRecord(rId, (result) => {
+      if (result) setRecordedAudio(result);
+      else console.log("녹음 종료 실패");
+    });
+  }, [rId]);
 
   useEffect(() => {
-    if (show) {
-      startRecord((result) => {
-        setRecorderId(result);
-      });
+    if (recorderId) setRId(recorderId);
+    if (show) startRecording();
+    else {
+      setIsRecording(false);
+      setIsSendEnabled(false);
+      setRecordedAudio(null);
+      setResetTimer(true);
     }
-  }, [show]);
+  }, [show, recorderId, startRecording]);
 
-  const handleSendAudio = useCallback(() => {
-    stopRecord(recorderId, (result)=> {
-      handleClose(result);
-      setRecorderId(null);
-    });
-  }, [recorderId, handleClose]);
+  const handleStopRecording = () => {
+    if (isRecording) stopRecording();
+  };
 
-  const handleCancelAudio = useCallback(() => {
-    stopRecord(recorderId, (result)=> {
-      handleClose(null);
-      setRecorderId(null);
-    });
-  }, [recorderId, handleClose]);
+  const handleSendAudio = () => handleClose(recordedAudio || null);
+
+  const handleCancelAudio = () => {
+    if (!isSendEnabled) stopRecord(rId,() => {});
+    handleClose(null);
+  };
 
   return (
     <Modal show={show} onHide={handleCancelAudio} centered>
@@ -37,27 +59,38 @@ export default function RecorderModal({ show, handleClose }) {
       </Modal.Header>
       <Modal.Body>
         <WaveContainer>
-          <Wave />
-          <Wave />
-          <Wave />
+          <Wave isRecording={isRecording} />
+          <Wave isRecording={isRecording} />
+          <Wave isRecording={isRecording} />
         </WaveContainer>
+        <Timer isRunning={isRecording} onReset={resetTimer} />
+        <RecordingButton onClick={handleStopRecording} disabled={!isRecording}>
+          <FaStop style={{ color: "black" }} />
+        </RecordingButton>
+        <SendButton
+          variant="success"
+          onClick={handleSendAudio}
+          disabled={!isSendEnabled} // 녹음 중지 후에만 활성화
+        >
+          전송
+        </SendButton>
 
-        <Timer>
-          {`${Math.floor(seconds / 60).toString().padStart(2, "0")}:${(seconds % 60).toString().padStart(2, "0")}`}
-        </Timer>
-
-        <ButtonContainer>
-          <SendButton onClick={handleSendAudio}>전송</SendButton>
-          <ExitButton onClick={handleCancelAudio}>취소</ExitButton>
-        </ButtonContainer>
+        {/* 취소 버튼 */}
+        <ExitButton
+          variant="secondary"
+          onClick={handleCancelAudio} // 취소 시 모달을 닫음
+        >
+          취소
+        </ExitButton>
       </Modal.Body>
     </Modal>
   );
-}
+};
 
 const waveAnimation = keyframes`
-  0%, 100% { transform: scaleY(1); }
+  0% { transform: scaleY(1); }
   50% { transform: scaleY(1.5); }
+  100% { transform: scaleY(1); }
 `;
 
 const WaveContainer = styled.div`
@@ -74,30 +107,38 @@ const Wave = styled.div`
   background-color: #007bff;
   border-radius: 50px;
   animation: ${waveAnimation} 0.6s infinite ease-in-out;
+  animation-play-state: ${({ isRecording }) => isRecording ? "running" : "paused"};
   &:nth-child(2) { animation-delay: 0.2s; }
   &:nth-child(3) { animation-delay: 0.4s; }
 `;
 
-const Timer = styled.div`
-  font-size: 1.5rem;
-  text-align: center;
-  margin: 10px 0 20px;
-`;
-
-const ButtonContainer = styled.div`
+const RecordingButton = styled.button`
   display: flex;
-  justify-content: space-between;
-  margin-top: 20px;
+  justify-content: center;
+  align-items: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 3px solid gray;
+  background-color: white;
+  cursor: pointer;
+  margin: 20px auto;
 `;
 
-const StyledButton = styled(Button)`
+const SendButton = styled(Button)`
   width: 47%;
+  margin-top: 20px;
+  margin-right: 10px;
+  background-color: ${({ disabled }) => (disabled ? "#ccc" : "#448569")};
+  cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
 `;
 
-const SendButton = styled(StyledButton)`
-  background-color: #448569;
-`;
-
-const ExitButton = styled(StyledButton)`
+const ExitButton = styled(Button)`
+  width: 47%;
+  margin-top: 20px;
+  margin-left: 10px;
   background-color: #ccc;
+  cursor: pointer;
 `;
+
+export default RecorderModal;
