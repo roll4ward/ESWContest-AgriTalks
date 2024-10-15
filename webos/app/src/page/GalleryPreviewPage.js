@@ -164,6 +164,8 @@ const Container = styled.div`
 
 const GalleryGrid = styled.div`
   display: grid;
+  height: 80vh;
+  overflow-y: scroll;
   grid-template-columns: repeat(4, 1fr);
   gap: 20px;
   margin: 20px;
