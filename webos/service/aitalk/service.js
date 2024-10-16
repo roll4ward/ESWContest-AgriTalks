@@ -438,14 +438,14 @@ aitalk_service.register('create', function(message) {
       _kind: CONVESKIND,
       text: message.payload.text,
       type: message.payload.type,
-      image: message.payload.image,
+      image: JSON.stringify(message.payload.image),
       regdate: new Date().toISOString()
   };
 
   if (!dataToStore.type || !dataToStore.text) {
       return message.respond({ returnValue: false, result: 'text, type fields are required.' });
-  } 
-  
+  }
+
   aitalk_service.call('luna://com.webos.service.db/put', { objects: [dataToStore] }, (response) => {
       console.log(response);
       if (response.payload.returnValue) {
@@ -461,6 +461,7 @@ aitalk_service.register('read', function(message) {
   const query  = {
       from: CONVESKIND,
       where: [],
+      select: ["type", "text", "image"],
       limit: 10,
       desc: true
   };

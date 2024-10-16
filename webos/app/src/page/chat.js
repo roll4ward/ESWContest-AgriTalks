@@ -48,11 +48,11 @@ export default function ChatPage() {
   const fetchConversation = (page) => {
     setIsLoadingMore(true); // 로딩 상태로 설정
     readConversation(page, (result) => {
-      if (result && result.texts && result.texts.length > 0) {
+      if (result.texts.length > 0) {
         const conversationPage = result.texts.map((msg) => ({
           type: msg.type,
           text: msg.text,
-          image: msg.image, // msg.image로 이미지 처리
+          image: JSON.parse(msg.image), // msg.image로 이미지 처리
         }));
 
         setMessages((prevMessages) => [...conversationPage, ...prevMessages]); // 기존 메시지에 추가
@@ -75,17 +75,18 @@ export default function ChatPage() {
     const initializeChat = () => {
       initRecord((result) => {
         setRecorderId(result);
-        console.log("ChatPage: 레코더 초기화 완료.", result);
       });
+
       readConversation(null, (result)=> {
-        console.log(result);
-        setMessages(result.texts.map((msg) => ({ type: msg.type, text: msg.text, image:msg.image })));
-        if(result.page) 
-          setNextPage(result.page)
-          setTimeout(() => {
-            scrollToBottom(); // 대화 기록이 모두 렌더링된 후 스크롤 실행
-            initialLoadComplete.current = true; // 초기 로딩 완료 플래그 설정
-          }, 0);
+        if(result.texts.length > 0){
+          setMessages(result.texts.map((msg) => ({ type: msg.type, text: msg.text, image: JSON.parse(msg.image)})));
+          if(result.page) setNextPage(result.page)
+        }
+
+        setTimeout(() => {
+          scrollToBottom(); // 대화 기록이 모두 렌더링된 후 스크롤 실행
+          initialLoadComplete.current = true; // 초기 로딩 완료 플래그 설정
+        }, 0);
       });
 
       if (selectedImages) {
@@ -126,27 +127,30 @@ export default function ChatPage() {
     // 질문창이 공백이면 return
     if (prompt == "" && !image) return;
 
-    // 사용자 메시지 저장
-    const newMessages = [...messages, { type: "user", text: image? imageDesc : prompt, image: image}];
-    setMessages(newMessages);
-    createConversation(image ? imageDesc : prompt, "user", image);
+    let aiMessage = { text: "", type: "ai", image: []};
+    let text = prompt;
+    let img = [];
+
+    if (image){
+      text = imageDesc;
+      img = image;
+    }
+
     setPrompt("");
 
-    // ai의 대답창을 우선 "..."으로 초기화
-    setMessages((prevMessages) => [...prevMessages,{type: "ai",text: "..."}]);
+    // 사용자 메시지 저장, ai의 대답창을 우선 "..."으로 초기화
+    setMessages((prevMessages) => [...prevMessages, { text: text, type: "user", image: img}, {type: "ai", text: "...", image: []}]);
+    createConversation(text, "user", img);
     scrollToBottom();
-    let aiMessage = { type: "ai", text: ""};
     
     // 스트림 질문 전송 함수
-    askToAiStream(image? imageDesc : prompt, image, (askResult)=> {
+    askToAiStream(text, img, (askResult)=> {
       // 스트림의 마지막 토큰이 수신되면 ai의 대답 전문을 저장 및 tts & audioStart
       scrollToBottom();
       if(!askResult.isStreaming){
-        createConversation(aiMessage.text, "ai");
-        TTS(aiMessage.text, (path)=> {
-          audioStart(path ,(result)=> {
-            setAudioId(result);
-          }); 
+        createConversation(aiMessage.text, "ai", []);
+        TTS(aiMessage.text, (path)=> { 
+          audioStart(path, (result)=> { setAudioId(result); }); 
         });
       }else{
         aiMessage.text = askResult.chunks;
@@ -160,40 +164,36 @@ export default function ChatPage() {
 
   const handleRecordModalClose = (audio) => {
     setShowRecordModal(false);
-    if (audio) {
-      console.log(audio);
-      STT(audio, (result) => {
-        // 사용자 메시지 저장
-        const newMessages = [...messages, { type: "user", text: result }];
-        setMessages(newMessages);
-        createConversation(result, "user", "");
+    
+    if (!audio) return;
 
-        // ai의 대답창을 우선 "..."으로 초기화
-        setMessages((prevMessages) => [...prevMessages,{type: "ai",text: "..."}]);
+    STT(audio, (result) => {
+      let aiMessage = { type: "ai", text: "", image: [] };
+
+      // 사용자 메시지 저장, ai의 대답창을 우선 "..."으로 초기화
+      setMessages((prevMessages) => [...prevMessages, { text: result, type: "user", image: []}, {text: "...", type: "ai", image: []}]);
+      createConversation(result, "user", []);
+      scrollToBottom();
+      
+      // 스트림 질문 전송 함수
+      askToAiStream(result, "", (askResult)=> {
         scrollToBottom();
-        let aiMessage = { type: "ai", text: "" };
-
-        // 스트림 질문 전송 함수
-        askToAiStream(result, "", (askResult)=> {
-          scrollToBottom();
-          // 스트림의 마지막 토큰이 수신되면 ai의 대답 전문을 저장 및 tts & audioStart
-          if(!askResult.isStreaming){
-            createConversation(aiMessage.text, "ai", "");
-            TTS(aiMessage.text, (path)=> { 
-              audioStart(path, (result)=> {
-                setAudioId(result);
-              }); 
-            });
-          }else{
-            aiMessage.text = askResult.chunks;
-            setMessages((prevMessages) => {
-              const updatedMessages = prevMessages.slice(0, -1);
-              return([...updatedMessages, aiMessage]);
-            });
-          }
-        });
+        // 스트림의 마지막 토큰이 수신되면 ai의 대답 전문을 저장 및 tts & audioStart
+        if(!askResult.isStreaming){
+          createConversation(aiMessage.text, "ai", []);
+          TTS(aiMessage.text, (path)=> { 
+            audioStart(path, (result)=> { setAudioId(result); }); 
+          });
+        }else{
+          aiMessage.text = askResult.chunks;
+          setMessages((prevMessages) => {
+            const updatedMessages = prevMessages.slice(0, -1);
+            return([...updatedMessages, aiMessage]);
+          });
+        }
       });
-    }
+    });
+    
   };
 
   const handleOpenRecordModal = () => {
