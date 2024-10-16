@@ -139,8 +139,14 @@ export default function ChatPage() {
     setPrompt("");
 
     // 사용자 메시지 저장, ai의 대답창을 우선 "..."으로 초기화
-    setMessages((prevMessages) => [...prevMessages, { text: text, type: "user", image: img}, {type: "ai", text: "...", image: []}]);
+    const newMessages = [...messages, { text: text, type: "user", image: img}];
+    setMessages(newMessages);
+    console.log(img);
     createConversation(text, "user", img);
+    setPrompt("");
+
+    // ai의 대답창을 우선 "..."으로 초기화
+    setMessages((prevMessages) => [...prevMessages,{type: "ai",text: "...", image: []}]);
     scrollToBottom();
     
     // 스트림 질문 전송 함수
