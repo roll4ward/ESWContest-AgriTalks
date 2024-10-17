@@ -103,6 +103,7 @@ export default function GalleryPreviewPage() {
   return (
     <Container>
       <h1>이미지 미리보기</h1>
+      <Button onClick={handleCompleteSelection}>AI에게 물어보기</Button>
       <GalleryGrid>
         {images.length === 0 && <p>이미지를 불러오는 중...</p>}
         {images.map((image) => (
@@ -131,7 +132,7 @@ export default function GalleryPreviewPage() {
           </ImageItem>
         ))}
       </GalleryGrid>
-      <Button onClick={handleCompleteSelection}>AI에게 물어보기</Button>
+     
 
       {isModalOpen && (
         <ModalOverlay>
@@ -170,6 +171,7 @@ const GalleryGrid = styled.div`
   gap: 20px;
   margin: 20px;
   justify-items: center;
+  width:100%;
 `;
 
 const ImageItem = styled.div`
@@ -191,6 +193,7 @@ const SelectedIcon = styled.div`
 `;
 
 const Button = styled.button`
+font-size: 40px;
   margin-top: 20px;
   padding: 10px 20px;
   background-color: #448569;
