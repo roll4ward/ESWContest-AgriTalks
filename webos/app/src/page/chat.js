@@ -4,7 +4,7 @@ import MessageBox from "../component/MessageBox";
 import { Button, Form, InputGroup, Card, Spinner } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import styled from "styled-components";
-import { FaStopCircle } from "react-icons/fa"; // 중단 아이콘 추가
+import { FaStopCircle } from "react-icons/fa";
 import {
   askToAiStream,
   TTS,
@@ -20,56 +20,68 @@ import { FaMicrophone } from "react-icons/fa";
 
 export default function ChatPage() {
   const [messages, setMessages] = useState([]);  
-  const [nextPage, setNextPage] = useState(null); // 다음 페이지 정보를 저장할 상태
+  const [nextPage, setNextPage] = useState(null); 
   const [prompt, setPrompt] = useState("");
   const [showRecordModal, setShowRecordModal] = useState(false);
   const [audioId, setAudioId] = useState("");
   const [recorderId, setRecorderId] = useState("");
 
-  const [isLoadingMore, setIsLoadingMore] = useState(false); // 이전 대화 불러올 때 로딩 상태
-  const [allMessagesLoaded, setAllMessagesLoaded] = useState(false); // 더 이상 불러올 메시지가 없는 상태 추가
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [allMessagesLoaded, setAllMessagesLoaded] = useState(false); 
 
-  const messagesEndRef = useRef(null); // 스크롤 끝을 참조할 ref 생성
-  const cardBodyRef = useRef(null); // 대화 내용이 들어가는 요소에 대한 ref 생성
-  const initialLoadComplete = useRef(false); // 초기 렌더링 완료 여부
+  const messagesEndRef = useRef(null); 
+  const cardBodyRef = useRef(null); 
+  const initialLoadComplete = useRef(false); 
+  const scrollPositionRef = useRef(0); // 스크롤 위치를 저장할 ref
   
   const location = useLocation();
   const selectedImages = location.state?.selectedImages;
   const selectedImageDesc = location.state?.selectedImageDesc;
 
-  // 스크롤을 가장 아래로 이동하는 함수
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   };
 
-  // WebOS 서비스를 통해 대화 기록을 불러오는 함수
   const fetchConversation = (page) => {
-    setIsLoadingMore(true); // 로딩 상태로 설정
+    setIsLoadingMore(true);
+    
     readConversation(page, (result) => {
       if (result.texts.length > 0) {
         const conversationPage = result.texts.map((msg) => ({
           type: msg.type,
           text: msg.text,
-          image: JSON.parse(msg.image), // msg.image로 이미지 처리
+          image: JSON.parse(msg.image),
         }));
-
-        setMessages((prevMessages) => [...conversationPage, ...prevMessages]); // 기존 메시지에 추가
-
+  
+        const prevScrollHeight = cardBodyRef.current.scrollHeight; // 기존 스크롤 높이 저장
+  
+        setMessages((prevMessages) => [...conversationPage, ...prevMessages]);
+  
         if (result.page) {
-          setNextPage(result.page); // 다음 페이지가 있을 경우 업데이트
+          setNextPage(result.page);
         } else {
-          setAllMessagesLoaded(true); // 더 이상 불러올 메시지가 없으면 true
+          setAllMessagesLoaded(true);
         }
-
-        setIsLoadingMore(false); // 로딩 상태 종료
+  
+        setIsLoadingMore(false);
+  
+        // 새로운 대화 묶음이 추가된 후, 추가된 묶음의 최신 메시지가 먼저 보이게 스크롤 조정
+        setTimeout(() => {
+          if (cardBodyRef.current) {
+            const newScrollHeight = cardBodyRef.current.scrollHeight; // 새 스크롤 높이 계산
+            const addedHeight = newScrollHeight - prevScrollHeight;  // 추가된 높이 계산
+            cardBodyRef.current.scrollTop = addedHeight;  // 새로 추가된 메시지 묶음의 끝에 스크롤 위치 설정
+          }
+        }, 0); // 상태가 업데이트되고 나서 스크롤 조정
       } else {
-        setAllMessagesLoaded(true); // 더 이상 불러올 메시지가 없으면 true
-        setIsLoadingMore(false); // 로딩 상태 종료
+        setAllMessagesLoaded(true);
+        setIsLoadingMore(false);
       }
     });
   };
+  
 
   useEffect(() => {
     const initializeChat = () => {
@@ -77,15 +89,15 @@ export default function ChatPage() {
         setRecorderId(result);
       });
 
-      readConversation(null, (result)=> {
-        if(result.texts.length > 0){
-          setMessages(result.texts.map((msg) => ({ type: msg.type, text: msg.text, image: JSON.parse(msg.image)})));
-          if(result.page) setNextPage(result.page)
+      readConversation(null, (result) => {
+        if (result.texts.length > 0) {
+          setMessages(result.texts.map((msg) => ({ type: msg.type, text: msg.text, image: JSON.parse(msg.image) })));
+          if (result.page) setNextPage(result.page);
         }
 
         setTimeout(() => {
-          scrollToBottom(); // 대화 기록이 모두 렌더링된 후 스크롤 실행
-          initialLoadComplete.current = true; // 초기 로딩 완료 플래그 설정
+          scrollToBottom(); 
+          initialLoadComplete.current = true;
         }, 0);
       });
 
@@ -96,19 +108,11 @@ export default function ChatPage() {
     initializeChat();
   }, []);
 
-  // 스크롤 맨 위로 이동했을 때 이전 대화 내용 불러오기
   useEffect(() => {
     const handleScroll = () => {
-      // 스크롤이 맨 위로 도달했는지 확인하는 조건
-      if (
-        cardBodyRef.current.scrollTop === 0 && // 스크롤이 맨 위에 도달했을 때
-        nextPage && // 다음 페이지가 있을 때
-        !isLoadingMore && // 현재 로딩 중이 아닐 때
-        !allMessagesLoaded && // 모든 메시지를 다 불러오지 않았을 때
-        initialLoadComplete.current // 초기 로딩이 완료되었을 때
-      ) {
-        console.log("스크롤이 맨 위로 이동했습니다. 이전 대화 불러오기.");
-        fetchConversation(nextPage); // 다음 페이지의 대화 불러오기
+      if (cardBodyRef.current.scrollTop === 0 && nextPage && !isLoadingMore && !allMessagesLoaded && initialLoadComplete.current) {
+        scrollPositionRef.current = cardBodyRef.current.scrollHeight; // 스크롤 위치 저장
+        fetchConversation(nextPage);
       }
     };
 
@@ -123,94 +127,92 @@ export default function ChatPage() {
     };
   }, [nextPage, isLoadingMore, allMessagesLoaded]);
 
-  const handleSendMessage = (_ , image, imageDesc) => {
-    // 질문창이 공백이면 return
-    if (prompt == "" && !image) return;
-
-    let aiMessage = { text: "", type: "ai", image: []};
+  useEffect(() => {
+    // 메시지가 업데이트될 때마다 스크롤을 맨 아래로 이동
+    scrollToBottom();
+  }, [messages]);
+  
+  const handleSendMessage = (_, image, imageDesc) => {
+    if (prompt === "" && !image) return;
+  
+    let aiMessage = { text: "", type: "ai", image: [] };
     let text = prompt;
     let img = [];
-
-    if (image){
+  
+    if (image) {
       text = imageDesc;
       img = image;
     }
-
+  
     setPrompt("");
-
-    // 사용자 메시지 저장, ai의 대답창을 우선 "..."으로 초기화
-    const newMessages = [...messages, { text: text, type: "user", image: img}];
-    setMessages(newMessages);
-    console.log(img);
+  
+    const newMessages = [...messages, { text: text, type: "user", image: img }];
+    setMessages(newMessages); // 상태 업데이트
     createConversation(text, "user", img);
-    setPrompt("");
-
-    // ai의 대답창을 우선 "..."으로 초기화
-    setMessages((prevMessages) => [...prevMessages,{type: "ai",text: "...", image: []}]);
-    scrollToBottom();
-    
-    // 스트림 질문 전송 함수
-    askToAiStream(text, img, (askResult)=> {
-      // 스트림의 마지막 토큰이 수신되면 ai의 대답 전문을 저장 및 tts & audioStart
-      scrollToBottom();
-      if(!askResult.isStreaming){
+  
+    // 바로 AI 메시지를 추가
+    setMessages((prevMessages) => [...prevMessages, { type: "ai", text: "...", image: [] }]);
+  
+    askToAiStream(text, img, (askResult) => {
+      if (!askResult.isStreaming) {
         createConversation(aiMessage.text, "ai", []);
-        TTS(aiMessage.text, (path)=> { 
-          audioStart(path, (result)=> { setAudioId(result); }); 
+        TTS(aiMessage.text, (path) => {
+          audioStart(path, (result) => {
+            setAudioId(result);
+          });
         });
-      }else{
+      } else {
         aiMessage.text = askResult.chunks;
         setMessages((prevMessages) => {
           const updatedMessages = prevMessages.slice(0, -1);
-          return([...updatedMessages, aiMessage]);
+          return [...updatedMessages, aiMessage];
         });
       }
     });
   };
+  
+  
 
   const handleRecordModalClose = (audio) => {
     setShowRecordModal(false);
-    
+
     if (!audio) return;
 
     STT(audio, (result) => {
       let aiMessage = { type: "ai", text: "", image: [] };
 
-      // 사용자 메시지 저장, ai의 대답창을 우선 "..."으로 초기화
-      setMessages((prevMessages) => [...prevMessages, { text: result, type: "user", image: []}, {text: "...", type: "ai", image: []}]);
+      setMessages((prevMessages) => [...prevMessages, { text: result, type: "user", image: [] }, { text: "...", type: "ai", image: [] }]);
       createConversation(result, "user", []);
       scrollToBottom();
-      
-      // 스트림 질문 전송 함수
-      askToAiStream(result, "", (askResult)=> {
+
+      askToAiStream(result, "", (askResult) => {
         scrollToBottom();
-        // 스트림의 마지막 토큰이 수신되면 ai의 대답 전문을 저장 및 tts & audioStart
-        if(!askResult.isStreaming){
+        if (!askResult.isStreaming) {
           createConversation(aiMessage.text, "ai", []);
-          TTS(aiMessage.text, (path)=> { 
-            audioStart(path, (result)=> { setAudioId(result); }); 
+          TTS(aiMessage.text, (path) => {
+            audioStart(path, (result) => {
+              setAudioId(result);
+            });
           });
-        }else{
+        } else {
           aiMessage.text = askResult.chunks;
           setMessages((prevMessages) => {
             const updatedMessages = prevMessages.slice(0, -1);
-            return([...updatedMessages, aiMessage]);
+            return [...updatedMessages, aiMessage];
           });
         }
       });
     });
-    
   };
 
   const handleOpenRecordModal = () => {
-    setShowRecordModal(true); // 녹음 모달 열기
+    setShowRecordModal(true);
   };
-  
+
   const handleStopBriefing = () => {
     if (audioId) {
       audioStop(audioId);
-      console.log("브리핑 중단됨:", audioId);
-      setAudioId(""); // 오디오 ID를 초기화하여 중단 처리
+      setAudioId("");
     }
   };
 
@@ -226,9 +228,8 @@ export default function ChatPage() {
             </SpinnerWrapper>
           )}
           {messages.map((msg, idx) => (
-             <div key={idx} style={{ position: "relative" }}>
+            <div key={idx} style={{ position: "relative" }}>
               <MessageBox msgType={msg.type} text={msg.text} image={msg.image} />
-             
               {idx === messages.length - 1 && msg.type === "ai" && audioId && (
                 <StopIcon onClick={handleStopBriefing}>
                   <FaStopCircle size={50} color="grey" />
@@ -236,7 +237,7 @@ export default function ChatPage() {
               )}
             </div>
           ))}
-          <div ref={messagesEndRef} /> {/* 메시지 끝 ref 추가 */}
+          <div ref={messagesEndRef} />
         </CardBody>
         <CardFooter>
           <InputGroup>
@@ -257,7 +258,7 @@ export default function ChatPage() {
             >
               ↑
             </Button>
-          
+
             <Button
               style={{
                 backgroundColor: "#FF6F61",
@@ -265,23 +266,18 @@ export default function ChatPage() {
                 width: "5%",
                 fontSize: "30px",
               }}
-              onClick={handleOpenRecordModal} // 녹음 모달 열기 버튼
+              onClick={handleOpenRecordModal}
             >
               <FaMicrophone size={30} />
             </Button>
           </InputGroup>
         </CardFooter>
       </StyledCard>
-      <RecordModal
-        show={showRecordModal}
-        handleClose={handleRecordModalClose}
-        recorderId={recorderId}
-      />
+      <RecordModal show={showRecordModal} handleClose={handleRecordModalClose} recorderId={recorderId} />
     </Container>
   );
 }
 
-// 전체 컨테이너 스타일
 const Container = styled.div`
   display: flex;
   justify-content: space-between;
@@ -315,7 +311,7 @@ const SpinnerWrapper = styled.div`
 const StopIcon = styled.div`
   position: absolute;
   top: 50%;
-  right: 80px; /* 버튼이 채팅 박스 바로 옆에 위치하도록 조정 */
+  right: 80px;
   transform: translateY(-50%);
   cursor: pointer;
 `;
