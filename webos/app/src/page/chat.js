@@ -89,21 +89,21 @@ export default function ChatPage() {
         setRecorderId(result);
       });
 
-      readConversation(null, (result) => {
-        if (result.texts.length > 0) {
-          setMessages(result.texts.map((msg) => ({ type: msg.type, text: msg.text, image: JSON.parse(msg.image) })));
-          if (result.page) setNextPage(result.page);
+      readConversation(null, (result)=> {
+        if(result.texts.length > 0){
+          setMessages(result.texts.map((msg) => ({ type: msg.type, text: msg.text, image: JSON.parse(msg.image)})));
+          if(result.page) setNextPage(result.page)
         }
 
         setTimeout(() => {
-          scrollToBottom(); 
-          initialLoadComplete.current = true;
+          scrollToBottom(); // 대화 기록이 모두 렌더링된 후 스크롤 실행
+          initialLoadComplete.current = true; // 초기 로딩 완료 플래그 설정
         }, 0);
-      });
 
-      if (selectedImages) {
-        handleSendMessage("", selectedImages, selectedImageDesc);
-      }
+        if (selectedImages) {
+          handleSendMessage("", selectedImages, selectedImageDesc);
+        }
+      });
     };
     initializeChat();
   }, []);
@@ -132,45 +132,45 @@ export default function ChatPage() {
     scrollToBottom();
   }, [messages]);
   
-  const handleSendMessage = (_, image, imageDesc) => {
-    if (prompt === "" && !image) return;
-  
-    let aiMessage = { text: "", type: "ai", image: [] };
+  const handleSendMessage = (_ , image, imageDesc) => {
+    // 질문창이 공백이면 return
+    if (prompt == "" && !image) return;
+
+    let aiMessage = { text: "", type: "ai", image: []};
     let text = prompt;
     let img = [];
-  
-    if (image) {
+
+    if (image){
       text = imageDesc;
       img = image;
     }
-  
+
     setPrompt("");
-  
-    const newMessages = [...messages, { text: text, type: "user", image: img }];
-    setMessages(newMessages); // 상태 업데이트
     createConversation(text, "user", img);
-  
-    // 바로 AI 메시지를 추가
+
+    // 사용자 메시지 저장, ai의 대답창을 우선 "..."으로 초기화
+    setMessages((prevMessages) => [...prevMessages, { text: text, type: "user", image: img }]);
     setMessages((prevMessages) => [...prevMessages, { type: "ai", text: "...", image: [] }]);
-  
-    askToAiStream(text, img, (askResult) => {
-      if (!askResult.isStreaming) {
+    scrollToBottom();
+    
+    // 스트림 질문 전송 함수
+    askToAiStream(text, img, (askResult)=> {
+      // 스트림의 마지막 토큰이 수신되면 ai의 대답 전문을 저장 및 tts & audioStart
+      scrollToBottom();
+      if(!askResult.isStreaming){
         createConversation(aiMessage.text, "ai", []);
-        TTS(aiMessage.text, (path) => {
-          audioStart(path, (result) => {
-            setAudioId(result);
-          });
+        TTS(aiMessage.text, (path)=> { 
+          audioStart(path, (result)=> { setAudioId(result); }); 
         });
-      } else {
+      }else{
         aiMessage.text = askResult.chunks;
         setMessages((prevMessages) => {
           const updatedMessages = prevMessages.slice(0, -1);
-          return [...updatedMessages, aiMessage];
+          return([...updatedMessages, aiMessage]);
         });
       }
     });
   };
-  
   
 
   const handleRecordModalClose = (audio) => {
