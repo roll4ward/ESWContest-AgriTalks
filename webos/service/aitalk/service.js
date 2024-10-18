@@ -68,31 +68,29 @@ class AITalkEventHandler extends Events.EventEmitter {
       try {
           const toolOutputs = 
               await Promise.all(data.required_action.submit_tool_outputs.tool_calls.map(async (toolCall) => {
-                  if (toolCall.function.name === "activate_water_valve") {
-                    this.msg.respond(new aitalk_response({
-                      chunks: "물 밸브 동작을 시도하고 있습니다. 잠시만 기다려주세요.",
-                      isStreaming: true
-                    }))
-                    return {
-                        tool_call_id: toolCall.id,
-                        output: JSON.stringify({success: true}),
-                    };
-                  } 
-                  else if (toolCall.function.name === "getAreaList") {
+                  if (toolCall.function.name === "getAreaList") {
                     this.msg.respond(new aitalk_response({
                       chunks: "등록하신 Area의 정보를 읽고 있습니다.. 잠시만 기다려주세요.",
                       isStreaming: true
                     }));
 
                     const response = await getAreaList(aitalk_service)
-                    console.log("response", response)
-                    const payload = {
-                      tool_call_id: toolCall.id,
-                      output: JSON.stringify(response)
+                    if (response.returnValue) {
+                      console.log("response", response)
+                      const payload = {
+                        tool_call_id: toolCall.id,
+                        output: JSON.stringify(response)
+                      }
+                      console.log("toolCall: ", toolCall)
+                      console.log("payload: ", payload)
+                      return payload 
+                    } else {
+                      this.msg.respond(new error(`Area의 정보를 불러오는 중에 에러가 발생했습니다.`));
+                      return {
+                        tool_call_id: toolCall.id, 
+                        output: JSON.stringify({success: false})
+                    };
                     }
-                    console.log("toolCall: ", toolCall)
-                    console.log("payload: ", payload)
-                    return payload 
                   } 
                   else if (toolCall.function.name === "getDeviceList") {
                     this.msg.respond(new aitalk_response({
@@ -104,31 +102,74 @@ class AITalkEventHandler extends Events.EventEmitter {
                     console.log("toolCall.function", toolCall.function)
 
                     const response = await getDeviceList(areaId, aitalk_service)
-                    console.log("response", response)
-                    const payload = {
-                      tool_call_id: toolCall.id,
-                      output: JSON.stringify(response)
+                    if (response.returnValue) {
+                      console.log("response", response)
+                      const payload = {
+                        tool_call_id: toolCall.id,
+                        output: JSON.stringify(response)
+                      }
+                      console.log("toolCall: ", toolCall)
+                      console.log("payload: ", payload)
+                      return payload 
+                    } else{
+                      this.msg.respond(new error("Device 정보를 읽어오는 도중 에러가 발생했습니다."))
+                      return {
+                        tool_call_id: toolCall.id, 
+                        output: JSON.stringify({success: false})
+                    };
                     }
-                    console.log("toolCall: ", toolCall)
-                    console.log("payload: ", payload)
-                    return payload 
                   }
                   else if (toolCall.function.name === "controlDevices") {
+                    this.msg.respond(new aitalk_response({
+                      chunks: "Device를 제어하고 있습니다.",
+                      isStreaming: true
+                    }));
+
                     console.log("controlDevive invoked")
                     console.log("toolCall, ", toolCall.function.name)
 
                     const args = JSON.parse(toolCall.function.arguments)
                     console.log("controlDevice args: ", args)
                     const response = await controlDevices(args.deviceId, args.level, aitalk_service)
-
-                    const payload = {
-                      tool_call_id: toolCall.id,
-                      output: JSON.stringify(response)
+                    if (response.returnValue) {
+                      const payload = {
+                        tool_call_id: toolCall.id,
+                        output: JSON.stringify(response)
+                      }
+                      console.log("payload: ", payload)
+                      return payload 
+                    } else {
+                      this.msg.respond(new error("Device를 제어하는 과정에서 에러가 발생했습니다."))
+                      return {
+                        tool_call_id: toolCall.id, 
+                        output: JSON.stringify({success: false})
+                    };
                     }
-                    console.log("payload: ", payload)
-                    return payload 
+                  }
+                  else if (toolCall.function.name === "getSensorValuesOfAreaByTimeAsCSV") {
+                    console.log("getSensorValuesOfAreaByTimeAsCSV invoked")
+                    console.log("toolCall, ", toolCall.function.name)
+
+                    const args = JSON.parse(toolCall.function.arguments)
+                    console.log("controlDevice args: ", args)
+                    const response = await getSensorValuesOfAreaByTimeAsCSV(args.areaId, args.NHoursAgo, aitalk_service)
+                    if (response.returnValue) {
+                      const payload = {
+                        tool_call_id: toolCall.id,
+                        output: JSON.stringify(response)
+                      }
+                      console.log("payload: ", payload)
+                      return payload 
+                    } else {
+                      this.msg.respond(new error("센서값들이 저장된 csv 파일을 불러오는데 에러가 발생했습니다."))
+                      return {
+                        tool_call_id: toolCall.id, 
+                        output: JSON.stringify({success: false})
+                    };
+                    }
                   }
                   else {
+                      this.msg.respond(new error("AI가 적절하지 않은 함수를 호출하여 에러가 발생했습니다."))
                       return {
                           tool_call_id: toolCall.id, 
                           output: JSON.stringify({success: false})
@@ -138,15 +179,18 @@ class AITalkEventHandler extends Events.EventEmitter {
       // Submit all the tool outputs at the same time
       await this.submitToolOutputs(toolOutputs, runId, threadId);
     } catch (err) {
-      this.msg.respond(new error("Error processing required action:", err))
+      this.msg.respond(new error(`Error processing required action: error: ${err}`))
       console.error("Error processing required action:", err);
+      return {
+          tool_call_id: toolCall.id, 
+          output: JSON.stringify({success: false, error: err})
+      };
     }
   }
 
   async submitToolOutputs(toolOutputs, runId, threadId) {
     try {
       // Use the submitToolOutputsStream helper
-      console.log("in submitToolOutputs", toolOutputs.output)
       const stream = this.client.beta.threads.runs.submitToolOutputsStream(
         threadId,
         runId,
@@ -156,7 +200,8 @@ class AITalkEventHandler extends Events.EventEmitter {
         this.emit("event", event);
       }
     } catch (error) {
-      console.error("Error submitting tool outputs:", error);
+      console.error(`Error submitting tool outputs:, error: ${error}`);
+      this.msg.respond(`Error submitting tool outputs:, error: ${error}`)
     }
   }
 }
@@ -166,48 +211,68 @@ aitalk_service.register("ask_stream", async function(msg) {
   aitalkEventHandler.on("event", aitalkEventHandler.onEvent.bind(aitalkEventHandler));
 
   if (!thread) {
-    thread = await openai.beta.threads.create();    
+    try {
+      thread = await openai.beta.threads.create();    
+    } catch (e) {
+      msg.respond(new error("OpenAI측에 새로운 thread를 생성해달라는 요청 중에 에러가 발생했습니다. error: ", e))
+      return;
+    }
   };
 
-  console.log(msg)
   if (!msg.payload.prompt) {
-    msg.respond(new error('prompt is required.'));
+    msg.respond(new error('prompt is required. payload: ', payload));
     return;
   }
 
   // build contents for "ask"
   let contents = [];
   contents.push({"type": "text", "text": msg.payload.prompt});
-
   if (msg.payload.imagePaths) {
     const uploadPromises = msg.payload.imagePaths.map(async (image_path) => {
-      const img_file = await openai.files.create({
-        file: fs.createReadStream(image_path),
-        purpose: "assistants"
-      });
-      console.log("img_file: ", img_file);
-      contents.push({ "type": "image_file", "image_file": { "file_id": img_file.id } });
+      try {
+        const img_file = await openai.files.create({
+          file: fs.createReadStream(image_path),
+          purpose: "assistants"
+        });
+        console.log("img_file: ", img_file);
+        contents.push({ "type": "image_file", "image_file": { "file_id": img_file.id } });
+      } catch (e) {
+        msg.respond(new error("이미지를 읽어 AI에게 전송하는 중에 에러가 발생했습니다. error: ", e))
+        return;
+      }
     });
     // Wait for all uploads to complete
     await Promise.all(uploadPromises);
   }
 
   console.log("content: ", contents)
-  const threadMessages = await openai.beta.threads.messages.create(thread.id, { role: "user", content: contents});
-  const stream = await openai.beta.threads.runs.stream(
-    thread.id,
-    { assistant_id: config.openai_assistant_id },
-    aitalkEventHandler,
-  );
+  try {
+    const threadMessages = await openai.beta.threads.messages.create(thread.id, { role: "user", content: contents});
+  } catch (e) {
+    msg.respond(new error(`AI에게 전송할 message를 생성하는 중에 에러가 발생했습니다. error: ${e}`))
+    return;
+  }
+  try {
+    const stream = await openai.beta.threads.runs.stream(
+      thread.id,
+      { assistant_id: config.openai_assistant_id },
+      aitalkEventHandler,
+    );
 
-  for await (const event of stream) {
-    aitalkEventHandler.emit("event", event);
+    for await (const event of stream) {
+      aitalkEventHandler.emit("event", event);
+    }
+  } catch (e) {
+    msg.respond(`AI 응답을 stream으로 받는 과정에서 에러가 발생했습니다. error: ${e}`);
+    return;
   }
 });
 
 aitalk_service.register("stt", async function(msg) {
   // 0. check msg contains "voice_path"
+  console.log(msg.payload.voice_path);
   if (!("voice_path" in msg.payload)) {
+    console.log('It requires voice_path (e.g. voice_text.mp3).');
     msg.respond(new error('It requires voice_path (e.g. voice_text.mp3).'));
     return;
   }
@@ -215,21 +280,27 @@ aitalk_service.register("stt", async function(msg) {
   // 1. check is voice file (e.g. mp3) is exist
   // 1.1. if doesn't exist, then raise RuntimeError
   if (!fs.existsSync(msg.payload.voice_path)) {
+    console.log("File not found. ");
     msg.respond(new error("File not found. ", msg.payload.voice_path))
     return;
   }
 
   // 2. send voice file to API servce
-  const transcription = await openai.audio.transcriptions.create({
-      file: fs.createReadStream(msg.payload.voice_path),
-      model: config.openai_stt_model,
-  });
-
-  // 3. return text converted from voice file
-  const voice_prompt = transcription.text;
-  msg.respond(new aitalk_response(
-    {voice_prompt: voice_prompt}
-  ))
+  try {
+    const transcription = await openai.audio.transcriptions.create({
+        file: fs.createReadStream(msg.payload.voice_path),
+        model: config.openai_stt_model,
+    });
+  
+    // 3. return text converted from voice file
+    const voice_prompt = transcription.text;
+    msg.respond(new aitalk_response(
+      {voice_prompt: voice_prompt}
+    ))
+  } catch (e) {
+    msg.respond(new error(`STT를 수행하던 중 에러가 발생했습니다. error: ${e}`));
+    return;
+  }
 
   // 다 사용한 파일 삭제 추가 -geonha
   fs.readdir("/media/internal", (err, files) => {
@@ -265,123 +336,38 @@ aitalk_service.register("tts", async function (msg) {
     return;
   }
 
-  const mp3 = await openai.audio.speech.create({
-    model: config.openai_tts.model,
-    voice: config.openai_tts.voice,
-    input: msg.payload.text,
-    response_format: "pcm",
-    speed: 1.2
-  });
-
-  const tts_path = path.resolve(__dirname, "./tts.pcm");
-  console.log("audio file will be stored to " + tts_path);
-  const buffer = Buffer.from(await mp3.arrayBuffer());
-  await fs.promises.writeFile(tts_path, buffer);
-  console.log("TTS done.");
-
-  exec("python3 ./audioCon.py " + "./tts.pcm" + " 24000 " + "./tts.pcm" + " 32000",(err, stdout, stderr) => {
-      if (err) {
-        console.error(`Error during conversion: ${stderr}`);
-      } else {
-        msg.respond(new aitalk_response({ store_path: tts_path}));
-      }
-    }
-  );
-});
-
-
-aitalk_service.register("briefing", async function(msg) {
-  ////////////////////////////////////////////////
-  // Briefing 기능 구현
-  //  - GPT에게 아래와 같이 입력을 줌.
-  //    1. prompt
-  //      - str (e.g. "Hello! 너 토마토 좋아해?")
-  //    2. images
-  //      - 이미지의 경로 (e.g. /home/developer/media/tmp.png, etc.) 
-  //    3. sensor values file
-  //      - pdf 파일
-  //      - prompt 안에 같이 삽입
-  ////////////////////////////////////////////////
-
-  if (!("prompt" in msg.payload)) 
-  { // prompt를 포함하지 않으면 raise error
-    msg.respond(new error('prompt is required.' + JSON.stringify(msg)));
+  try {
+    const mp3 = await openai.audio.speech.create({
+      model: config.openai_tts.model,
+      voice: config.openai_tts.voice,
+      input: msg.payload.text,
+      response_format: "pcm",
+      speed: 1.2
+    });
+  
+    const tts_path = path.resolve(__dirname, "./tts.pcm");
+    console.log("audio file will be stored to " + tts_path);
+    const buffer = Buffer.from(await mp3.arrayBuffer());
+    await fs.promises.writeFile(tts_path, buffer);
+    console.log("TTS done.");
+  } catch (e) {
+    msg.respond(new error(`TTS 수행 중에 에러가 발생했습니다. error: ${e}`))
     return;
   }
-  const prompt = msg.payload.prompt;
 
-  if (thread == null) 
-  { // 사용자가 처음 사용하면 새로운 thread를 생성해서 gloabl 변수로 선언
-    thread = await openai.beta.threads.create();    
-  } 
-  console.log("thread_id", thread.id);
-
-  // 2. 이미지는 이미지의 경로를 입력으로 주면 알아서 업로드 함.
-  const img_file = await openai.files.create({
-    file: fs.createReadStream(msg.payload.image_path),
-    purpose: "assistants"
-  })
-
-  /////////////////////////////////////////////////////////////////////////
-  // 3. 센서 값들을 담은 파일을 csv로 전달하려고 했으나 현재 안되는 상태.
-  // const cvs_file = await openai.files.create({
-  //   file: fs.createReadStream(msg.payload.csv_path),
-  //   purpose: "assistants"
-  // })
-
-  // 아래와 같이 csv 파일을 읽어서 직접 텍스트로 전달하는게 더 좋은듯
-  const sensor_values_data = await fs.readFileSync(msg.payload.csv_path? msg.payload.csv_path: 'test_sensor_values.csv', 'utf-8');
-  ////////////////////////////////////////////////////////////////////////
-  const threadMessages = await openai.beta.threads.messages.create(
-    thread.id, 
-    { 
-      role: "user", 
-      content: [
-        {
-          "type": "text",
-          // 센서 값들을 prompt 안에 삽입하여 GPT에게 전달.
-          "text": "아래 \"센서 값 정보들\"과 주어진 이미지를 바탕으로 브리핑 해줘.\n센서 값 정보들 (csv 파일의 형식):\n: "+sensor_values_data
-        },
-        {
-          "type": "image_file",
-          "image_file": {"file_id": img_file.id}
-        },
-      ],
-      // attachment: {
-      //   "file_id": cvs_file.id,
-      //   "tools": "code_interpreter"
-      // }
-    });
-
-  await new Promise((resolve, reject) => {
-    try {
-      const stream = openai.beta.threads.runs.stream(thread.id, {
-        assistant_id: config.openai_assistant_id
-      })
-      .on('textCreated', (text) => {
-        console.log(text)
-      })
-      .on('textDelta', (textDelta, snapshot) => {
-        console.log(snapshot)
-        msg.respond(new aitalk_response({
-          chunks: snapshot.replace(/【\d+:\d+†[^】]+】/g, ""),
-          isStreaming: true
-        }))
-      })
-      .on('end', () => {
-        console.log('\nStream has ended.');
-        msg.respond(new aitalk_response({
-          chunks: "",
-          isStreaming: false
-        }))
-        resolve();
-      })
-    } catch (err) {
-      console.error("Promise 구 내에서 발생한 에러: "+err)
-    }
-  })
-
-  msg.respond(new aitalk_response("streaming.."))
+  try {
+    exec("python3 ./audioCon.py " + "./tts.pcm" + " 24000 " + "./tts.pcm" + " 32000",(err, stdout, stderr) => {
+        if (err) {
+          console.error(`Error during conversion: ${stderr}`);
+        } else {
+          msg.respond(new aitalk_response({ store_path: tts_path}));
+        }
+      }
+    );
+  } catch (e) {
+    msg.respond(new error(`TTS의 응답으로 받은 음성 파일의 sampling rate 을 변환하는 python script를 수행하는 중 에러가 발생했습니다. errpr: ${e}`));
+    return;
+  }
 });
 
 // 세션 & 대화 정보 데이터베이스 생성 (임시)
@@ -433,14 +419,14 @@ aitalk_service.register('create', function(message) {
       _kind: CONVESKIND,
       text: message.payload.text,
       type: message.payload.type,
-      image: message.payload.image,
+      image: JSON.stringify(message.payload.image),
       regdate: new Date().toISOString()
   };
 
   if (!dataToStore.type || !dataToStore.text) {
       return message.respond({ returnValue: false, result: 'text, type fields are required.' });
-  } 
-  
+  }
+
   aitalk_service.call('luna://com.webos.service.db/put', { objects: [dataToStore] }, (response) => {
       console.log(response);
       if (response.payload.returnValue) {
@@ -456,6 +442,7 @@ aitalk_service.register('read', function(message) {
   const query  = {
       from: CONVESKIND,
       where: [],
+      select: ["type", "text", "image"],
       limit: 10,
       desc: true
   };
@@ -474,39 +461,6 @@ aitalk_service.register('read', function(message) {
     }
   });
 });
-
-// 세션 데이터 delete
-aitalk_service.register('delete', function(message) {
-  const query  = {
-      from: CONVESKIND,
-      where: []
-  };
-  
-  aitalk_service.call('luna://com.webos.service.db/find', { query: query }, (response) => {
-    if(response.payload.returnValue){
-      if (response.payload.results.length > 0) {
-        const ids = [];
-
-        for (const result of response.payload.results) {
-          ids.push(result._id);
-        }
-
-        aitalk_service.call('luna://com.webos.service.db/del', { ids: ids }, (response) => {
-          if (response.payload.returnValue) {
-              message.respond({ returnValue: true, result: 'Item deleted successfully' });
-          } else {
-              message.respond({ returnValue: false, result: response.error });
-          }
-        });
-      } else {
-          message.respond({ returnValue: true, result: null });
-      }
-    }else{
-        message.respond({ returnValue: false, result: 'cannot found conversation' });
-    }
-  });
-});
-
 
 /////////////////////////////////// Control functions ////////////////////////////////////
 
@@ -561,15 +515,33 @@ function controlDevices(deviceId, level, service)
     payload: level
   }
 
+  // return new Promise((resolve, reject) => {
+  //   service.call("luna://xyz.rollforward.app.coap/send", payload, (response) => {
+  //     if (response.payload.returnValue) {
+  //       console.log(response.payload)
+  //       resolve({success: true, response: response.payload})
+  //     } else {
+  //       console.log("fail: ", response)
+  //       reject({success: false})
+  //     }
+  //   })
+  // })
+
   return new Promise((resolve, reject) => {
-    service.call("luna://xyz.rollforward.app.coap/send", payload, (response) => {
-      if (response.payload.returnValue) {
-        console.log(response.payload)
-        resolve({success: true, response: response.payload})
-      } else {
-        console.log("fail: ", response)
-        reject({success: false})
-      }
-    })
+    resolve({success: true})
   })
 }
+
+function getSensorValuesOfAreaByTimeAsCSV(areaId, NHoursAgo, service) 
+{
+  console.log("getSensorValuesOfAreaByTimeAsCSV is invoked")
+  return new Promise((resolve, reject) => {
+
+
+
+
+    // testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest
+    const sensorValuesCSV = fs.readFileSync('/home/developer/test_sensor_values.csv', 'utf-8');
+    resolve({succes: true, sensorValues: sensorValuesCSV, isTest: true})
+  });
+}; 

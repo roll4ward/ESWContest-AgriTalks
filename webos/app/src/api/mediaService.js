@@ -1,108 +1,86 @@
-/**
- * 서비스와 메소드에 매칭되는 URL을 생성
- * @param {*} service 
- * @param {*} method 
- * @returns 서비스의 URL
- */
-const getServiceURL = (service, method) => `luna://xyz.rollforward.app.${service}/${method}`;
+import { callService } from './serviceUtils';
+const APP_URL = 'luna://xyz.rollforward.app';
+const WEBOSSERVICE_URL = 'luna://com.webos.service';
 
+// 이미지 관련 서비스 호출 부분
 /**
  * 저장된 이미지 경로 리스트 전체 쿼리
- * @param {*} callback 쿼리한 결과를 처리할 콜백 함수
+ * @param {Function} callback 쿼리한 결과를 처리할 콜백 함수
  */
 export function readAllImages(callback) {
-  let bridge = new WebOSServiceBridge();
-  bridge.onservicecallback = (msg) => {
-      msg = JSON.parse(msg);
-      if(!msg.returnValue) {
-          console.log(`readAllImages Service call failed : ${msg.result}`);
-          return;
-      }
-  
-      if(callback) callback(msg.result);
-  }
-  bridge.call(getServiceURL("infomedia", "image/readAll"), "{}");
+    callService(APP_URL, 'infomedia', 'image/readAll', {}, callback);
+}
+
+/**
+ * 이미지 삭제
+ * @param {Function} callback 쿼리한 결과를 처리할 콜백 함수
+ */
+export function deleteImage(imagePath, callback) {
+    callService(APP_URL, 'infomedia', 'image/delete', {imagePath: imagePath}, callback);
 }
 
 /**
  * 저장된 이미지 경로에 yuv파일을 jpg로 변환
- * @param {*} callback 쿼리한 결과를 처리할 콜백 함수
+ * @param {Function} callback 쿼리한 결과를 처리할 콜백 함수
  */
 export function convertJpg(callback) {
-    let bridge = new WebOSServiceBridge();
-    bridge.onservicecallback = (msg) => {
-        msg = JSON.parse(msg);
-        if(!msg.returnValue) {
-            console.log(`convertJpg Service call failed : ${msg.result}`);
-            return;
-        }
-    
-        if(callback) callback(msg.result);
-    }
-    bridge.call(getServiceURL("infomedia", "image/convertJpg"), "{}");
-  }
+    callService(APP_URL, 'infomedia', 'image/convertJpg', {}, callback);
+}
 
+
+
+// 녹음 관련 서비스 호출 부분
 /**
- * 녹음기 초기화 * @param {*} callback 녹음 시작 결과를 처리할 콜백 함수
+ * 녹음기 초기화
+ * @param {Function} callback 녹음 초기화 결과를 처리할 콜백 함수
  */
 export function initRecord(callback) {
-    let bridge = new WebOSServiceBridge();
-    bridge.onservicecallback = (msg) => {
-        msg = JSON.parse(msg);
-        if(!msg.returnValue) {
-            console.log(`initRecord Service call failed : ${msg.result}`);
-            if(callback) callback("");
-            return;
-        }
-        
-        if(callback) callback(msg.result);
-    }
-    bridge.call(getServiceURL("infomedia", "record/init"), "{}");
+    callService(APP_URL, 'infomedia', 'record/init', {}, callback);
 }
 
 /**
  * 녹음 시작
- * @param {*} callback 녹음 시작 결과를 처리할 콜백 함수
+ * @param {string} id 레코더 ID
+ * @param {Function} callback 녹음 시작 결과를 처리할 콜백 함수
  */
 export function startRecord(id, callback) {
-    let bridge = new WebOSServiceBridge();
-    bridge.onservicecallback = (msg) => {
-        msg = JSON.parse(msg);
-        if(!msg.returnValue) {
-            console.log(`startRecord Service call failed : ${msg.result}`);
-            return;
-        }
-        
-        if(callback) callback(msg.result);
-    }
-        
-    let query = {
-        recorderId: id
-    };
-
-    bridge.call(getServiceURL("infomedia", "record/start"), JSON.stringify(query));
+    callService(APP_URL, 'infomedia', 'record/start', { recorderId: id }, callback);
 }
 
 /**
  * 녹음 중단
- * @param {*} callback 녹음 중단 결과를 처리할 콜백 함수
+ * @param {string} id 레코더 ID
+ * @param {Function} callback 녹음 중단 결과를 처리할 콜백 함수
  */
 export function stopRecord(id, callback) {
-    let bridge = new WebOSServiceBridge();
-    bridge.onservicecallback = (msg) => {
-        msg = JSON.parse(msg);
-        if(!msg.returnValue) {
-            console.log(`stopRecord Service call failed : ${msg.result}`);
-            return;
-        }
-        
-        if(callback) callback(msg.result);
-    }
-    
-    let query = {
-        recorderId: id
-    };
-
-    bridge.call(getServiceURL("infomedia", "record/stop"), JSON.stringify(query));
+    callService(APP_URL, 'infomedia', 'record/stop', { recorderId: id }, callback);
 }
 
+// 음성파일 관련 서비스 호출 부분
+/**
+ * 음성파일 재생
+ * @param {string} ttsFile ttsFile 위치
+ * @param {*} callback 결과를 처리할 콜백 함수
+ */
+
+export function audioStart(ttsFile, callback) {
+    let query = {
+        fileName: ttsFile,
+        sink: "default1",
+        sampleRate: 32000,
+        format: "PA_SAMPLE_S16LE",
+        channels: 1
+    };
+    callService(WEBOSSERVICE_URL, 'audio', 'playSound', query, callback);
+}
+
+/**
+ * 음성파일 재생
+ * @param {string} id 음성파일 playback id
+ * @param {*} callback 결과를 처리할 콜백 함수
+ */
+
+export function audioStop(id, callback) {
+    let query = { playbackId: id, requestType: "stop" };
+    callService(WEBOSSERVICE_URL, 'audio', 'controlPlayback', query, callback);
+}

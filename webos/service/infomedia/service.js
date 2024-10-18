@@ -1,116 +1,125 @@
 const pkg_info = require("./package.json");
 const Service = require('webos-service');
 const { exec } = require("child_process");
+const fs = require("fs");
+const { promisify } = require('util');
+
+const execAsync = promisify(exec);
+
 const service = new Service(pkg_info.name);
 
-// 저장된 이미지 경로 리스트 전체 쿼리
-service.register('image/readAll', function(message) {
-    service.call('luna://com.webos.service.mediaindexer/requestMediaScan', {"path": ""}, (Rresponse) => {
-        if (Rresponse.payload.returnValue) {
-            service.call('luna://com.webos.service.mediaindexer/getImageList', {}, (Iresponse) => {
-                let images = Iresponse.payload.imageList.results.map(image =>{
-                    return(image.file_path.replace("file://",""));
-                });
+// Helpers
+const callServiceMethod = (uri, params = {}) => {
+  return new Promise((resolve, reject) => {
+    service.call(uri, params, (response) => {
+      if (response.payload.returnValue) {
+        resolve(response.payload);
+      } else {
+        reject(new Error(response.payload.errorText || 'Unknown error'));
+      }
+    });
+  });
+};
 
-                if (Iresponse.payload.returnValue) {
-                    message.respond({ returnValue: true, result:images});
-                } else {
-                    message.respond({ returnValue: false, result: Iresponse.errorText });
-                }
-            });
+// Image handlers
+const imageHandlers = {
+  async readAll(message) {
+    try {
+      await callServiceMethod('luna://com.webos.service.mediaindexer/requestMediaScan', { path: "" });
+      const response = await callServiceMethod('luna://com.webos.service.mediaindexer/getImageList');
+      const images = response.imageList.results.map(image => image.file_path.replace("file://", ""));
+      message.respond({ returnValue: true, result: images });
+    } catch (error) {
+      message.respond({ returnValue: false, result: error.message });
+    }
+  },
+
+  async delete(message) {
+    try {
+
+      if (!message.payload.imagePath) {
+        return message.respond({ returnValue: false, result: "imagePath required" });
+      }
+
+      fs.unlink(message.payload.imagePath, error => {
+        if (error) {
+          message.respond({ returnValue: false, result: error.message });
         } else {
-            message.respond({ returnValue: false, result: Rresponse.errorText });
+          message.respond({ returnValue: true, result: message.payload.imagePath });
         }
-    });
-});
+      });
+    } catch (error) {
+      message.respond({ returnValue: false, result: error.message });
+    }
+  },
 
-service.register('image/convertJpg', function(message) {
-    exec("python3 ./imageCon.py",(err, stdout, stderr) => {
-        if (err) {
-            console.error(`Error during conversion: ${stderr}`);
-            message.respond({ returnValue: false, result: stderr });
-        } else {
-            message.respond({ returnValue: true, result: "success"});
-        }
-    });
-});
+  async convertJpg(message) {
+    try {
+      await execAsync("python3 ./imageCon.py");
+      message.respond({ returnValue: true, result: "success" });
+    } catch (error) {
+      message.respond({ returnValue: false, result: error.stderr });
+    }
+  }
+};
 
-// record 객체 초기화 함수
-service.register('record/init', function(message) {
-    service.call('luna://com.webos.service.audio/listSupportedDevices', {}, (response) => {
-        if (response.payload.returnValue) {
-            service.call('luna://com.webos.service.mediarecorder/open', {audio: true}, (response) => {
-                if (response.payload.returnValue) {
-                    const recorderId = response.payload.recorderId;
+// Record handlers
+const recordHandlers = {
+  async init(message) {
+    try {
+      const { recorderId } = await callServiceMethod('luna://com.webos.service.mediarecorder/open', { audio: true });
 
-                    const fomat = {
-                        recorderId: recorderId,
-                        codec:"AAC",
-                        bitRate:192000,
-                        sampleRate:48000,
-                        channelCount:2
-                    }
-                    service.call('luna://com.webos.service.mediarecorder/setAudioFormat', fomat, (response) => {
-                        if (response.payload.returnValue) {
-                            console.log("Setting format success");
-                        }
-                    });
+      const formatSettings = [
+        { method: 'setAudioFormat', params: { codec: "AAC", bitRate: 192000, sampleRate: 48000, channelCount: 2 } },
+        { method: 'setOutputFile', params: { path: "/media/internal/" } },
+        { method: 'setOutputFormat', params: { format: "M4A" } }
+      ];
 
-                    const output = {
-                        recorderId: recorderId,
-                        path : "/media/internal/"
-                    }
-                    service.call('luna://com.webos.service.mediarecorder/setOutputFile', output, (response) => {
-                        if (response.payload.returnValue) {
-                            console.log("Setting output path success");
-                        }
-                    });
+      for (const setting of formatSettings) {
+        await callServiceMethod(`luna://com.webos.service.mediarecorder/${setting.method}`, { recorderId, ...setting.params });
+        console.log(`Setting ${setting.method} success`);
+      }
 
-                    const outputFomat = {
-                        recorderId: recorderId,
-                        format:"M4A"
-                    }
-                    service.call('luna://com.webos.service.mediarecorder/setOutputFormat', outputFomat, (response) => {
-                        if (response.payload.returnValue) {
-                            console.log("Setting format M4A success");
-                        }
-                    });
-                    message.respond({ returnValue: true, result: recorderId });
-                }
-            });
-        }
-        else{
-            console.log("Does not support audio input.")
-        }
-    });
-});
+      message.respond({ returnValue: true, result: recorderId });
+    } catch (error) {
+      message.respond({ returnValue: false, result: error.message });
+    }
+  },
 
-// 녹음 시작 서비스
-service.register('record/start', function(message) {
+  async start(message) {
     if (!message.payload.recorderId) {
-        return message.respond({ returnValue: false, result: "recorderId required" });
+      return message.respond({ returnValue: false, result: "recorderId required" });
     }
 
-    service.call('luna://com.webos.service.mediarecorder/start', {recorderId: message.payload.recorderId}, (response) => {
-        if (response.payload.returnValue) {
-            message.respond({ returnValue: true, result: "Start recording..." });
-        } else {
-            message.respond({ returnValue: false, result: response.payload.errorText });
-        }
-    });
-});
+    try {
+      await callServiceMethod('luna://com.webos.service.mediarecorder/start', { recorderId: message.payload.recorderId });
+      message.respond({ returnValue: true, result: "Start recording..." });
+    } catch (error) {
+      message.respond({ returnValue: false, result: error.message });
+    }
+  },
 
-// 녹음 종료 서비스
-service.register('record/stop', function(message) {
+  async stop(message) {
     if (!message.payload.recorderId) {
-        return message.respond({ returnValue: false, result: "recorderId required" });
+      return message.respond({ returnValue: false, result: "recorderId required" });
     }
 
-    service.call('luna://com.webos.service.mediarecorder/stop', {recorderId: message.payload.recorderId}, (response) => {
-        if (response.payload.returnValue) {
-            message.respond({ returnValue: true, result: response.payload.path });
-        } else {
-            message.respond({ returnValue: false, result: response.payload.errorText });
-        }
-    });
-});
+    try {
+      const response = await callServiceMethod('luna://com.webos.service.mediarecorder/stop', { recorderId: message.payload.recorderId });
+
+      message.respond({ returnValue: true, result: response.path });
+    } catch (error) {
+      message.respond({ returnValue: false, result: error.message });
+    }
+  }
+};
+
+// Register services
+service.register('image/readAll', imageHandlers.readAll);
+service.register('image/delete', imageHandlers.delete);
+service.register('image/convertJpg', imageHandlers.convertJpg);
+service.register('record/init', recordHandlers.init);
+service.register('record/start', recordHandlers.start);
+service.register('record/stop', recordHandlers.stop);
+
+module.exports = service;

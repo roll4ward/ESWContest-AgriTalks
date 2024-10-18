@@ -1,97 +1,166 @@
-// ChatPage.js
-import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom"; // useNavigate, useLocation 추가
+import React, { useState, useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import MessageBox from "../component/MessageBox";
-import { Button, Form, InputGroup, Card } from "react-bootstrap";
+import { Button, Form, InputGroup, Card, Spinner } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import styled from "styled-components";
-import { askToAiStream, TTS, STT, audioStart, audioStop, createConversation, readConversation, deleteAllConversation } from "../api/aiService";
-import { initRecord} from "../api/mediaService";
+import { FaStopCircle } from "react-icons/fa";
+import {
+  askToAiStream,
+  TTS,
+  STT,
+  audioStart,
+  audioStop,
+  createConversation,
+  readConversation
+} from "../api/aiService";
+import { initRecord } from "../api/mediaService";
 import RecordModal from "../component/modal/RecorderModal";
 import { FaMicrophone } from "react-icons/fa";
 
 export default function ChatPage() {
-  const [messages, setMessages] = useState([]);
-  const [page, setPage] = useState("");
+  const [messages, setMessages] = useState([]);  
+  const [nextPage, setNextPage] = useState(null); 
   const [prompt, setPrompt] = useState("");
   const [showRecordModal, setShowRecordModal] = useState(false);
-  const [recorderId, setRecorderId] = useState("");
   const [audioId, setAudioId] = useState("");
+  const [recorderId, setRecorderId] = useState("");
 
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [allMessagesLoaded, setAllMessagesLoaded] = useState(false); 
+
+  const messagesEndRef = useRef(null); 
+  const cardBodyRef = useRef(null); 
+  const initialLoadComplete = useRef(false); 
+  const scrollPositionRef = useRef(0); // 스크롤 위치를 저장할 ref
+  
   const location = useLocation();
-  const selectedImage = location.state?.selectedImage;
+  const selectedImages = location.state?.selectedImages;
   const selectedImageDesc = location.state?.selectedImageDesc;
 
-  useEffect(() => {
-    readConversation(null, (result)=> {
-      setMessages(result.texts.map((msg) => ({ type: msg.type, text: msg.text, image:msg.image })));
-      if(result.page) setPage(result.page)
-    });
-
-    initRecord((result)=> {
-      setRecorderId(result); 
-    });
-    
-    // 이미지가 있으면 메세지 전송
-    if (selectedImage) {
-      handleSendMessage("",selectedImage, selectedImageDesc);
+  const scrollToBottom = () => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
+  };
 
+  const fetchConversation = (page) => {
+    setIsLoadingMore(true);
+    
+    readConversation(page, (result) => {
+      if (result.texts.length > 0) {
+        const conversationPage = result.texts.map((msg) => ({
+          type: msg.type,
+          text: msg.text,
+          image: JSON.parse(msg.image),
+        }));
+  
+        const prevScrollHeight = cardBodyRef.current.scrollHeight; // 기존 스크롤 높이 저장
+  
+        setMessages((prevMessages) => [...conversationPage, ...prevMessages]);
+  
+        if (result.page) {
+          setNextPage(result.page);
+        } else {
+          setAllMessagesLoaded(true);
+        }
+  
+        setIsLoadingMore(false);
+  
+        // 새로운 대화 묶음이 추가된 후, 추가된 묶음의 최신 메시지가 먼저 보이게 스크롤 조정
+        setTimeout(() => {
+          if (cardBodyRef.current) {
+            const newScrollHeight = cardBodyRef.current.scrollHeight; // 새 스크롤 높이 계산
+            const addedHeight = newScrollHeight - prevScrollHeight;  // 추가된 높이 계산
+            cardBodyRef.current.scrollTop = addedHeight;  // 새로 추가된 메시지 묶음의 끝에 스크롤 위치 설정
+          }
+        }, 0); // 상태가 업데이트되고 나서 스크롤 조정
+      } else {
+        setAllMessagesLoaded(true);
+        setIsLoadingMore(false);
+      }
+    });
+  };
+  
+
+  useEffect(() => {
+    const initializeChat = () => {
+      initRecord((result) => {
+        setRecorderId(result);
+      });
+
+      readConversation(null, (result)=> {
+        if(result.texts.length > 0){
+          setMessages(result.texts.map((msg) => ({ type: msg.type, text: msg.text, image: JSON.parse(msg.image)})));
+          if(result.page) setNextPage(result.page)
+        }
+
+        setTimeout(() => {
+          scrollToBottom(); // 대화 기록이 모두 렌더링된 후 스크롤 실행
+          initialLoadComplete.current = true; // 초기 로딩 완료 플래그 설정
+        }, 0);
+
+        if (selectedImages) {
+          handleSendMessage("", selectedImages, selectedImageDesc);
+        }
+      });
+    };
+    initializeChat();
   }, []);
 
+  useEffect(() => {
+    const handleScroll = () => {
+      if (cardBodyRef.current.scrollTop === 0 && nextPage && !isLoadingMore && !allMessagesLoaded && initialLoadComplete.current) {
+        scrollPositionRef.current = cardBodyRef.current.scrollHeight; // 스크롤 위치 저장
+        fetchConversation(nextPage);
+      }
+    };
+
+    if (cardBodyRef.current) {
+      cardBodyRef.current.addEventListener("scroll", handleScroll);
+    }
+
+    return () => {
+      if (cardBodyRef.current) {
+        cardBodyRef.current.removeEventListener("scroll", handleScroll);
+      }
+    };
+  }, [nextPage, isLoadingMore, allMessagesLoaded]);
+
+  useEffect(() => {
+    // 메시지가 업데이트될 때마다 스크롤을 맨 아래로 이동
+    scrollToBottom();
+  }, [messages]);
+  
   const handleSendMessage = (_ , image, imageDesc) => {
     // 질문창이 공백이면 return
-    if (prompt == "" && !image) {
+    if (prompt == "" && !image) return;
 
-      // -----------------------------------------------------------
-      // 임시 태스트용 코드
+    let aiMessage = { text: "", type: "ai", image: []};
+    let text = prompt;
+    let img = [];
 
-      // ai가 한창 브리핑 중에 빈 프롬프트로 메세지 전송 버튼을 누르면 오디오가 중단 됨
-      if (audioId) {
-        audioStop(audioId);
-        console.log("stop", audioId);
-        setAudioId("");
-      }
-
-      // 대화 내용이 10개 초과로 있어야 태스트 가능
-      // 다음 페이지가 있는 경우 이전 대화내용 10개 추가로 불러오는 함수
-      // 스크롤바가 맨 위로 이동하는 이벤트에 이 함수를 넣어주면 됨
-      if(page){
-        readConversation(page, (result)=> {
-          const list = result.texts.map((msg) => ({ type: msg.type, text: msg.text, image:msg.image }))
-          setMessages([...list , ...messages]);
-          if(result.page){
-            setPage(result.page);
-          }else{
-            setPage("");
-          }
-        });
-      }
-      // ~ 임시 태스트용 코드
-      // -----------------------------------------------------------
-
-      return;
+    if (image){
+      text = imageDesc;
+      img = image;
     }
-    
-    // 사용자 메시지 저장
-    const newMessages = [...messages, { type: "user", text: image? imageDesc : prompt, image: image}];
-    setMessages(newMessages);
-    createConversation(image ? imageDesc : prompt, "user", image);
-    setPrompt("");
 
-    // ai의 대답창을 우선 "..."으로 초기화
-    setMessages((prevMessages) => [...prevMessages,{type: "ai",text: "..."}]);
-    let aiMessage = { type: "ai", text: ""};
+    setPrompt("");
+    createConversation(text, "user", img);
+
+    // 사용자 메시지 저장, ai의 대답창을 우선 "..."으로 초기화
+    setMessages((prevMessages) => [...prevMessages, { text: text, type: "user", image: img }]);
+    setMessages((prevMessages) => [...prevMessages, { type: "ai", text: "...", image: [] }]);
+    scrollToBottom();
     
     // 스트림 질문 전송 함수
-    askToAiStream(image? imageDesc : prompt, image, (askResult)=> {
+    askToAiStream(text, img, (askResult)=> {
       // 스트림의 마지막 토큰이 수신되면 ai의 대답 전문을 저장 및 tts & audioStart
+      scrollToBottom();
       if(!askResult.isStreaming){
-        createConversation(aiMessage.text, "ai");
-        TTS(aiMessage.text, (path)=> {
-          audioStart(path ,(result)=> {
-            setAudioId(result);
-          }); 
+        createConversation(aiMessage.text, "ai", []);
+        TTS(aiMessage.text, (path)=> { 
+          audioStart(path, (result)=> { setAudioId(result); }); 
         });
       }else{
         aiMessage.text = askResult.chunks;
@@ -102,53 +171,73 @@ export default function ChatPage() {
       }
     });
   };
+  
 
   const handleRecordModalClose = (audio) => {
     setShowRecordModal(false);
-    if (audio) {
-      STT(audio, (result) => {
-        // 사용자 메시지 저장
-        const newMessages = [...messages, { type: "user", text: result }];
-        setMessages(newMessages);
-        createConversation(result, "user", "");
 
-        // ai의 대답창을 우선 "..."으로 초기화
-        setMessages((prevMessages) => [...prevMessages,{type: "ai",text: "..."}]);
-        let aiMessage = { type: "ai", text: "" };
+    if (!audio) return;
 
-        // 스트림 질문 전송 함수
-        askToAiStream(result, "", (askResult)=> {
-          // 스트림의 마지막 토큰이 수신되면 ai의 대답 전문을 저장 및 tts & audioStart
-          if(!askResult.isStreaming){
-            createConversation(aiMessage.text, "ai", "");
-            TTS(aiMessage.text, (path)=> { 
-              audioStart(path, (result)=> {
-                setAudioId(result);
-              }); 
+    STT(audio, (result) => {
+      let aiMessage = { type: "ai", text: "", image: [] };
+
+      setMessages((prevMessages) => [...prevMessages, { text: result, type: "user", image: [] }, { text: "...", type: "ai", image: [] }]);
+      createConversation(result, "user", []);
+      scrollToBottom();
+
+      askToAiStream(result, "", (askResult) => {
+        scrollToBottom();
+        if (!askResult.isStreaming) {
+          createConversation(aiMessage.text, "ai", []);
+          TTS(aiMessage.text, (path) => {
+            audioStart(path, (result) => {
+              setAudioId(result);
             });
-          }else{
-            aiMessage.text = askResult.chunks;
-            setMessages((prevMessages) => {
-              const updatedMessages = prevMessages.slice(0, -1);
-              return([...updatedMessages, aiMessage]);
-            });
-          }
-        });
+          });
+        } else {
+          aiMessage.text = askResult.chunks;
+          setMessages((prevMessages) => {
+            const updatedMessages = prevMessages.slice(0, -1);
+            return [...updatedMessages, aiMessage];
+          });
+        }
       });
-    }
+    });
   };
-  
+
   const handleOpenRecordModal = () => {
-    setShowRecordModal(true); // 녹음 모달 열기
+    setShowRecordModal(true);
+  };
+
+  const handleStopBriefing = () => {
+    if (audioId) {
+      audioStop(audioId);
+      setAudioId("");
+    }
   };
 
   return (
     <Container>
       <StyledCard>
-        <CardBody>
+        <CardBody ref={cardBodyRef}>
+          {isLoadingMore && (
+            <SpinnerWrapper>
+              <Spinner animation="border" role="status">
+                <span className="sr-only">Loading...</span>
+              </Spinner>
+            </SpinnerWrapper>
+          )}
           {messages.map((msg, idx) => (
-            <MessageBox key={idx} msgType={msg.type} text={msg.text} image={msg.image}/>
+            <div key={idx} style={{ position: "relative" }}>
+              <MessageBox msgType={msg.type} text={msg.text} image={msg.image} />
+              {idx === messages.length - 1 && msg.type === "ai" && audioId && (
+                <StopIcon onClick={handleStopBriefing}>
+                  <FaStopCircle size={50} color="grey" />
+                </StopIcon>
+              )}
+            </div>
           ))}
+          <div ref={messagesEndRef} />
         </CardBody>
         <CardFooter>
           <InputGroup>
@@ -159,7 +248,12 @@ export default function ChatPage() {
               style={{ height: "80px", fontSize: "20px" }}
             />
             <Button
-              style={{ backgroundColor: "#448569", color: "#fff", width: "5%", fontSize: "30px"}}
+              style={{
+                backgroundColor: "#448569",
+                color: "#fff",
+                width: "5%",
+                fontSize: "30px",
+              }}
               onClick={handleSendMessage}
             >
               ↑
@@ -172,23 +266,18 @@ export default function ChatPage() {
                 width: "5%",
                 fontSize: "30px",
               }}
-              onClick={handleOpenRecordModal} // 녹음 모달 열기 버튼
+              onClick={handleOpenRecordModal}
             >
               <FaMicrophone size={30} />
             </Button>
           </InputGroup>
         </CardFooter>
       </StyledCard>
-      <RecordModal
-        show={showRecordModal}
-        handleClose={handleRecordModalClose}
-        recorderId={recorderId} 
-      />
+      <RecordModal show={showRecordModal} handleClose={handleRecordModalClose} recorderId={recorderId} />
     </Container>
   );
 }
 
-// 전체 컨테이너 스타일
 const Container = styled.div`
   display: flex;
   justify-content: space-between;
@@ -209,4 +298,20 @@ const CardBody = styled(Card.Body)`
 
 const CardFooter = styled(Card.Footer)`
   background-color: #f8f9fa;
+`;
+
+const SpinnerWrapper = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 50px;
+  margin-bottom: 10px;
+`;
+
+const StopIcon = styled.div`
+  position: absolute;
+  top: 50%;
+  right: 80px;
+  transform: translateY(-50%);
+  cursor: pointer;
 `;

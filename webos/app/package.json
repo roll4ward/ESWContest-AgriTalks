@@ -29,6 +29,7 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "webos-pack": "ares-package -o ipk build",
+    "webos-pack-service": "ares-package -o ipk build ../service/aitalk/ ../service/coap/ ../service/infomanage/ ../service/infomedia/",
     "info-update": "cp webos/* build/",
     "prepare-tts": "ares-push ./audioCon.py /home/developer && ares-shell -r 'mkdir -p /home/developer/media'",
     "prepare-camara": "ares-push ./imageCon.py /home/developer && ares-shell -r 'mkdir -p /home/developer/media'",
