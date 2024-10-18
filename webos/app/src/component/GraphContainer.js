@@ -12,7 +12,7 @@ import {
   Legend,
 } from "chart.js";
 import { useEffect, useState } from "react";
-import { readAllValues } from "../api/coapService";
+import { readRecentValues } from "../api/coapService";
 
 ChartJS.register(
   CategoryScale,
@@ -24,18 +24,18 @@ ChartJS.register(
   Legend
 );
 
-export default function GraphContainer({ deviceID, deviceData }) {
+export default function GraphContainer({ deviceID }) {
   const [graphData, setGraphData] = useState(null);
 
   useEffect(() => {
-    console.log("deviceData에는 뭐가있을까요 : ", deviceData);
     if (!deviceID) {
       return;
     }
 
     // 기기 내 값들 불러오기
-    readAllValues(deviceID, (result) => {
+    readRecentValues(deviceID, 24, (result) => {
       console.log("result in Graph : ", result);
+      
       setGraphValues(result);
     });
   }, [deviceID]);
@@ -55,17 +55,11 @@ export default function GraphContainer({ deviceID, deviceData }) {
       ],
     };
 
-    for (let i = 0; i < data.length; i++) {
-      const targetDate = new Date(data[i].time);
-      const now = new Date();
-      const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    data.forEach((data)=> {
+      newData.labels.push(data.time);
+      newData.datasets[0].data.push(data.value)
+    });
 
-      // 24시간 내의 데이터만 추가
-      if (targetDate >= twentyFourHoursAgo && targetDate <= now) {
-        newData.labels.push(data[i].time);
-        newData.datasets[0].data.push(data[i].value);
-      }
-    }
     console.log("newData : ", newData);
     setGraphData(newData);
   };
@@ -109,7 +103,7 @@ export default function GraphContainer({ deviceID, deviceData }) {
         <Line data={graphData} options={options} />
       ) : (
         <NoDataText>
-          측정된 데이터가 없어요. 센서 연결을 확인해 주세요.
+          최근 24시간 사이의 데이터가 없어요.
         </NoDataText>
       )}
     </GraphWrap>

@@ -27,7 +27,9 @@ service.register('createKind', function(message) {
             required: ['deviceId', 'time', 'value']
         },
         indexes: [
-            { name: 'deviceId', props: [{ name: 'deviceId' }] }
+            { name: 'deviceId', props: [{ name: 'deviceId' }] },
+            { name: 'deviceId_latest', props: [ {name: 'deviceId'}, {name: "_rev"}]},
+            { name: 'deviceId_recent', props: [ {name: 'deviceId'}, {name: "time"}]}
         ]
     };
 
@@ -116,10 +118,42 @@ service.register('read', function(message) {
 });
 
 // 가장 최근에 측정된 값 read
+service.register('read/recent', function(message) {
+    if (!(message.payload.deviceId && message.payload.hour)) {
+        message.respond({ returnValue: false, results: "deviceId & hour are required."});
+        return;
+    }
+
+    const n_hour_ago = Date.now() - message.payload.hour * 60 * 60 * 1000;
+
+    const query = {
+        from: DB_KIND,
+        where: [
+            { prop: 'deviceId', op: '=', val: message.payload.deviceId },
+            { prop: 'time', op: '>=', val: n_hour_ago }
+        ]
+    };
+
+    service.call('luna://com.webos.service.db/find', { query: query }, (response) => {
+        console.log(response);
+        if (response.payload.returnValue) {
+            let result = response.payload.results;
+
+            console.log(result);
+            
+            message.respond({ returnValue: true, results: result });
+        } else {
+            message.respond({ returnValue: false, results: response.error });
+        }
+    });
+});
+
+// 가장 최근에 측정된 값 read
 service.register('read/latest', function(message) {
     const query = {
         from: DB_KIND,
-        where: [],
+        where: [{ prop: 'deviceId', op: '=', val: message.payload.deviceId }],
+        orderBy: "_rev",
         desc: true,
         limit: 1
     };
@@ -127,7 +161,6 @@ service.register('read/latest', function(message) {
     if (!message.payload.deviceId) {
         message.respond({ returnValue: false, results: "deviceId is required."});
     }
-    query.where.push({ prop: 'deviceId', op: '=', val: message.payload.deviceId });
 
     service.call('luna://com.webos.service.db/find', { query: query }, (response) => {
         console.log(response);
