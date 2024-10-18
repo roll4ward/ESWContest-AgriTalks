@@ -110,6 +110,17 @@ service.register('read', function(message) {
 
     service.call('luna://com.webos.service.db/find', { query: query }, (response) => {
         if (response.payload.returnValue) {
+            if (message.payload.deviceIds) {
+               let select = [];
+               response.payload.results.map((res) => {
+                if (res.deviceId in deviceIds) {
+                    select.push(res)
+                }
+               }) 
+
+               response.payload.results = select;
+            }
+
             message.respond({ returnValue: true, results: response.payload.results });
         } else {
             message.respond({ returnValue: false, results: response.error });

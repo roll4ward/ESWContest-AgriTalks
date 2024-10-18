@@ -448,33 +448,85 @@ function controlDevices(deviceId, level, service)
     payload: level
   }
 
-  // return new Promise((resolve, reject) => {
-  //   service.call("luna://xyz.rollforward.app.coap/send", payload, (response) => {
-  //     if (response.payload.returnValue) {
-  //       console.log(response.payload)
-  //       resolve({success: true, response: response.payload})
-  //     } else {
-  //       console.log("fail: ", response)
-  //       reject({success: false})
-  //     }
-  //   })
-  // })
-
   return new Promise((resolve, reject) => {
-    resolve({success: true})
+    service.call("luna://xyz.rollforward.app.coap/send", payload, (response) => {
+      if (response.payload.returnValue) {
+        console.log(response.payload)
+        resolve({success: true, response: response.payload})
+      } else {
+        console.log("fail: ", response)
+        reject({success: false})
+      }
+    })
   })
+
+  // return new Promise((resolve, reject) => {
+  //   resolve({success: true})
+  // })
 }
 
 function getSensorValuesOfAreaByTimeAsCSV(areaId, NHoursAgo, service) 
 {
   console.log("getSensorValuesOfAreaByTimeAsCSV is invoked")
   return new Promise((resolve, reject) => {
+    // 1. areaId에 속한 device들을 먼저 불러옴
+    console.log("getDeviceList is invoked")
+    const query = {
+      select: ["_id", "areaId", "name", "type", "desc"],
+      areaId: areaId
+    }
+    console.log("query: ", query)
+    let deviceList = [];
+    service.call("luna://xyz.rollforward.app.infomanage/device/read", query, (response) => {
+      console.log("getDeviceList response: ", response)
+      if (response.payload.returnValue) {
+        // 2. 불러온 deviceId 들의 sensor values 들을 읽어와야함.
+        let deviceIds = response.payload.results.map(({_id}) => _id);
+        console.log(`deviceIds: ${deviceIds}`)
 
+        aitalk_service.call("luna://xyz.rollforward.app.coap/read", {"deviceIds": deviceIds}, (res) => {
+          console.log(`responses: ${res}`)
+          // 3. parsing 하고 저장
+          const jsonData = res.payload.results;
 
+          const csvHeaders = [
+            { id: 'time', title: 'Time' },
+            { id: 'deviceId', title: 'Device ID' },
+            { id: 'value', title: 'Sensor Values' },
+          ];
 
+          const writer = csvWriter({
+            path: '/home/developer/test_sensor_values.csv',
+            header: csvHeaders,
+          });
 
-    // testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest
-    const sensorValuesCSV = fs.readFileSync('/home/developer/test_sensor_values.csv', 'utf-8');
-    resolve({succes: true, sensorValues: sensorValuesCSV, isTest: true})
-  });
+          const records = jsonData.map((item) => ({
+            time: item.time,
+            deviceId: item.deviceId,
+            sensorValues: item.sensorValues,
+            subtype: item.subtype,
+          }));
+
+          writer
+            .writeRecords(records)
+            .then(() => {
+              console.log('CSV 파일이 성공적으로 생성되었습니다.');
+            })
+            .catch((err) => {
+              console.error('CSV 파일 생성 중 오류 발생:', err);
+            });
+
+          const sensorValuesCSV = fs.readFileSync('/home/developer/test_sensor_values.csv', 'utf-8');
+          resolve({succes: true, sensorValues: sensorValuesCSV, isTest: true})
+        });
+      } else {
+        reject({success: false})
+      }
+    })
+
+    })
+
+    
+    
+    
 }; 
