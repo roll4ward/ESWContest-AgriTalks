@@ -75,22 +75,14 @@ class AITalkEventHandler extends Events.EventEmitter {
                     }));
 
                     const response = await getAreaList(aitalk_service)
-                    if (response.returnValue) {
-                      console.log("response", response)
-                      const payload = {
-                        tool_call_id: toolCall.id,
-                        output: JSON.stringify(response)
-                      }
-                      console.log("toolCall: ", toolCall)
-                      console.log("payload: ", payload)
-                      return payload 
-                    } else {
-                      this.msg.respond(new error(`Area의 정보를 불러오는 중에 에러가 발생했습니다.`));
-                      return {
-                        tool_call_id: toolCall.id, 
-                        output: JSON.stringify({success: false})
-                    };
+                    console.log("response", response)
+                    const payload = {
+                      tool_call_id: toolCall.id,
+                      output: JSON.stringify(response)
                     }
+                    console.log("toolCall: ", toolCall)
+                    console.log("payload: ", payload)
+                    return payload 
                   } 
                   else if (toolCall.function.name === "getDeviceList") {
                     this.msg.respond(new aitalk_response({
@@ -102,22 +94,14 @@ class AITalkEventHandler extends Events.EventEmitter {
                     console.log("toolCall.function", toolCall.function)
 
                     const response = await getDeviceList(areaId, aitalk_service)
-                    if (response.returnValue) {
-                      console.log("response", response)
-                      const payload = {
-                        tool_call_id: toolCall.id,
-                        output: JSON.stringify(response)
-                      }
-                      console.log("toolCall: ", toolCall)
-                      console.log("payload: ", payload)
-                      return payload 
-                    } else{
-                      this.msg.respond(new error("Device 정보를 읽어오는 도중 에러가 발생했습니다."))
-                      return {
-                        tool_call_id: toolCall.id, 
-                        output: JSON.stringify({success: false})
-                    };
+                    console.log("response", response)
+                    const payload = {
+                      tool_call_id: toolCall.id,
+                      output: JSON.stringify(response)
                     }
+                    console.log("toolCall: ", toolCall)
+                    console.log("payload: ", payload)
+                    return payload 
                   }
                   else if (toolCall.function.name === "controlDevices") {
                     this.msg.respond(new aitalk_response({
@@ -131,20 +115,12 @@ class AITalkEventHandler extends Events.EventEmitter {
                     const args = JSON.parse(toolCall.function.arguments)
                     console.log("controlDevice args: ", args)
                     const response = await controlDevices(args.deviceId, args.level, aitalk_service)
-                    if (response.returnValue) {
-                      const payload = {
-                        tool_call_id: toolCall.id,
-                        output: JSON.stringify(response)
-                      }
-                      console.log("payload: ", payload)
-                      return payload 
-                    } else {
-                      this.msg.respond(new error("Device를 제어하는 과정에서 에러가 발생했습니다."))
-                      return {
-                        tool_call_id: toolCall.id, 
-                        output: JSON.stringify({success: false})
-                    };
+                    const payload = {
+                      tool_call_id: toolCall.id,
+                      output: JSON.stringify(response)
                     }
+                    console.log("payload: ", payload)
+                    return payload 
                   }
                   else if (toolCall.function.name === "getSensorValuesOfAreaByTimeAsCSV") {
                     console.log("getSensorValuesOfAreaByTimeAsCSV invoked")
@@ -153,23 +129,14 @@ class AITalkEventHandler extends Events.EventEmitter {
                     const args = JSON.parse(toolCall.function.arguments)
                     console.log("controlDevice args: ", args)
                     const response = await getSensorValuesOfAreaByTimeAsCSV(args.areaId, args.NHoursAgo, aitalk_service)
-                    if (response.returnValue) {
-                      const payload = {
-                        tool_call_id: toolCall.id,
-                        output: JSON.stringify(response)
-                      }
-                      console.log("payload: ", payload)
-                      return payload 
-                    } else {
-                      this.msg.respond(new error("센서값들이 저장된 csv 파일을 불러오는데 에러가 발생했습니다."))
-                      return {
-                        tool_call_id: toolCall.id, 
-                        output: JSON.stringify({success: false})
-                    };
+                    const payload = {
+                      tool_call_id: toolCall.id,
+                      output: JSON.stringify(response)
                     }
+                    console.log("payload: ", payload)
+                    return payload 
                   }
                   else {
-                      this.msg.respond(new error("AI가 적절하지 않은 함수를 호출하여 에러가 발생했습니다."))
                       return {
                           tool_call_id: toolCall.id, 
                           output: JSON.stringify({success: false})
@@ -179,7 +146,7 @@ class AITalkEventHandler extends Events.EventEmitter {
       // Submit all the tool outputs at the same time
       await this.submitToolOutputs(toolOutputs, runId, threadId);
     } catch (err) {
-      this.msg.respond(new error(`Error processing required action: error: ${err}`))
+      this.msg.respond(new error("Error processing required action:", err))
       console.error("Error processing required action:", err);
       return {
           tool_call_id: toolCall.id, 
@@ -200,8 +167,7 @@ class AITalkEventHandler extends Events.EventEmitter {
         this.emit("event", event);
       }
     } catch (error) {
-      console.error(`Error submitting tool outputs:, error: ${error}`);
-      this.msg.respond(`Error submitting tool outputs:, error: ${error}`)
+      console.error("Error submitting tool outputs:", error);
     }
   }
 }
@@ -211,60 +177,42 @@ aitalk_service.register("ask_stream", async function(msg) {
   aitalkEventHandler.on("event", aitalkEventHandler.onEvent.bind(aitalkEventHandler));
 
   if (!thread) {
-    try {
-      thread = await openai.beta.threads.create();    
-    } catch (e) {
-      msg.respond(new error("OpenAI측에 새로운 thread를 생성해달라는 요청 중에 에러가 발생했습니다. error: ", e))
-      return;
-    }
+    thread = await openai.beta.threads.create();    
   };
 
+  console.log(msg)
   if (!msg.payload.prompt) {
-    msg.respond(new error('prompt is required. payload: ', payload));
+    msg.respond(new error('prompt is required.'));
     return;
   }
 
   // build contents for "ask"
   let contents = [];
   contents.push({"type": "text", "text": msg.payload.prompt});
+
   if (msg.payload.imagePaths) {
     const uploadPromises = msg.payload.imagePaths.map(async (image_path) => {
-      try {
-        const img_file = await openai.files.create({
-          file: fs.createReadStream(image_path),
-          purpose: "assistants"
-        });
-        console.log("img_file: ", img_file);
-        contents.push({ "type": "image_file", "image_file": { "file_id": img_file.id } });
-      } catch (e) {
-        msg.respond(new error("이미지를 읽어 AI에게 전송하는 중에 에러가 발생했습니다. error: ", e))
-        return;
-      }
+      const img_file = await openai.files.create({
+        file: fs.createReadStream(image_path),
+        purpose: "assistants"
+      });
+      console.log("img_file: ", img_file);
+      contents.push({ "type": "image_file", "image_file": { "file_id": img_file.id } });
     });
     // Wait for all uploads to complete
     await Promise.all(uploadPromises);
   }
 
   console.log("content: ", contents)
-  try {
-    const threadMessages = await openai.beta.threads.messages.create(thread.id, { role: "user", content: contents});
-  } catch (e) {
-    msg.respond(new error(`AI에게 전송할 message를 생성하는 중에 에러가 발생했습니다. error: ${e}`))
-    return;
-  }
-  try {
-    const stream = await openai.beta.threads.runs.stream(
-      thread.id,
-      { assistant_id: config.openai_assistant_id },
-      aitalkEventHandler,
-    );
+  const threadMessages = await openai.beta.threads.messages.create(thread.id, { role: "user", content: contents});
+  const stream = await openai.beta.threads.runs.stream(
+    thread.id,
+    { assistant_id: config.openai_assistant_id },
+    aitalkEventHandler,
+  );
 
-    for await (const event of stream) {
-      aitalkEventHandler.emit("event", event);
-    }
-  } catch (e) {
-    msg.respond(`AI 응답을 stream으로 받는 과정에서 에러가 발생했습니다. error: ${e}`);
-    return;
+  for await (const event of stream) {
+    aitalkEventHandler.emit("event", event);
   }
 });
 
@@ -286,21 +234,16 @@ aitalk_service.register("stt", async function(msg) {
   }
 
   // 2. send voice file to API servce
-  try {
-    const transcription = await openai.audio.transcriptions.create({
-        file: fs.createReadStream(msg.payload.voice_path),
-        model: config.openai_stt_model,
-    });
-  
-    // 3. return text converted from voice file
-    const voice_prompt = transcription.text;
-    msg.respond(new aitalk_response(
-      {voice_prompt: voice_prompt}
-    ))
-  } catch (e) {
-    msg.respond(new error(`STT를 수행하던 중 에러가 발생했습니다. error: ${e}`));
-    return;
-  }
+  const transcription = await openai.audio.transcriptions.create({
+      file: fs.createReadStream(msg.payload.voice_path),
+      model: config.openai_stt_model,
+  });
+
+  // 3. return text converted from voice file
+  const voice_prompt = transcription.text;
+  msg.respond(new aitalk_response(
+    {voice_prompt: voice_prompt}
+  ))
 
   // 다 사용한 파일 삭제 추가 -geonha
   fs.readdir("/media/internal", (err, files) => {
@@ -336,38 +279,28 @@ aitalk_service.register("tts", async function (msg) {
     return;
   }
 
-  try {
-    const mp3 = await openai.audio.speech.create({
-      model: config.openai_tts.model,
-      voice: config.openai_tts.voice,
-      input: msg.payload.text,
-      response_format: "pcm",
-      speed: 1.2
-    });
-  
-    const tts_path = path.resolve(__dirname, "./tts.pcm");
-    console.log("audio file will be stored to " + tts_path);
-    const buffer = Buffer.from(await mp3.arrayBuffer());
-    await fs.promises.writeFile(tts_path, buffer);
-    console.log("TTS done.");
-  } catch (e) {
-    msg.respond(new error(`TTS 수행 중에 에러가 발생했습니다. error: ${e}`))
-    return;
-  }
+  const mp3 = await openai.audio.speech.create({
+    model: config.openai_tts.model,
+    voice: config.openai_tts.voice,
+    input: msg.payload.text,
+    response_format: "pcm",
+    speed: 1.2
+  });
 
-  try {
-    exec("python3 ./audioCon.py " + "./tts.pcm" + " 24000 " + "./tts.pcm" + " 32000",(err, stdout, stderr) => {
-        if (err) {
-          console.error(`Error during conversion: ${stderr}`);
-        } else {
-          msg.respond(new aitalk_response({ store_path: tts_path}));
-        }
+  const tts_path = path.resolve(__dirname, "./tts.pcm");
+  console.log("audio file will be stored to " + tts_path);
+  const buffer = Buffer.from(await mp3.arrayBuffer());
+  await fs.promises.writeFile(tts_path, buffer);
+  console.log("TTS done.");
+
+  exec("python3 ./audioCon.py " + "./tts.pcm" + " 24000 " + "./tts.pcm" + " 32000",(err, stdout, stderr) => {
+      if (err) {
+        console.error(`Error during conversion: ${stderr}`);
+      } else {
+        msg.respond(new aitalk_response({ store_path: tts_path}));
       }
-    );
-  } catch (e) {
-    msg.respond(new error(`TTS의 응답으로 받은 음성 파일의 sampling rate 을 변환하는 python script를 수행하는 중 에러가 발생했습니다. errpr: ${e}`));
-    return;
-  }
+    }
+  );
 });
 
 // 세션 & 대화 정보 데이터베이스 생성 (임시)
