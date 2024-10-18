@@ -68,17 +68,7 @@ class AITalkEventHandler extends Events.EventEmitter {
       try {
           const toolOutputs = 
               await Promise.all(data.required_action.submit_tool_outputs.tool_calls.map(async (toolCall) => {
-                  if (toolCall.function.name === "activate_water_valve") {
-                    this.msg.respond(new aitalk_response({
-                      chunks: "물 밸브 동작을 시도하고 있습니다. 잠시만 기다려주세요.",
-                      isStreaming: true
-                    }))
-                    return {
-                        tool_call_id: toolCall.id,
-                        output: JSON.stringify({success: true}),
-                    };
-                  } 
-                  else if (toolCall.function.name === "getAreaList") {
+                  if (toolCall.function.name === "getAreaList") {
                     this.msg.respond(new aitalk_response({
                       chunks: "등록하신 Area의 정보를 읽고 있습니다.. 잠시만 기다려주세요.",
                       isStreaming: true
