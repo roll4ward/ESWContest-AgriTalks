@@ -67,8 +67,8 @@ const ModalContent = styled.div`
   overflow-y: auto;
 `;
 
-const Title = styled.h2`
-  font-size: 30px;  /* 제목 크기를 키움 */
+const Title = styled.h1`
+  font-size: 50px;  
   margin-bottom: 30px;  /* 간격 확대 */
 `;
 
@@ -90,12 +90,12 @@ const ImageItem = styled.img`
 
 const Input = styled.textarea`
   width: 100%;
-  height: 250px;  /* 입력창 크기를 키움 */
-  padding: 20px;  /* 패딩을 크게 */
-  margin-bottom: 40px;  /* 하단 여백 증가 */
+  height: 350px;  
+  padding: 20px;  
+  margin-bottom: 40px; 
   border: 1px solid #ccc;
   border-radius: 5px;
-  font-size: 22px;  /* 폰트 크기 확대 */
+  font-size: 38px;  
 `;
 
 const ButtonContainer = styled.div`
