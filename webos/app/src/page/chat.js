@@ -88,18 +88,19 @@ export default function ChatPage() {
       initRecord((result) => {
         setRecorderId(result);
       });
-
-      readConversation(null, (result)=> {
-        if(result.texts.length > 0){
-          setMessages(result.texts.map((msg) => ({ type: msg.type, text: msg.text, image: JSON.parse(msg.image)})));
-          if(result.page) setNextPage(result.page)
+  
+      readConversation(null, (result) => {
+        if (result.texts.length > 0) {
+          setMessages(result.texts.map((msg) => ({ type: msg.type, text: msg.text, image: JSON.parse(msg.image) })));
+          if (result.page) setNextPage(result.page);
         }
-
+  
+        // DOM이 완전히 렌더링된 후에 스크롤을 가장 아래로 이동시키기 위해 setTimeout 사용
         setTimeout(() => {
           scrollToBottom(); // 대화 기록이 모두 렌더링된 후 스크롤 실행
           initialLoadComplete.current = true; // 초기 로딩 완료 플래그 설정
-        }, 0);
-
+        }, 100); // DOM이 완전히 렌더링된 후에 스크롤을 아래로 이동시키기 위해 약간의 지연 시간을 둠
+  
         if (selectedImages) {
           handleSendMessage("", selectedImages, selectedImageDesc);
         }
@@ -245,14 +246,14 @@ export default function ChatPage() {
               placeholder="텍스트를 입력하세요."
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              style={{ height: "80px", fontSize: "20px" }}
+              style={{ height: "140px", fontSize: "40px" }}
             />
             <Button
               style={{
                 backgroundColor: "#448569",
                 color: "#fff",
-                width: "5%",
-                fontSize: "30px",
+                width: "8%",
+                fontSize: "70px",
               }}
               onClick={handleSendMessage}
             >
@@ -263,12 +264,12 @@ export default function ChatPage() {
               style={{
                 backgroundColor: "#FF6F61",
                 color: "#fff",
-                width: "5%",
+                width:"8%",
                 fontSize: "30px",
               }}
               onClick={handleOpenRecordModal}
             >
-              <FaMicrophone size={30} />
+              <FaMicrophone size={50} />
             </Button>
           </InputGroup>
         </CardFooter>
