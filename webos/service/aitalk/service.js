@@ -60,6 +60,10 @@ class AITalkEventHandler extends Events.EventEmitter {
           this.msg.cancel();
       }
     } catch (e) {
+      this.msg.respond(new aitalk_response({
+        chunks: "에러가 발생했습니다. 다시 시도해주세요.",
+        isStreaming: false
+      }))
       this.msg.respond(new error("Error handling event:"))
       console.error("Error handling event:", e);
     }
