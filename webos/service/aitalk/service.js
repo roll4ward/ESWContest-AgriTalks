@@ -12,6 +12,7 @@ const Service = require("webos-service");
 const OpenAI = require("openai");
 const path = require("path");
 const Events = require("events");
+const csvWriter = require('csv-writer').createObjectCsvStringifier;
 
 const openai = new OpenAI({apiKey: config.openai_api_key});
 
@@ -459,10 +460,6 @@ function controlDevices(deviceId, level, service)
       }
     })
   })
-
-  // return new Promise((resolve, reject) => {
-  //   resolve({success: true})
-  // })
 }
 
 function getSensorValuesOfAreaByTimeAsCSV(areaId, NHoursAgo, service) 
@@ -472,7 +469,7 @@ function getSensorValuesOfAreaByTimeAsCSV(areaId, NHoursAgo, service)
     // 1. areaId에 속한 device들을 먼저 불러옴
     console.log("getDeviceList is invoked")
     const query = {
-      select: ["_id", "areaId", "name", "type", "desc"],
+      select: ["_id", "areaId", "name", "type", "desc", "subtype"],
       areaId: areaId
     }
     console.log("query: ", query)
@@ -480,53 +477,87 @@ function getSensorValuesOfAreaByTimeAsCSV(areaId, NHoursAgo, service)
     service.call("luna://xyz.rollforward.app.infomanage/device/read", query, (response) => {
       console.log("getDeviceList response: ", response)
       if (response.payload.returnValue) {
-        // 2. 불러온 deviceId 들의 sensor values 들을 읽어와야함.
-        let deviceIds = response.payload.results.map(({_id}) => _id);
-        console.log(`deviceIds: ${deviceIds}`)
+
+        // 1. deviceId와 subtype을 매핑
+        const deviceIdToSensor = {};
+        response.payload.results.forEach((device) => {
+          const deviceId = device._id;
+          const sensorType = device.subtype;
+          deviceIdToSensor[deviceId] = sensorType;
+        });
+        console.log("deviceIdToSensor: ", deviceIdToSensor);
+
+        // 2. 고유한 subtype 목록 추출
+        const sensorTypes = Array.from(new Set(Object.values(deviceIdToSensor)));
+        console.log("sensorTypes: ", sensorTypes);
+
+        // 2. 불러온 deviceId들의 sensor values를 읽어옴
+        let deviceIds = response.payload.results.map(({ _id }) => _id);
+        console.log(`deviceIds: ${deviceIds}`);
 
         aitalk_service.call("luna://xyz.rollforward.app.coap/read", {"deviceIds": deviceIds}, (res) => {
           console.log(`responses: ${res}`)
           // 3. parsing 하고 저장
           const jsonData = res.payload.results;
 
+          // test /////////////////////////////////////////////////////////////////////////////////////////////
+          // const jsonData = [
+          //   {"time": 1729345031, "deviceId": "NZR5cCINcHs", "value": 3}, // temperature sensor
+          //   {"time": 1729345131, "deviceId": "NZR5cCINcHs", "value": 4},
+          //   {"time": 1729345231, "deviceId": "NZR5cCINcHs", "value": 2},
+          //   {"time": 1729345331, "deviceId": "NZR5cCINcHs", "value": 1},
+          //   {"time": 1729345031, "deviceId": "NZR5dO1AKBw", "value": 3}, // humidity sensor
+          //   {"time": 1729345131, "deviceId": "NZR5dO1AKBw", "value": 4},
+          //   {"time": 1729345231, "deviceId": "NZR5dO1AKBw", "value": 2},
+          //   {"time": 1729345331, "deviceId": "NZR5dO1AKBw", "value": 1},
+          //   {"time": 1729345031, "deviceId": "NZR5eINqb_k", "value": 3}, // light sensor
+          //   {"time": 1729345131, "deviceId": "NZR5eINqb_k", "value": 4},
+          //   {"time": 1729345231, "deviceId": "NZR5eINqb_k", "value": 2},
+          //   {"time": 1729345331, "deviceId": "NZR5eINqb_k", "value": 1},
+          // ]
+          // test /////////////////////////////////////////////////////////////////////////////////////////////
+
+          // 시간별로 데이터를 그룹화
+          const timeMap = {};
+
+          jsonData.forEach((item) => {
+            // Unix 타임스탬프를 ISO 형식으로 변환
+            const isoTime = new Date(item.time * 1000).toISOString();
+            const sensorType = deviceIdToSensor[item.deviceId];
+
+            if (!timeMap[isoTime]) {
+              timeMap[isoTime] = { time: isoTime };
+            }
+            timeMap[isoTime][sensorType] = item.value;
+          });
+
+          // 시간별로 정렬된 레코드 배열 생성
+          const records = Object.values(timeMap).sort((a, b) => new Date(a.time) - new Date(b.time));
+
+          // 4. csvHeaders를 동적으로 생성
           const csvHeaders = [
             { id: 'time', title: 'Time' },
-            { id: 'deviceId', title: 'Device ID' },
-            { id: 'value', title: 'Sensor Values' },
+            ...sensorTypes.map((sensorType) => ({ id: sensorType, title: sensorType }))
           ];
+          console.log("csvHeaders: ", csvHeaders);
 
-          const writer = csvWriter({
-            path: '/home/developer/test_sensor_values.csv',
+          const csvStringifier = csvWriter({
             header: csvHeaders,
           });
 
-          const records = jsonData.map((item) => ({
-            time: item.time,
-            deviceId: item.deviceId,
-            sensorValues: item.sensorValues,
-            subtype: item.subtype,
-          }));
+          // CSV 문자열 생성
+          const headerString = csvStringifier.getHeaderString();
+          const recordsString = csvStringifier.stringifyRecords(records);
+          const csvOutput = headerString + recordsString;
 
-          writer
-            .writeRecords(records)
-            .then(() => {
-              console.log('CSV 파일이 성공적으로 생성되었습니다.');
-            })
-            .catch((err) => {
-              console.error('CSV 파일 생성 중 오류 발생:', err);
-            });
+          // 콘솔에 출력
+          console.log(csvOutput);
 
-          const sensorValuesCSV = fs.readFileSync('/home/developer/test_sensor_values.csv', 'utf-8');
-          resolve({succes: true, sensorValues: sensorValuesCSV, isTest: true})
+          resolve({succes: true, sensorValues: csvOutput, isTest: true})
         });
       } else {
         reject({success: false})
       }
     })
-
     })
-
-    
-    
-    
 }; 
