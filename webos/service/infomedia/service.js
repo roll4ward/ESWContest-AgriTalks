@@ -28,7 +28,7 @@ const imageHandlers = {
       await callServiceMethod('luna://com.webos.service.mediaindexer/requestMediaScan', { path: "" });
       const response = await callServiceMethod('luna://com.webos.service.mediaindexer/getImageList');
       const images = response.imageList.results.map(image => image.file_path.replace("file://", ""));
-      message.respond({ returnValue: true, result: images });
+      message.respond({ returnValue: true, result: images.reverse() });
     } catch (error) {
       message.respond({ returnValue: false, result: error.message });
     }
