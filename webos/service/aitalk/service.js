@@ -500,24 +500,9 @@ function getSensorValuesOfAreaByTimeAsCSV(areaId, NHoursAgo, service)
         console.log(`deviceIds: ${deviceIds}`);
 
         aitalk_service.call("luna://xyz.rollforward.app.coap/read", {"deviceIds": deviceIds}, (res) => {
-          console.log(`responses: ${res}`)
+          console.log(res)
           // 3. parsing 하고 저장
           const jsonData = res.payload.results;
-
-          // test /////////////////////////////////////////////////////////////////////////////////////////////
-          // const jsonData = [
-          //   {"time": 1729345031, "deviceId": "NZR5cCINcHs", "value": 3}, // temperature sensor
-          //   {"time": 1729345131, "deviceId": "NZR5cCINcHs", "value": 4},
-          //   {"time": 1729345231, "deviceId": "NZR5cCINcHs", "value": 2},
-          //   {"time": 1729345331, "deviceId": "NZR5cCINcHs", "value": 1},
-          //   {"time": 1729345031, "deviceId": "NZR5dO1AKBw", "value": 3}, // humidity sensor
-          //   {"time": 1729345131, "deviceId": "NZR5dO1AKBw", "value": 4},
-          //   {"time": 1729345231, "deviceId": "NZR5dO1AKBw", "value": 2},
-          //   {"time": 1729345331, "deviceId": "NZR5dO1AKBw", "value": 1},
-          //   {"time": 1729345031, "deviceId": "NZR5eINqb_k", "value": 3}, // light sensor
-          //   {"time": 1729345131, "deviceId": "NZR5eINqb_k", "value": 4},
-          //   {"time": 1729345231, "deviceId": "NZR5eINqb_k", "value": 2},
-          //   {"time": 1729345331, "deviceId": "NZR5eINqb_k", "value": 1},
           // ]
           // test /////////////////////////////////////////////////////////////////////////////////////////////
 
