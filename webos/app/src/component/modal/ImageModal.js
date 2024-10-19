@@ -11,12 +11,12 @@ export default function ImageModal({ image, onClose, onDelete, onSelect, isSelec
           <SelectButton onClick={() => onSelect(image)}>
             <AiFillCheckCircle
               style={{ color: isSelected ? "green" : "gray", marginRight: "8px" }}
-              size={32} 
+              size={40} 
             />
             {isSelected ? "선택 해제" : "이미지 선택"}
           </SelectButton>
           <DeleteButton onClick={() => onDelete(image)}>
-            <AiOutlineDelete style={{ color: "red", marginRight: "8px" }} size={32} /> 
+            <AiOutlineDelete style={{ color: "red", marginRight: "8px" }} size={40} /> 
             이미지 삭제
           </DeleteButton>
         </ButtonGroup>
@@ -61,25 +61,25 @@ const ButtonGroup = styled.div`
 `;
 
 const SelectButton = styled.button`
-  padding: 10px 20px;
+  padding: 20px 40px;  /* 버튼 크기를 키우기 위한 패딩 값 조정 */
   background-color: transparent;
   color: black;
   border: none;
   display: flex;
   align-items: center;
   cursor: pointer;
-  font-size: 25px; 
+  font-size: 30px;  /* 폰트 크기를 키움 */
 `;
 
 const DeleteButton = styled.button`
-  padding: 10px 20px;
+  padding: 20px 40px;  /* 버튼 크기를 키우기 위한 패딩 값 조정 */
   background-color: transparent;
   color: black;
   border: none;
   display: flex;
   align-items: center;
   cursor: pointer;
-  font-size: 25px; 
+  font-size: 30px;  /* 폰트 크기를 키움 */
 `;
 
 const CloseButton = styled.button`

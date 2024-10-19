@@ -68,8 +68,8 @@ const ModalContent = styled.div`
 `;
 
 const Title = styled.h2`
-  font-size: 24px;
-  margin-bottom: 20px;
+  font-size: 30px;  /* 제목 크기를 키움 */
+  margin-bottom: 30px;  /* 간격 확대 */
 `;
 
 const ImagePreviewContainer = styled.div`
@@ -77,12 +77,12 @@ const ImagePreviewContainer = styled.div`
   justify-content: center;
   flex-wrap: wrap;
   gap: 10px;
-  margin-bottom: 20px;
+  margin-bottom: 30px;
 `;
 
 const ImageItem = styled.img`
-  width: 300px;
-  height: 225px;
+  width: 350px;  /* 이미지 크기 확대 */
+  height: 250px;  /* 이미지 크기 확대 */
   object-fit: cover;
   border-radius: 5px;
   border: 2px solid #ccc;
@@ -90,12 +90,12 @@ const ImageItem = styled.img`
 
 const Input = styled.textarea`
   width: 100%;
-  height: 150px;
-  padding: 15px;
-  margin-bottom: 30px;
+  height: 250px;  /* 입력창 크기를 키움 */
+  padding: 20px;  /* 패딩을 크게 */
+  margin-bottom: 40px;  /* 하단 여백 증가 */
   border: 1px solid #ccc;
   border-radius: 5px;
-  font-size: 18px;
+  font-size: 22px;  /* 폰트 크기 확대 */
 `;
 
 const ButtonContainer = styled.div`
@@ -104,13 +104,14 @@ const ButtonContainer = styled.div`
 `;
 
 const Button = styled.button`
-  padding: 15px 30px;
-  font-size: 18px;
+  padding: 20px 40px;  /* 버튼 크기 확대 */
+  font-size: 40px;  /* 버튼 텍스트 크기 확대 */
   background-color: ${(props) => (props.cancel ? "#FF6F61" : "#448569")};
   color: white;
   border: none;
   cursor: pointer;
   border-radius: 5px;
+  width: 170px;  /* 버튼 넓이 설정 */
 
   &:hover {
     background-color: ${(props) => (props.cancel ? "#ff3b2f" : "#367c5b")};

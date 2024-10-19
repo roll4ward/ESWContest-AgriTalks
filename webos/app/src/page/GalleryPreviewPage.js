@@ -102,8 +102,15 @@ export default function GalleryPreviewPage() {
 
   return (
     <Container>
-      <h1>이미지 미리보기</h1>
-      <Button onClick={handleCompleteSelection}>AI에게 물어보기</Button>
+      {/* 이미지 미리보기 텍스트 */}
+      <Text>이미지 미리보기</Text>
+
+      {/* AI에게 물어보기 버튼 */}
+      <ActionBar>
+        <Button onClick={handleCompleteSelection}>AI에게 물어보기</Button>
+      </ActionBar>
+
+      {/* 이미지들 */}
       <GalleryGrid>
         {images.length === 0 && <p>이미지를 불러오는 중...</p>}
         {images.map((image) => (
@@ -117,7 +124,7 @@ export default function GalleryPreviewPage() {
           >
             <img
               src={`${image}`}
-              alt=""
+              alt="선택한 이미지"
               style={{
                 width: "100%",
                 height: "100%",
@@ -132,7 +139,6 @@ export default function GalleryPreviewPage() {
           </ImageItem>
         ))}
       </GalleryGrid>
-     
 
       {isModalOpen && (
         <ModalOverlay>
@@ -163,15 +169,42 @@ const Container = styled.div`
   align-items: center;
 `;
 
+const Text = styled.p`
+  font-size: 64px;
+  margin: 5px 0;
+  text-align: left;
+  width: 100%;
+  padding-left: 20px;
+`;
+
+const ActionBar = styled.div`
+  display: flex;
+  justify-content: flex-end; /* 버튼을 오른쪽으로 정렬 */
+  width: 100%;
+  padding: 0 20px;
+  margin-top: 20px;
+`;
+
+const Button = styled.button`
+  font-size: 40px;
+  padding: 10px 20px;
+  background-color: #448569;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  border-radius: 15px;
+  margin-right: 10px;
+`;
+
 const GalleryGrid = styled.div`
   display: grid;
-  height: 80vh;
+  height: 70vh;
   overflow-y: scroll;
   grid-template-columns: repeat(4, 1fr);
   gap: 20px;
   margin: 20px;
   justify-items: center;
-  width:100%;
+  width: 100%;
 `;
 
 const ImageItem = styled.div`
@@ -190,16 +223,6 @@ const SelectedIcon = styled.div`
   top: 10px;
   right: 10px;
   z-index: 10;
-`;
-
-const Button = styled.button`
-font-size: 40px;
-  margin-top: 20px;
-  padding: 10px 20px;
-  background-color: #448569;
-  color: #fff;
-  border: none;
-  cursor: pointer;
 `;
 
 const ModalOverlay = styled.div`
