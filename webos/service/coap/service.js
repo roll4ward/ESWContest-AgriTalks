@@ -113,7 +113,7 @@ service.register('read', function(message) {
             if (message.payload.deviceIds) {
                let select = [];
                response.payload.results.map((res) => {
-                if (res.deviceId in deviceIds) {
+                if (message.payload.deviceIds.includes(res.deviceId)) {
                     select.push(res)
                 }
                }) 
