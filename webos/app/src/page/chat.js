@@ -187,7 +187,7 @@ export default function ChatPage() {
 
   const handleRecordModalClose = (audio) => {
     setShowRecordModal(false);
-
+    console.log(audio);
     if (!audio) return;
 
     STT(audio, (result) => {

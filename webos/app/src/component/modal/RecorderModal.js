@@ -7,7 +7,7 @@ import { initRecord } from "../../api/mediaService";
 
 export default function RecorderModal({ show, handleClose }) {
   const [isRecording, setIsRecording] = useState(true);
-  const [recordedAudio, setRecordedAudio] = useState(null);
+  const recordedAudio = useRef("");
   const [seconds, setSeconds] = useState(0);
   const [isSendEnabled, setIsSendEnabled] = useState(false); // 전송 버튼 비활성화 상태
   const [recorderId, setRecorderId] = useState("");
@@ -64,7 +64,7 @@ export default function RecorderModal({ show, handleClose }) {
 
     stopRecord(recorderId, (result) => {
       if (result) {
-        setRecordedAudio(result);
+        recordedAudio.current =result;
       } else {
         console.log("녹음 종료 실패");
       }
@@ -73,8 +73,8 @@ export default function RecorderModal({ show, handleClose }) {
 
   // 오디오 전송
   const handleSendAudio = () => {
-    if (recordedAudio) {
-      handleClose(recordedAudio);
+    if (recordedAudio.current) {
+      handleClose(recordedAudio.current);
     } else {
       handleClose(null);
     }
