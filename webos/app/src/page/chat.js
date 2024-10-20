@@ -12,28 +12,26 @@ import {
   audioStart,
   audioStop,
   createConversation,
-  readConversation
+  readConversation,
 } from "../api/aiService";
-import { initRecord } from "../api/mediaService";
 import RecordModal from "../component/modal/RecorderModal";
 import { FaMicrophone } from "react-icons/fa";
 
 export default function ChatPage() {
-  const [messages, setMessages] = useState([]);  
-  const [nextPage, setNextPage] = useState(null); 
+  const [messages, setMessages] = useState([]);
+  const [nextPage, setNextPage] = useState(null);
   const [prompt, setPrompt] = useState("");
   const [showRecordModal, setShowRecordModal] = useState(false);
   const [audioId, setAudioId] = useState("");
-  const [recorderId, setRecorderId] = useState("");
 
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [allMessagesLoaded, setAllMessagesLoaded] = useState(false); 
+  const [allMessagesLoaded, setAllMessagesLoaded] = useState(false);
 
-  const messagesEndRef = useRef(null); 
-  const cardBodyRef = useRef(null); 
-  const initialLoadComplete = useRef(false); 
+  const messagesEndRef = useRef(null);
+  const cardBodyRef = useRef(null);
+  const initialLoadComplete = useRef(false);
   const scrollPositionRef = useRef(0); // 스크롤 위치를 저장할 ref
-  
+
   const location = useLocation();
   const selectedImages = location.state?.selectedImages;
   const selectedImageDesc = location.state?.selectedImageDesc;
@@ -46,7 +44,7 @@ export default function ChatPage() {
 
   const fetchConversation = (page) => {
     setIsLoadingMore(true);
-    
+
     readConversation(page, (result) => {
       if (result.texts.length > 0) {
         const conversationPage = result.texts.map((msg) => ({
@@ -54,25 +52,25 @@ export default function ChatPage() {
           text: msg.text,
           image: JSON.parse(msg.image),
         }));
-  
+
         const prevScrollHeight = cardBodyRef.current.scrollHeight; // 기존 스크롤 높이 저장
-  
+
         setMessages((prevMessages) => [...conversationPage, ...prevMessages]);
-  
+
         if (result.page) {
           setNextPage(result.page);
         } else {
           setAllMessagesLoaded(true);
         }
-  
+
         setIsLoadingMore(false);
-  
+
         // 새로운 대화 묶음이 추가된 후, 추가된 묶음의 최신 메시지가 먼저 보이게 스크롤 조정
         setTimeout(() => {
           if (cardBodyRef.current) {
             const newScrollHeight = cardBodyRef.current.scrollHeight; // 새 스크롤 높이 계산
-            const addedHeight = newScrollHeight - prevScrollHeight;  // 추가된 높이 계산
-            cardBodyRef.current.scrollTop = addedHeight;  // 새로 추가된 메시지 묶음의 끝에 스크롤 위치 설정
+            const addedHeight = newScrollHeight - prevScrollHeight; // 추가된 높이 계산
+            cardBodyRef.current.scrollTop = addedHeight; // 새로 추가된 메시지 묶음의 끝에 스크롤 위치 설정
           }
         }, 0); // 상태가 업데이트되고 나서 스크롤 조정
       } else {
@@ -81,17 +79,18 @@ export default function ChatPage() {
       }
     });
   };
-  
 
   useEffect(() => {
     const initializeChat = () => {
-      initRecord((result) => {
-        setRecorderId(result);
-      });
-  
       readConversation(null, (result) => {
         if (result.texts.length > 0) {
-          setMessages(result.texts.map((msg) => ({ type: msg.type, text: msg.text, image: JSON.parse(msg.image) })));
+          setMessages(
+            result.texts.map((msg) => ({
+              type: msg.type,
+              text: msg.text,
+              image: JSON.parse(msg.image),
+            }))
+          );
           if (result.page) setNextPage(result.page);
         }
   
@@ -111,7 +110,13 @@ export default function ChatPage() {
 
   useEffect(() => {
     const handleScroll = () => {
-      if (cardBodyRef.current.scrollTop === 0 && nextPage && !isLoadingMore && !allMessagesLoaded && initialLoadComplete.current) {
+      if (
+        cardBodyRef.current.scrollTop === 0 &&
+        nextPage &&
+        !isLoadingMore &&
+        !allMessagesLoaded &&
+        initialLoadComplete.current
+      ) {
         scrollPositionRef.current = cardBodyRef.current.scrollHeight; // 스크롤 위치 저장
         fetchConversation(nextPage);
       }
@@ -132,16 +137,16 @@ export default function ChatPage() {
     // 메시지가 업데이트될 때마다 스크롤을 맨 아래로 이동
     scrollToBottom();
   }, [messages]);
-  
-  const handleSendMessage = (_ , image, imageDesc) => {
+
+  const handleSendMessage = (_, image, imageDesc) => {
     // 질문창이 공백이면 return
     if (prompt == "" && !image) return;
 
-    let aiMessage = { text: "", type: "ai", image: []};
+    let aiMessage = { text: "", type: "ai", image: [] };
     let text = prompt;
     let img = [];
 
-    if (image){
+    if (image) {
       text = imageDesc;
       img = image;
     }
@@ -150,39 +155,50 @@ export default function ChatPage() {
     createConversation(text, "user", img);
 
     // 사용자 메시지 저장, ai의 대답창을 우선 "..."으로 초기화
-    setMessages((prevMessages) => [...prevMessages, { text: text, type: "user", image: img }]);
-    setMessages((prevMessages) => [...prevMessages, { type: "ai", text: "...", image: [] }]);
+    setMessages((prevMessages) => [
+      ...prevMessages,
+      { text: text, type: "user", image: img },
+    ]);
+    setMessages((prevMessages) => [
+      ...prevMessages,
+      { type: "ai", text: "...", image: [] },
+    ]);
     scrollToBottom();
-    
+
     // 스트림 질문 전송 함수
-    askToAiStream(text, img, (askResult)=> {
+    askToAiStream(text, img, (askResult) => {
       // 스트림의 마지막 토큰이 수신되면 ai의 대답 전문을 저장 및 tts & audioStart
       scrollToBottom();
-      if(!askResult.isStreaming){
+      if (!askResult.isStreaming) {
         createConversation(aiMessage.text, "ai", []);
-        TTS(aiMessage.text, (path)=> { 
-          audioStart(path, (result)=> { setAudioId(result); }); 
+        TTS(aiMessage.text, (path) => {
+          audioStart(path, (result) => {
+            setAudioId(result);
+          });
         });
-      }else{
+      } else {
         aiMessage.text = askResult.chunks;
         setMessages((prevMessages) => {
           const updatedMessages = prevMessages.slice(0, -1);
-          return([...updatedMessages, aiMessage]);
+          return [...updatedMessages, aiMessage];
         });
       }
     });
   };
-  
 
   const handleRecordModalClose = (audio) => {
     setShowRecordModal(false);
-
+    console.log(audio);
     if (!audio) return;
 
     STT(audio, (result) => {
       let aiMessage = { type: "ai", text: "", image: [] };
 
-      setMessages((prevMessages) => [...prevMessages, { text: result, type: "user", image: [] }, { text: "...", type: "ai", image: [] }]);
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        { text: result, type: "user", image: [] },
+        { text: "...", type: "ai", image: [] },
+      ]);
       createConversation(result, "user", []);
       scrollToBottom();
 
@@ -230,7 +246,11 @@ export default function ChatPage() {
           )}
           {messages.map((msg, idx) => (
             <div key={idx} style={{ position: "relative" }}>
-              <MessageBox msgType={msg.type} text={msg.text} image={msg.image} />
+              <MessageBox
+                msgType={msg.type}
+                text={msg.text}
+                image={msg.image}
+              />
               {idx === messages.length - 1 && msg.type === "ai" && audioId && (
                 <StopIcon onClick={handleStopBriefing}>
                   <FaStopCircle size={50} color="grey" />
@@ -274,7 +294,10 @@ export default function ChatPage() {
           </InputGroup>
         </CardFooter>
       </StyledCard>
-      <RecordModal show={showRecordModal} handleClose={handleRecordModalClose} recorderId={recorderId} />
+      <RecordModal
+        show={showRecordModal}
+        handleClose={handleRecordModalClose}
+      />
     </Container>
   );
 }
