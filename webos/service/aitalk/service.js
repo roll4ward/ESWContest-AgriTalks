@@ -153,10 +153,6 @@ class AITalkEventHandler extends Events.EventEmitter {
     } catch (err) {
       this.msg.respond(new error("Error processing required action:", err))
       console.error("Error processing required action:", err);
-      return {
-          tool_call_id: toolCall.id, 
-          output: JSON.stringify({success: false, error: err})
-      };
     }
   }
 
@@ -182,7 +178,13 @@ aitalk_service.register("ask_stream", async function(msg) {
   aitalkEventHandler.on("event", aitalkEventHandler.onEvent.bind(aitalkEventHandler));
 
   if (!thread) {
-    thread = await openai.beta.threads.create();    
+    try {
+      thread = await openai.beta.threads.create();    
+    } catch(err) {
+      console.log(err)
+      msg.respond(new error('Fail to create new thread'))
+      return;
+    }
   };
 
   console.log(msg)
@@ -503,8 +505,6 @@ function getSensorValuesOfAreaByTimeAsCSV(areaId, NHoursAgo, service)
           console.log(res)
           // 3. parsing 하고 저장
           const jsonData = res.payload.results;
-          // ]
-          // test /////////////////////////////////////////////////////////////////////////////////////////////
 
           // 시간별로 데이터를 그룹화
           const timeMap = {};
