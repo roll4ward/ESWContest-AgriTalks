@@ -289,7 +289,7 @@ aitalk_service.register("stt", async function (msg) {
     // 필터된 파일들을 삭제
     audioFiles.forEach(file => {
         const filePath = path.join("/media/internal", file);
-      fs.unlink(filePath, err => {
+        fs.unlink(filePath, (err) => {
           if (err) {
             console.error(`Error deleting file ${file}:`, err);
           } else {
@@ -298,6 +298,10 @@ aitalk_service.register("stt", async function (msg) {
         });
       });
     });
+  } catch (err) {
+    console.error("Error in stt:", err);
+    msg.respond(new error("Error in stt:", err.message));
+  }
 });
 
 aitalk_service.register("tts", async function (msg) {
