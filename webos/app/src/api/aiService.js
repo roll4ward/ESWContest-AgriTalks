@@ -136,6 +136,30 @@ export function audioStop(id) {
 }
 
 /**
+ *  음성 재생이 멈췄을 때
+ */
+export function setAudioStopHandler(id, callback) {
+  let bridge = new WebOSServiceBridge();
+  bridge.onservicecallback = (msg) => {
+      msg = JSON.parse(msg);
+      if(msg.returnValue && msg.playbackStatus === "stopped") {
+          console.log(`Audio Stopped`);
+          if (callback) callback();
+          bridge.cancel();
+          return;
+      }
+  }
+
+  const service = "luna://com.webos.service.audio/getPlaybackStatus";
+  let query = {
+    playbackId: id,
+    subscribe: true
+  };
+
+  bridge.call(service, JSON.stringify(query));
+}
+
+/**
  * text로 새로운 대화를 생성
  * @param { string } text 대화내용 이름
  * @param { string } type user or ai

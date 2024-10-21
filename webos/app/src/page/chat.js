@@ -13,6 +13,7 @@ import {
   audioStop,
   createConversation,
   readConversation,
+  setAudioStopHandler,
 } from "../api/aiService";
 import RecordModal from "../component/modal/RecorderModal";
 import { FaMicrophone } from "react-icons/fa";
@@ -174,6 +175,9 @@ export default function ChatPage() {
         TTS(aiMessage.text, (path) => {
           audioStart(path, (result) => {
             setAudioId(result);
+            setAudioStopHandler(result, ()=> {
+              setAudioId("");
+            });
           });
         });
       } else {
@@ -209,6 +213,9 @@ export default function ChatPage() {
           TTS(aiMessage.text, (path) => {
             audioStart(path, (result) => {
               setAudioId(result);
+              setAudioStopHandler(result, ()=> {
+                setAudioId("");
+              });
             });
           });
         } else {
@@ -229,7 +236,6 @@ export default function ChatPage() {
   const handleStopBriefing = () => {
     if (audioId) {
       audioStop(audioId);
-      setAudioId("");
     }
   };
 
