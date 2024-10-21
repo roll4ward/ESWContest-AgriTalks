@@ -6,11 +6,8 @@ import { startRecord, stopRecord } from "../../api/mediaService";
 import { initRecord } from "../../api/mediaService";
 import { useRecordStore } from "../../store/useRecordStore";
 
-export default function RecorderModal({ show, handleClose }) {
-  const [isRecording, setIsRecording] = useState(true);
-  const recordedAudio = useRef("");
+export default function RecorderModal({ show, handleClose }) {;
   const [seconds, setSeconds] = useState(0);
-  const [isSendEnabled, setIsSendEnabled] = useState(false); // 전송 버튼 비활성화 상태
 
   const recorderId = useRecordStore((state) => state.recorderId);
   const setRecorderId = useRecordStore((state) => state.setRecorderId);
@@ -27,7 +24,6 @@ export default function RecorderModal({ show, handleClose }) {
 
     if (show) {
       console.log("모달 열림: 녹음 시작");
-      setIsRecording(true);
       startTimer(); // 타이머 시작
 
       startRecord(recorderId, (result) => {
@@ -38,8 +34,6 @@ export default function RecorderModal({ show, handleClose }) {
     } else {
       stopTimer(); // 모달이 닫힐 때 타이머 정지
       setSeconds(0); // 타이머 초기화
-      setIsRecording(false); // 녹음 상태 초기화
-      setIsSendEnabled(false); // 전송 버튼 비활성화
     }
   }, [show, recorderId]);
 
@@ -62,36 +56,23 @@ export default function RecorderModal({ show, handleClose }) {
   // 녹음 중지
   const handleStopRecording = () => {
     stopTimer(); // 타이머 정지
-    setIsRecording(false); // 녹음 중지
-    setIsSendEnabled(true); // 전송 버튼 활성화
 
     stopRecord(recorderId, (result) => {
       if (result) {
-        recordedAudio.current = result;
+        handleClose(result);
       } else {
         console.log("녹음 종료 실패");
+        handleClose(null);
       }
     });
-  };
-
-  // 오디오 전송
-  const handleSendAudio = () => {
-    if (recordedAudio.current) {
-      handleClose(recordedAudio.current);
-    } else {
-      handleClose(null);
-    }
   };
 
   // 녹음 취소
   const handleCancelAudio = () => {
     handleClose(null); // 취소 시 모달을 닫음
     console.log("모달 닫힘: clean-up 처리 중");
-    if (!isSendEnabled) {
-      stopRecord(recorderId);
-    }
+    stopRecord(recorderId);
     stopTimer(); // 타이머 정지
-    setIsRecording(false); // 녹음 상태 초기화
     setSeconds(0); // 타이머 초기화
   };
 
@@ -102,13 +83,11 @@ export default function RecorderModal({ show, handleClose }) {
         <Modal.Title>녹음하기</Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        {isRecording && (
-          <WaveContainer>
-            <Wave isRecording={isRecording} />
-            <Wave isRecording={isRecording} />
-            <Wave isRecording={isRecording} />
-          </WaveContainer>
-        )}
+        <WaveContainer>
+          <Wave/>
+          <Wave/>
+          <Wave/>
+        </WaveContainer>
 
         <Timer>
           {`${Math.floor(seconds / 60)
@@ -116,17 +95,10 @@ export default function RecorderModal({ show, handleClose }) {
             .padStart(2, "0")}:${(seconds % 60).toString().padStart(2, "0")}`}
         </Timer>
 
-        <RecordingButton
-          onClick={handleStopRecording}
-          disabled={!isRecording} // 녹음 중일 때만 중지 가능
-        >
-          <FaStop style={{ color: "black" }} />
-        </RecordingButton>
         {/* 전송 버튼 */}
         <SendButton
           variant="success"
-          onClick={handleSendAudio}
-          disabled={!isSendEnabled} // 녹음 중지 후에만 활성화
+          onClick={handleStopRecording}
         >
           전송
         </SendButton>
@@ -169,10 +141,7 @@ const Wave = styled.div`
   background-color: #007bff;
   border-radius: 50px;
   animation: ${waveAnimation} 0.6s infinite ease-in-out;
-  animation-play-state: ${({ isRecording }) =>
-    isRecording
-      ? "running"
-      : "paused"}; // 애니메이션 상태를 녹음 상태에 맞춰 실행/정지
+  animation-play-state: running;
   &:nth-child(2) {
     animation-delay: 0.2s;
   }
@@ -186,19 +155,6 @@ const Timer = styled.div`
   text-align: center;
   margin-top: 10px;
   margin-bottom: 20px;
-`;
-
-const RecordingButton = styled.button`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  border: 3px solid gray;
-  background-color: white;
-  cursor: pointer;
-  margin: 20px auto;
 `;
 
 const SendButton = styled(Button)`
