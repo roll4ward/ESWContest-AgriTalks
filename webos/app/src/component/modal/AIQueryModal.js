@@ -1,8 +1,11 @@
 import React, { useState } from "react";
 import styled from "styled-components";
+import { FaMicrophone } from "react-icons/fa";
+import RecorderModal from "./RecorderModal";
 
 export default function AIQueryModal({ selectedImages, onClose, onSend }) {
   const [description, setDescription] = useState("");
+  const [showRecordModal, setShowRecordModal] = useState(false);
 
   const handleSend = () => {
     if (description.trim()) {
@@ -11,6 +14,16 @@ export default function AIQueryModal({ selectedImages, onClose, onSend }) {
       alert("설명을 입력하세요!");
     }
   };
+
+  const handleRecordModalClose = (audio) => {
+    setShowRecordModal(false);
+    console.log(audio);
+    if (!audio) return;
+
+    STT(audio, (result) => {
+      onSend(result);
+    });
+  }
 
   return (
     <ModalOverlay>
@@ -27,6 +40,10 @@ export default function AIQueryModal({ selectedImages, onClose, onSend }) {
           ))}
         </ImagePreviewContainer>
 
+        <RecordingButton onClick={()=> { setShowRecordModal(true); }}>
+          <FaMicrophone style={{ color: "black" }} />
+        </RecordingButton>
+
         <Input
           placeholder="이미지에 대해 AI에게 물어볼 내용을 입력하세요."
           value={description}
@@ -39,6 +56,10 @@ export default function AIQueryModal({ selectedImages, onClose, onSend }) {
           </Button>
         </ButtonContainer>
       </ModalContent>
+      <RecorderModal
+        show={showRecordModal}
+        handleClose={handleRecordModalClose}
+      />
     </ModalOverlay>
   );
 }
@@ -116,4 +137,17 @@ const Button = styled.button`
   &:hover {
     background-color: ${(props) => (props.cancel ? "#ff3b2f" : "#367c5b")};
   }
+`;
+
+const RecordingButton = styled.button`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 3px solid gray;
+  background-color: white;
+  cursor: pointer;
+  margin: 20px auto;
 `;

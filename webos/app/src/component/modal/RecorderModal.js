@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Button, Modal } from "react-bootstrap";
 import styled, { keyframes } from "styled-components";
-import { FaMicrophone, FaStop } from "react-icons/fa";
 import { startRecord, stopRecord } from "../../api/mediaService";
 import { initRecord } from "../../api/mediaService";
 import { useRecordStore } from "../../store/useRecordStore";
