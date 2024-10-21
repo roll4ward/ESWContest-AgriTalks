@@ -10,8 +10,23 @@ import DeviceDetailPage from "./page/DeviceDetailPage";
 import { DeviceOverView } from "./page/DeviceOverView";
 import { SideBar } from "./component/SideBar";
 import GalleryPreviewPage from "./page/GalleryPreviewPage";
+import { useEffect } from "react";
+import { initRecord } from "./api/mediaService";
+import { useRecordStore } from "./store/useRecordStore";
 
 function App() {
+  const recorderId = useRecordStore((state) => state.recorderId);
+  const setRecorderId = useRecordStore((state) => state.setRecorderId);
+
+  useEffect(() => {
+    if (!recorderId) {
+      initRecord((result) => {
+        setRecorderId(result);
+      });
+      return;
+    }
+  }, []);
+
   return (
     <Router>
       <div
@@ -42,7 +57,6 @@ function App() {
             <Route path="/gallery" element={<GalleryPreviewPage />} />
             <Route path="/devices/:areaID" element={<DeviceOverView />} />
             <Route path="/detail/:deviceID" element={<DeviceDetailPage />} />
-
           </Routes>
         </div>
       </div>

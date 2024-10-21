@@ -19,10 +19,10 @@ export function callService(baseURL, service, method, params = {}, callback) {
         const response = JSON.parse(msg);
         if (!response.returnValue) {
             console.error(`${service}/${method} Service call failed:`, response.result);
-            callback(null, new Error(response.result));
+            if (callback) callback(null, new Error(response.result));
             return;
         }
-        callback(response.result);
+        if (callback) callback(response.result);
     };
     bridge.call(getServiceURL(baseURL, service, method), JSON.stringify(params));
 }
