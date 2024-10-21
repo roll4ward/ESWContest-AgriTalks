@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import styled from "styled-components";
 import { FaMicrophone } from "react-icons/fa";
 import RecorderModal from "./RecorderModal";
+import { STT } from "../../api/aiService";
 
 export default function AIQueryModal({ selectedImages, onClose, onSend }) {
   const [description, setDescription] = useState("");
@@ -143,8 +144,8 @@ const RecordingButton = styled.button`
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 60px;
-  height: 60px;
+  width: 200px;
+  height: 200px;
   border-radius: 50%;
   border: 3px solid gray;
   background-color: white;
