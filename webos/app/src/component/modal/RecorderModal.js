@@ -16,6 +16,7 @@ export default function RecorderModal({ show, handleClose }) {;
     // recorderId가 없으면 init 하자
     if (!recorderId) {
       initRecord((result) => {
+        console.log("New record : ", result);
         setRecorderId(result);
       });
       return;
@@ -58,7 +59,9 @@ export default function RecorderModal({ show, handleClose }) {;
 
     stopRecord(recorderId, (result) => {
       if (result) {
-        handleClose(result);
+        setTimeout(()=> {
+          handleClose(result);
+        }, 100);
       } else {
         console.log("녹음 종료 실패");
         handleClose(null);

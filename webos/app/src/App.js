@@ -22,6 +22,7 @@ function App() {
     if (!recorderId) {
       initRecord((result) => {
         setRecorderId(result);
+        console.log("first record :" , result);
       });
       return;
     }

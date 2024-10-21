@@ -42,7 +42,7 @@ export default function AIQueryModal({ selectedImages, onClose, onSend }) {
         </ImagePreviewContainer>
 
         <RecordingButton onClick={()=> { setShowRecordModal(true); }}>
-          <FaMicrophone style={{ color: "black" }} />
+          <FaMicrophone style={{ color: "black", width: "70px", height: "70px"}} />
         </RecordingButton>
 
         <Input
@@ -112,7 +112,7 @@ const ImageItem = styled.img`
 
 const Input = styled.textarea`
   width: 100%;
-  height: 350px;  
+  height: 250px;  
   padding: 20px;  
   margin-bottom: 40px; 
   border: 1px solid #ccc;
@@ -144,8 +144,8 @@ const RecordingButton = styled.button`
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 200px;
-  height: 200px;
+  width: 100px;
+  height: 100px;
   border-radius: 50%;
   border: 3px solid gray;
   background-color: white;
