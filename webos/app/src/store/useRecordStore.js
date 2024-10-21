@@ -1,15 +1,8 @@
 import { create } from "zustand";
 
-type State = {
-  recorderId: string,
-};
+export const useRecordStore = create((set) => ({
+  recorderId: "",
+  setRecorderId: (recorderId) => set({ recorderId }),
+}));
 
-type Action = {
-  setRecorderId: (recorderId: State["recorderId"]) => void,
-};
-
-// prettier-ignore
-export const useRecordStore = create<State & Action>((set) => ({
-    recorderId: "",
-    setRecorderId: (recorderId) => set(() => ({ recorderId : recorderId })),
-  }));
+export default useStore;
