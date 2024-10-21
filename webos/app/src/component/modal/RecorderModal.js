@@ -4,15 +4,18 @@ import styled, { keyframes } from "styled-components";
 import { FaMicrophone, FaStop } from "react-icons/fa";
 import { startRecord, stopRecord } from "../../api/mediaService";
 import { initRecord } from "../../api/mediaService";
+import { useRecordStore } from "../../store/useRecordStore";
 
 export default function RecorderModal({ show, handleClose }) {
   const [isRecording, setIsRecording] = useState(true);
   const recordedAudio = useRef("");
   const [seconds, setSeconds] = useState(0);
   const [isSendEnabled, setIsSendEnabled] = useState(false); // 전송 버튼 비활성화 상태
-  const [recorderId, setRecorderId] = useState("");
 
+  const recorderId = useRecordStore((state) => state.recorderId);
+  const setRecorderId = useRecordStore((state) => state.setRecorderId);
   const intervalRef = useRef(null); // 타이머 ID를 저장할 ref
+
   useEffect(() => {
     // recorderId가 없으면 init 하자
     if (!recorderId) {
@@ -64,7 +67,7 @@ export default function RecorderModal({ show, handleClose }) {
 
     stopRecord(recorderId, (result) => {
       if (result) {
-        recordedAudio.current =result;
+        recordedAudio.current = result;
       } else {
         console.log("녹음 종료 실패");
       }
