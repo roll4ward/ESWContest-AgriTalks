@@ -13,6 +13,7 @@ import GalleryPreviewPage from "./page/GalleryPreviewPage";
 import { useEffect } from "react";
 import { initRecord } from "./api/mediaService";
 import { useRecordStore } from "./store/useRecordStore";
+import { startSending } from "./api/coapService";
 
 function App() {
   const recorderId = useRecordStore((state) => state.recorderId);
@@ -24,8 +25,17 @@ function App() {
         setRecorderId(result);
         console.log("first record :" , result);
       });
-      return;
     }
+
+    startSending(30, (result) => {
+      if (result) {
+        console.log("CoAP Sending 시작");
+      }
+
+      else {
+        console.log("CoAP Sending 실패");
+      }
+    });
   }, []);
 
   return (

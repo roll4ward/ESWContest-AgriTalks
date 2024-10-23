@@ -117,3 +117,29 @@ export function sendValue(deviceID, value, callback) {
 
     bridge.call(getServiceURL("coap", "send"), JSON.stringify(query));
 }
+
+/**
+ * 주기적인 CoAP 요청 시작
+ * @param {number} interval 주기 (is seconds) 
+ * @param {*} callback 
+ */
+export function startSending(interval, callback) {
+    let bridge = new WebOSServiceBridge();
+    bridge.onservicecallback = (msg) => {
+        msg = JSON.parse(msg);
+        if(!msg.returnValue) {
+            console.log(`Service call failed : ${msg.results}`);
+            if (callback) callback(false);
+            return;
+        }
+
+        if(callback) callback(true);
+        console.log("Callback called ", callback);
+    }
+
+    let query = {
+        interval: interval
+    };
+
+    bridge.call(getServiceURL("coap", "startSending"), JSON.stringify(query));
+}
