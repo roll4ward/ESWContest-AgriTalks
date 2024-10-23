@@ -6,8 +6,8 @@ const { Readable } = require('stream');
 
 const service = new Service(pkg_info.name);
 const DB_KIND = 'xyz.rollforward.app.coap:1';
-let interval = {};
-let heartbeat_subscription = {};
+let interval = null;
+let heartbeat_subscription;
 let heartbeat_message = [];
 let heartbeat_interval;
 
@@ -240,11 +240,10 @@ function saveSensorData(deviceId, value) {
         };
     
         service.call('luna://com.webos.service.db/put', { objects: [dataToStore] }, (response) => {
-            console.log(response);
             if (response.payload.returnValue) {
                 res();
             } else {
-                rej();
+                rej(response.payload.errorText);
             }
         });
     });
@@ -262,7 +261,7 @@ function sendCoapMessage(hostIP, method, pathname, payload) {
         });
     
         req.on('response', function(response) {
-            console.log('Response from CoAP server:', response.payload.toString());
+            console.log('Response from CoAP server:', response.payload.toString(), response.payload.readDoubleLE(0));
             res(response.payload.readDoubleLE(0));
             clearTimeout(timeout);
             timeout = null;
@@ -317,18 +316,30 @@ function getDeviceInfo(deviceId) {
     });
 }
 
-function sendMessageAndSave(deviceId, payload) {
-    return new Promise(async (res, rej) => {
-        let deviceInfo;
-        try {
-            deviceInfo = await getDeviceInfo(deviceId);
-        }
-        catch (err) {
-            console.log("failed to get device info");
-            rej(err);
-            return;
-        }
-        
+function getAllDeviceInfos() {
+    return new Promise((res, rej) => {
+        service.call(
+            "luna://xyz.rollforward.app.infomanage/device/read",
+            { },
+            (response) => {
+                if (!response.payload.returnValue) {
+                    console.error(response.payload.results);
+                    rej("failed to get device info");
+                    return;
+                }
+                if (!response.payload.results) {
+                    rej("failed to get device info");
+                    return;
+                }
+                console.log(response.payload.results);
+                res(response.payload.results);
+            }
+        );
+    });
+}
+
+function sendMessageAndSave(deviceInfo, payload) {
+    return new Promise(async (res, rej) => { 
         let response_value
         try {
             if (typeof payload !== "undefined") {
@@ -344,10 +355,10 @@ function sendMessageAndSave(deviceId, payload) {
         }
 
         try {
-            await saveSensorData(deviceId, response_value);
+            await saveSensorData(deviceInfo._id, response_value);
         }
         catch (err) {
-            rej("Failed to save data");
+            rej("Failed to save data : ", err);
             return;
         }
 
@@ -364,7 +375,10 @@ service.register("send", (message) => {
         return;
     }
 
-    sendMessageAndSave(message.payload.deviceId, message.payload.payload)
+    getDeviceInfo(message.payload.deviceId)
+    .then((deviceInfo) => {
+        sendMessageAndSave(deviceInfo, message.payload.payload);
+    })
     .then((response) => {
         message.respond({
             returnValue: true,
@@ -381,18 +395,24 @@ service.register("send", (message) => {
 
 // 서비스 메소드: CoAP 메시지 전송 시작
 service.register("startSending", (message) => {
-    if (!(message.payload.deviceId && message.payload.interval)) {
+    if (!(message.payload.interval)) {
         message.respond({
             returnValue: false,
-            results: "deviceId, interval are required"
+            results: "interval is required"
         });
     }
 
-    const deviceId = message.payload.deviceId;
-
-    if (!interval[deviceId]) {
-        interval[deviceId] = setInterval(() => {
-            sendMessageAndSave(deviceId)
+    if (!interval) {
+        interval = setInterval(() => {
+            getAllDeviceInfos()
+            .then((deviceInfos) => {
+                deviceInfos.forEach((deviceInfo) => {
+                    sendMessageAndSave(deviceInfo)
+                    .catch((err) => {
+                        console.log("Send Coap err in interval : ", err);
+                    });
+                });
+            })
             .catch((reason) => {
                 console.log(reason);
             });
@@ -404,7 +424,7 @@ service.register("startSending", (message) => {
             console.log(response.payload.event);
         });
 
-        heartbeat_subscription[deviceId] = sub;
+        heartbeat_subscription = sub;
         console.log(heartbeat_subscription);
         console.log(interval);
 
@@ -422,20 +442,11 @@ service.register("startSending", (message) => {
 
 // 서비스 메소드: CoAP 메시지 전송 중지
 service.register("stopSending", (message) => {
-    if (!(message.payload.deviceId)) {
-        message.respond({
-            returnValue: false,
-            results: "deviceId is required"
-        });
-    }
-
-    const deviceId = message.payload.deviceId;
-
-    if (interval[deviceId])  {
-        clearInterval(interval[deviceId]);
-        delete interval[deviceId];
-        heartbeat_subscription[deviceId].cancel();
-        delete heartbeat_subscription[deviceId];
+    if (interval)  {
+        clearInterval(interval);
+        interval = null;
+        heartbeat_subscription.cancel();
+        heartbeat_subscription = null;
         message.respond({
             returnValue: true,
             message: "Stopped sending CoAP messages and storing data"
@@ -462,6 +473,7 @@ service.register("heartbeat",
         }
     },
     (message) => {
+        console.log(message);
         delete heartbeat_subscription[message.uniqueToken];
         if (heartbeat_subscription.length === 0) {
             clearInterval(heartbeat_interval);
