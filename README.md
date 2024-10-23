@@ -18,8 +18,12 @@
 
 <!-- 2x2 그리드로 이미지 추가 -->
 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+
+   ### 데이터 관리 섹션 🌾
    <img src="https://github.com/user-attachments/assets/967ec898-0610-4150-8ea7-35010ed90e0b" alt="image1" style="width:40%; height:auto; max-width:200px;">
    <img src="https://github.com/user-attachments/assets/8ef329b7-83bf-4b86-9006-40651feb4ab8" alt="image2" style="width:40%; height:auto; max-width:200px;">
+
+   ### AI와 대화하기 섹션 🧑‍🌾
    <img src="https://github.com/user-attachments/assets/9163539b-26bd-459f-b31d-f4b09d6ee481" alt="image3" style="width:40%; height:auto; max-width:200px;">
    <img src="https://github.com/user-attachments/assets/dc93bc3d-d5de-4e8d-840d-85e11fcd1197" alt="image4" style="width:40%; height:auto; max-width:200px;">
 </div>
@@ -43,7 +47,7 @@ AI와 고급 통신 프로토콜을 활용하여 사용자와 농업 장비 간�
 
 ---
 
-## AI와 대화하기 섹션 🧑‍🌾
+### AI와 대화하기 섹션 🧑‍🌾
 
 <!-- AI와 대화하기 섹션에 2개의 이미지 추가 -->
 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
