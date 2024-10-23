@@ -162,9 +162,16 @@ const registerDeviceMethod = (service) => {
         if (!("id" in message.payload)) {
             message.respond({ returnValue: false, results: 'id is required.' });
         }
+
         service.call('luna://com.webos.service.db/del', { ids: ids }, (response) => {
             if (response.payload.returnValue) {
-                message.respond({ returnValue: true, results: 'Item deleted successfully' });
+                service.call('luna://xyz.rollforward.app.coap/delete/device', { deviceId: message.payload.id }, (response) => {
+                    if (response.payload.returnValue) {
+                        message.respond({ returnValue: true, results: 'Item deleted successfully' });
+                    } else {
+                        message.respond({ returnValue: false, results: response.error });
+                    }
+                });
             } else {
                 message.respond({ returnValue: false, results: response.error });
             }

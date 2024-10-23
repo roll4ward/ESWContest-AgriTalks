@@ -204,6 +204,29 @@ service.register('delete', function(message) {
     });
 });
 
+// device에 속한 value 모두 삭제
+service.register('delete/device', function(message) {
+    if (!("deviceId" in message.payload)) {
+        message.respond({ returnValue: false, results: 'deviceId is required.' });
+    }
+
+    const query = {
+        from: DB_KIND,
+        where : [
+            {prop : "deviceId", op : "=", val : message.payload.deviceId}
+        ]
+    }
+
+    service.call('luna://com.webos.service.db/del', { query: query }, (response) => {
+        console.log("COAP Device delete ", response.payload);
+        if (response.payload.returnValue) {
+            message.respond({ returnValue: true, results: 'Item deleted successfully' });
+        } else {
+            message.respond({ returnValue: false, results: response.error });
+        }
+    });
+});
+
 // CoAP 관련 함수
 
 // 센서 데이터 저장 함수
