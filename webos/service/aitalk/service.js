@@ -547,8 +547,7 @@ function getSensorValuesOfAreaByTimeAsCSV(areaId, NHoursAgo, service) {
           // 2. 불러온 deviceId들의 sensor values를 읽어옴
           let deviceIds = response.payload.results.map(({ _id }) => _id);
           console.log(`deviceIds: ${deviceIds}`);
-
-          aitalk_service.call("luna://xyz.rollforward.app.coap/read", { deviceIds: deviceIds }, (res) => {
+              aitalk_service.call("luna://xyz.rollforward.app.coap/read", { deviceIds: deviceIds }, (res) => {
             console.log(res);
             if (res.payload.returnValue) {
               // 3. parsing 하고 저장
@@ -556,16 +555,24 @@ function getSensorValuesOfAreaByTimeAsCSV(areaId, NHoursAgo, service) {
 
               // 시간별로 데이터를 그룹화
               const timeMap = {};
+              const now = new Date();
+              const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000); 
 
               jsonData.forEach((item) => {
-                // Unix 타임스탬프를 ISO 형식으로 변환
-                const isoTime = new Date(item.time * 1000).toISOString();
-                const sensorType = deviceIdToSensor[item.deviceId];
+                // Convert ISO timestamp to Date object
+                const itemDate = new Date(item.time);
 
-                if (!timeMap[isoTime]) {
-                  timeMap[isoTime] = { time: isoTime };
+                // Filter data within the last 24 hours
+                if (itemDate >= oneDayAgo) { 
+                  // Extract minute from the timestamp
+                  const isoTime = new Date(itemDate.getFullYear(), itemDate.getMonth(), itemDate.getDate(), itemDate.getHours(), itemDate.getMinutes()).toISOString(); 
+                  const sensorType = deviceIdToSensor[item.deviceId];
+
+                  if (!timeMap[isoTime]) {
+                    timeMap[isoTime] = { time: isoTime };
+                  }
+                  timeMap[isoTime][sensorType] = item.value;
                 }
-                timeMap[isoTime][sensorType] = item.value;
               });
 
               // 시간별로 정렬된 레코드 배열 생성
@@ -592,7 +599,7 @@ function getSensorValuesOfAreaByTimeAsCSV(areaId, NHoursAgo, service) {
               // 콘솔에 출력
               console.log(csvOutput);
 
-              resolve({ success: true, sensorValues: csvOutput, isTest: true });
+              resolve({ success: true, sensorValues: csvOutput });
             } else {
               reject({ success: false, error: res.payload.errorText || "Unknown error" });
             }
