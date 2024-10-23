@@ -16,10 +16,10 @@
 
 <!-- 2x2 그리드로 이미지 추가 -->
 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
-   <img src="https://github.com/user-attachments/assets/967ec898-0610-4150-8ea7-35010ed90e0b" alt="image1" style="width:100%; height:auto; max-width:200px;">
-   <img src="https://github.com/user-attachments/assets/8ef329b7-83bf-4b86-9006-40651feb4ab8" alt="image2" style="width:100%; height:auto; max-width:200px;">
-   <img src="https://github.com/user-attachments/assets/9163539b-26bd-459f-b31d-f4b09d6ee481" alt="image3" style="width:100%; height:auto; max-width:200px;">
-   <img src="https://github.com/user-attachments/assets/dc93bc3d-d5de-4e8d-840d-85e11fcd1197" alt="image4" style="width:100%; height:auto; max-width:200px;">
+   <img src="https://github.com/user-attachments/assets/967ec898-0610-4150-8ea7-35010ed90e0b" alt="image1" style="width:50%; height:auto; max-width:200px;">
+   <img src="https://github.com/user-attachments/assets/8ef329b7-83bf-4b86-9006-40651feb4ab8" alt="image2" style="width:50%; height:auto; max-width:200px;">
+   <img src="https://github.com/user-attachments/assets/9163539b-26bd-459f-b31d-f4b09d6ee481" alt="image3" style="width:50%; height:auto; max-width:200px;">
+   <img src="https://github.com/user-attachments/assets/dc93bc3d-d5de-4e8d-840d-85e11fcd1197" alt="image4" style="width:50%; height:auto; max-width:200px;">
 </div>
 
 
