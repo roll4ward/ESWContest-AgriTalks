@@ -57,14 +57,17 @@ AI와 고급 통신 프로토콜을 활용하여 사용자와 농업 장비 간�
 
 # 기술 스택 🛠️
 
+
 | Area          | Stack & Tool |
 |---------------|--------------|
 | **Language**  | ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black) ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white) ![C](https://img.shields.io/badge/C-A8B9CC?style=for-the-badge&logo=c&logoColor=white) |
 | **Front end**  | ![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB) |
 | **Back end**  | ![Node.js](https://img.shields.io/badge/Node.js-43853D?style=for-the-badge&logo=node.js&logoColor=white) |
 | **Platform**  | ![webOS](https://img.shields.io/badge/webOS-FF3366?style=for-the-badge&logo=webos&logoColor=white) ![OpenAI API](https://img.shields.io/badge/OpenAI-412991?style=for-the-badge&logo=openai&logoColor=white) |
-| **Protocol**  | ![Thread](https://img.shields.io/badge/Thread-000000?style=for-the-badge&logo=thread&logoColor=white) ![wpantund](https://img.shields.io/badge/wpantund-00ADEF?style=for-the-badge&logo=thread&logoColor=white) |
+| **Protocol**  | ![Thread](https://img.shields.io/badge/Thread-000000?style=for-the-badge&logo=thread&logoColor=white) ![CoAP](https://img.shields.io/badge/CoAP-005571?style=for-the-badge&logo=coap&logoColor=white) |
+| **Network**   | ![wpantund](https://img.shields.io/badge/wpantund-00ADEF?style=for-the-badge&logo=thread&logoColor=white) |
 | **Cooperation**  | ![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white) ![Notion](https://img.shields.io/badge/Notion-000000?style=for-the-badge&logo=notion&logoColor=white) ![Figma](https://img.shields.io/badge/Figma-F24E1E?style=for-the-badge&logo=figma&logoColor=white) |
+
 
 
 ---
