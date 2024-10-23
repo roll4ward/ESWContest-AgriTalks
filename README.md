@@ -30,18 +30,4 @@
 
 ---
 
-📦2023ESWcontest_webOS_3015
-┣ 📂.github
-┣ 📂packages
-┃ ┣ 📂apps
-┃ ┃ ┣ 📂center119
-┃ ┃ ┣ 📂doctor
-┃ ┃ ┣ 📂hospital-desk
-┃ ┃ ┗ 📂user
-┃ ┣ 📂common
-┃ ┣ 📂js-service
-┃ ┗ 📂server
-┣ 📂sensers
-┣ 📜eslintrc.json
-┗ 📜prettierrc.json
-
+📦2023ESWcontest_webOS_3015 ┣ 📂.github ┣ 📂packages ┃ ┣ 📂apps ┃ ┃ ┣ 📂center119 ┃ ┃ ┣ 📂doctor ┃ ┃ ┣ 📂hospital-desk ┃ ┃ ┗ 📂user ┃ ┣ 📂common ┃ ┣ 📂js-service ┃ ┗ 📂server ┣ 📂sensers ┣ 📜eslintrc.json ┗ 📜prettierrc.json
