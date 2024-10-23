@@ -34,7 +34,9 @@ This project provides a [brief description of the service]. The service aims to 
 
 ## Development Schedule
 
-![Development Schedule Image](path/to/your/image.png)  
+
+![image](https://github.com/user-attachments/assets/d0247e82-7a52-4ab4-ac21-381f5a381453)
+
 *Insert a description of your development schedule image here.*
 
 ---
