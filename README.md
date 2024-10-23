@@ -30,8 +30,8 @@ AI와 고급 통신 프로토콜을 활용하여 사용자와 농업 장비 간�
 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
 
    ### [데이터 관리 섹션] 
-   <img src="https://github.com/user-attachments/assets/967ec898-0610-4150-8ea7-35010ed90e0b" alt="image1" style="width:40%; height:auto; max-width:200px;">
-   <img src="https://github.com/user-attachments/assets/8ef329b7-83bf-4b86-9006-40651feb4ab8" alt="image2" style="width:40%; height:auto; max-width:200px;">
+   <img src="https://github.com/user-attachments/assets/39e55fd6-4a34-439a-82d2-56a75a280a54" alt="image1" style="width:40%; height:auto; max-width:200px;">
+   <img src="https://github.com/user-attachments/assets/71981de0-e3bc-4a40-a957-a038ba053730" alt="image2" style="width:40%; height:auto; max-width:200px;">
 
    ### [AI와 대화하기 섹션] 
    <img src="https://github.com/user-attachments/assets/27ec0538-452f-4736-95a8-a0f98af421cc" alt="image4" style="width:40%; height:auto; max-width:200px;">
