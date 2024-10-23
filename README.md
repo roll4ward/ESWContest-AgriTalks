@@ -47,14 +47,7 @@ AI와 고급 통신 프로토콜을 활용하여 사용자와 농업 장비 간�
 
 ---
 
-
-# 개발 일정 📅
-
-<img src="https://github.com/user-attachments/assets/0ae64a3a-19fa-44d0-9dff-c8fe0553b0f1" alt="개발 일정" width="500px" />
-
----
-
-# 파일 구조
+# 파일 구조📂
 📦 webos  
 ├── 📂 app  
 │   ├── 📂 api  
@@ -89,6 +82,13 @@ AI와 고급 통신 프로토콜을 활용하여 사용자와 농업 장비 간�
 └── 📂 wpantund  
     └── 📜 bblayers.conf  
 
+---
+
+# 개발 일정 📅
+
+<img src="https://github.com/user-attachments/assets/0ae64a3a-19fa-44d0-9dff-c8fe0553b0f1" alt="개발 일정" width="500px" />
+
+---
 
 
 # 기술 스택 🛠️
