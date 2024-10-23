@@ -88,8 +88,9 @@ AI와 고급 통신 프로토콜을 활용하여 사용자와 농업 장비 간�
 
 ---
 
+
 # 개발 일정 📅
-<img src="https://github.com/user-attachments/assets/dd0c9f2e-2492-4ae5-98e0-2125a75fdfaf" alt="개발 일정" width="500px" />
+<img src="https://github.com/user-attachments/assets/90e01838-fe1f-432b-8ba5-92271b3ea791" alt="개발 일정" width="500px" />
 
 ---
 
