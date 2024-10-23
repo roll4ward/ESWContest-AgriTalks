@@ -2,15 +2,17 @@
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
+## Links
+[![GitHub](https://img.shields.io/badge/GITHUB-000000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/hwna00/2023ESWContest_webOS_3015)  
+[![YouTube](https://img.shields.io/badge/YOUTUBE-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://www.youtube.com)  
+[![PowerPoint](https://img.shields.io/badge/POWERPOINT-B7472A?style=for-the-badge&logo=microsoft-powerpoint&logoColor=white)](https://www.microsoft.com/en-us/microsoft-365/powerpoint)
+
 ## Table of Contents
 - [About the Project](#about-the-project)
 - [Service Overview](#service-overview)
 - [Development Schedule](#development-schedule)
-- [Project Structure](#project-structure)
 - [Key Features](#key-features)
 - [Tech Stack](#tech-stack)
-- [Installation](#installation)
-- [Usage](#usage)
 - [Contributing](#contributing)
 - [License](#license)
 - [About Team](#about-team)
@@ -36,6 +38,7 @@ This project provides a [brief description of the service]. The service aims to 
 *Insert a description of your development schedule image here.*
 
 ---
+
 ## Key Features
 - **Feature 1**: Brief description of the feature.
 - **Feature 2**: Brief description of the feature.
@@ -53,12 +56,11 @@ This project provides a [brief description of the service]. The service aims to 
 
 ## About Team
 
-| Role   | Name        | Responsibilities     | Tech Stack         | Affiliation    |
-|--------|-------------|----------------------|--------------------|----------------|
-| Team Lead | [Name]   | Overall project management, Backend Development | Node.js, Express.js | [Affiliation] |
-| Member  | [Name]     | Frontend Development  | React.js, HTML, CSS | [Affiliation]  |
-| Member  | [Name]     | API Development       | Node.js, REST API   | [Affiliation]  |
-| Member  | [Name]     | UI/UX Design          | Figma, Adobe XD     | [Affiliation]  |
-| Member  | [Name]     | Database Management   | MySQL, MongoDB      | [Affiliation]  |
-
+| Member   | Role   | Part                                 |
+|----------|--------|--------------------------------------|
+| ![이준희]| 팀장   | H/W Development                   |
+| ![김준호] | 팀원   | AI Backend Development            |
+| ![황건하] | 팀원   | Thread Protocol Development       |
+| ![유승혜]| 팀원   | Web App Development               |
+| ![이수민] | 팀원   | Web App Development              |
 
