@@ -3,7 +3,7 @@ import add from "../assets/icon/add.png";
 import { DeviceMonitorBox } from "../component/controlDevices/DeviceMonitorBox";
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { readAllAreas, readDeviceswithArea } from "../api/infomanageService"
+import { readAllAreas, readDeviceswithArea } from "../api/infomanageService";
 import { RegisterDevice } from "../component/modal/RegisterDevice";
 
 export const DeviceOverView = () => {
@@ -12,77 +12,92 @@ export const DeviceOverView = () => {
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [sensors, setSensors] = useState([]);
   const [actuators, setActuators] = useState([]);
-
-  const today = new Date();
+  const [currentArea, setCurrentArea] = useState({});
 
   console.log("area ID : ", areaID);
 
-  // 날짜 형식 포맷팅
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, "0");
-  const date = String(today.getDate()).padStart(2, "0");
-  const weekDays = ["일", "월", "화", "수", "목", "금", "토"];
-  const day = weekDays[today.getDay()];
-
-  const formattedDate = `${year}.${month}.${date} (${day})`; // 포맷된 날짜
-
-  useEffect(()=> {
+  useEffect(() => {
     readAllAreas((result) => {
-      setAreas(result.map(area => ({ name: area.name, areaID: area.areaID })));
+      setAreas(
+        result.map((area) => ({ name: area.name, areaID: area.areaID, description: area.desc }))
+      );
     });
     loadDevices();
   }, []);
 
+  useEffect(() => {
+    if (!areaID) {
+      return;
+    }
+    const area = areas.find((area) => area.areaID === areaID);
+    setCurrentArea(area);
+  }, [areaID, areas]);
+
   function loadDevices(flag) {
-    readDeviceswithArea(areaID, (result)=> {
+    readDeviceswithArea(areaID, (result) => {
       console.log(result);
-      if(flag==="actuator" || !flag) {
+      if (flag === "actuator" || !flag) {
         setActuators([]);
-        setActuators(result.filter(device => device.type === "actuator"));
+        setActuators(result.filter((device) => device.type === "actuator"));
       }
-      if(flag==="sensor" || !flag) {
-        setSensors([])
-        setSensors(result.filter(device => device.type === "sensor")); 
+      if (flag === "sensor" || !flag) {
+        setSensors([]);
+        setSensors(result.filter((device) => device.type === "sensor"));
       }
     });
   }
 
-  useEffect(()=>{
+  useEffect(() => {
     if (!showRegisterModal) {
       loadDevices();
     }
   }, [showRegisterModal, areaID]);
-  
+
   return (
     <Container>
-      <TitleWrapper>
-        <TopText>
-          {formattedDate}
-          <span>서울시 강남구</span>
-        </TopText>
-        <Line />
-      </TitleWrapper>
-
       <EventWrapper>
-        <select name="area" style={{ width: 391, height: 80, fontSize: 40 }}
-                onChange={(e) => {setAreaID(e.target.value)}}
-                value={areaID}>
-          { areas.map((area)=>(<option value={area.areaID}>{area.name}</option>)) }
+        <select
+          name="area"
+          style={{ width: 391, height: 80, fontSize: 40 }}
+          onChange={(e) => {
+            setAreaID(e.target.value);
+          }}
+          value={areaID}
+        >
+          {areas.map((area) => (
+            <option value={area.areaID}>{area.name}</option>
+          ))}
         </select>
-        <Button onClick={()=>{setShowRegisterModal(true)}}>
+        <Button
+          onClick={() => {
+            setShowRegisterModal(true);
+          }}
+        >
           <img src={add} alt="" width={48} height={48} />
           {"기기 추가"}
         </Button>
       </EventWrapper>
 
+      <DeviceDescriptionWrapper>
+        <Description>{currentArea?.description}</Description>
+      </DeviceDescriptionWrapper>
+
       <DeviceMonitorWapprer>
         {/* 센서 */}
-        <DeviceMonitorBox isSensor devices={sensors} loadDevices={loadDevices} />
+        <DeviceMonitorBox
+          isSensor
+          devices={sensors}
+          loadDevices={loadDevices}
+        />
 
         {/* 작동기 */}
         <DeviceMonitorBox devices={actuators} loadDevices={loadDevices} />
       </DeviceMonitorWapprer>
-      <RegisterDevice show={showRegisterModal} setShow={setShowRegisterModal} areaId={areaID}/>
+      <RegisterDevice
+        show={showRegisterModal}
+        setShow={setShowRegisterModal}
+        areaId={areaID}
+      />
     </Container>
   );
 };
@@ -93,36 +108,11 @@ const Container = styled.div`
   padding: 0px 60px;
 `;
 
-const TitleWrapper = styled.div`
-  display: flex;
-  flex-direction: row;
-`;
-
-const TopText = styled.p`
-  display: flex;
-  font-size: 50px;
-  color: #1b1b1b;
-  flex-direction: column;
-  width: 610px;
-
-  & > span {
-    font-size: 80px;
-    color: #448569;
-    font-weight: 700;
-  }
-`;
-
-const Line = styled.div`
-  width: 3px;
-  height: 210px;
-  background-color: #d9d9d9;
-`;
-
 const EventWrapper = styled.div`
   display: flex;
   width: 100%;
   justify-content: space-between;
-  padding-top: 90px;
+  padding-top: 10px;
 `;
 
 const Button = styled.button`
@@ -147,4 +137,18 @@ const DeviceMonitorWapprer = styled.div`
   display: flex;
   padding-top: 20px;
   justify-content: space-between;
+`;
+
+const DeviceDescriptionWrapper = styled.div`
+  display: flex;
+  width: 100%;
+`;
+
+const Description = styled.div`
+  color: #717171;
+  font-size: 50px;
+  white-space: normal;
+  text-overflow: ellipsis;
+  max-height: 200px;
+  overflow-y: auto;
 `;
