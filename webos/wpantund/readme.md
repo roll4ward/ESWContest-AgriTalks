@@ -76,7 +76,7 @@ nano conf/local.conf
 ```
 파일에 다음 줄을 추가:
 ```bash
-IMAGE_INSTALL_append = " wpantund"
+IMAGE_INSTALL:append = " wpantund"
 ```
 
 ## 2. bblayers.conf 파일 수정
