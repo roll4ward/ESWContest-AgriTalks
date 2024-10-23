@@ -16,11 +16,12 @@
 
 <!-- 2x2 그리드로 이미지 추가 -->
 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
-   <img src="https://github.com/user-attachments/assets/967ec898-0610-4150-8ea7-35010ed90e0b" alt="image1" style="width:100%">
-   <img src="https://github.com/user-attachments/assets/8ef329b7-83bf-4b86-9006-40651feb4ab8" alt="image2" style="width:100%">
-   <img src="https://github.com/user-attachments/assets/9163539b-26bd-459f-b31d-f4b09d6ee481" alt="image3" style="width:100%">
-   <img src="https://github.com/user-attachments/assets/dc93bc3d-d5de-4e8d-840d-85e11fcd1197" alt="image4" style="width:100%">
+   <img src="https://github.com/user-attachments/assets/967ec898-0610-4150-8ea7-35010ed90e0b" alt="image1" style="width:100%; height:auto; max-width:200px;">
+   <img src="https://github.com/user-attachments/assets/8ef329b7-83bf-4b86-9006-40651feb4ab8" alt="image2" style="width:100%; height:auto; max-width:200px;">
+   <img src="https://github.com/user-attachments/assets/9163539b-26bd-459f-b31d-f4b09d6ee481" alt="image3" style="width:100%; height:auto; max-width:200px;">
+   <img src="https://github.com/user-attachments/assets/dc93bc3d-d5de-4e8d-840d-85e11fcd1197" alt="image4" style="width:100%; height:auto; max-width:200px;">
 </div>
+
 
 농담(AgriTalk) 프로젝트는 2024 임베디드 소프트웨어 경진대회의 일환으로 개발되었습니다. 
 이 프로젝트는 webOS를 기반으로 한 스마트 농업 시스템을 구축하는 것을 목표로 하고 있습니다. 
