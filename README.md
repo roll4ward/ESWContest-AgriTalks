@@ -1,4 +1,4 @@
-# 2023ESWContest_webOS_3015 🌱
+![image](https://github.com/user-attachments/assets/50288616-4ddf-4df1-9bc4-589082685859)# 2023ESWContest_webOS_3015 🌱
 
 ## Links
 
@@ -15,6 +15,7 @@
 ---
 
 # 프로젝트 소개 🚜
+![image](https://github.com/user-attachments/assets/27ec0538-452f-4736-95a8-a0f98af421cc)
 
 <!-- 2x2 그리드로 이미지 추가 -->
 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
@@ -24,8 +25,8 @@
    <img src="https://github.com/user-attachments/assets/8ef329b7-83bf-4b86-9006-40651feb4ab8" alt="image2" style="width:40%; height:auto; max-width:200px;">
 
    ### AI와 대화하기 섹션 🧑‍🌾
-   <img src="https://github.com/user-attachments/assets/9163539b-26bd-459f-b31d-f4b09d6ee481" alt="image3" style="width:40%; height:auto; max-width:200px;">
-   <img src="https://github.com/user-attachments/assets/dc93bc3d-d5de-4e8d-840d-85e11fcd1197" alt="image4" style="width:40%; height:auto; max-width:200px;">
+   <img src="https://github.com/user-attachments/assets/9339930a-0e3c-471c-aae0-7d304e29e951" alt="image3" style="width:40%; height:auto; max-width:200px;">
+   <img src="https://github.com/user-attachments/assets/27ec0538-452f-4736-95a8-a0f98af421cc" alt="image4" style="width:40%; height:auto; max-width:200px;">
 </div>
 
 농담(AgriTalk) 프로젝트는 2024 임베디드 소프트웨어 경진대회의 일환으로 개발되었습니다. 
@@ -35,29 +36,6 @@ AI와 고급 통신 프로토콜을 활용하여 사용자와 농업 장비 간�
 
 ---
 
-## 데이터 관리 섹션 🌾
-
-<!-- 데이터 관리 섹션에 2개의 이미지 추가 -->
-<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
-   <img src="path/to/your/image1.png" alt="데이터 관리 이미지 1" style="width:100%; height:auto; max-width:200px;">
-   <img src="path/to/your/image2.png" alt="데이터 관리 이미지 2" style="width:100%; height:auto; max-width:200px;">
-</div>
-
-데이터 관리는 계층 구조로 구성되어 있으며, 손쉽게 기기를 추가하거나 제거할 수 있습니다. 이를 통해 농업 데이터의 저장 및 확인이 효율적으로 이루어집니다.
-
----
-
-### AI와 대화하기 섹션 🧑‍🌾
-
-<!-- AI와 대화하기 섹션에 2개의 이미지 추가 -->
-<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
-   <img src="path/to/your/image3.png" alt="AI와 대화 이미지 1" style="width:100%; height:auto; max-width:200px;">
-   <img src="path/to/your/image4.png" alt="AI와 대화 이미지 2" style="width:100%; height:auto; max-width:200px;">
-</div>
-
-AI와 대화를 통해 시스템을 제어할 수 있으며, 음성 인터페이스를 활용하여 농업 관련 질문을 하거나 요청을 처리할 수 있습니다.
-
----
 
 ## 주요 기능 🛠️
 - **음성 인식 및 제어**: 음성을 통해 농업 장비를 제어하고 다양한 작업을 수행할 수 있습니다.
