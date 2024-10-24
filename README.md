@@ -6,7 +6,7 @@
 [![GitHub](https://img.shields.io/badge/GITHUB-000000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/roll4ward/ESWContest-ThreadModule) 
 
 ### Others
-[![YouTube](https://img.shields.io/badge/YOUTUBE-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://youtu.be/KivOYPYOhD8) [![PowerPoint](https://img.shields.io/badge/POWERPOINT-B7472A?style=for-the-badge&logo=microsoft-powerpoint&logoColor=white)](https://www.microsoft.com/en-us/microsoft-365/powerpoint)
+[![YouTube](https://img.shields.io/badge/YOUTUBE-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://youtu.be/KivOYPYOhD8) [![PowerPoint](https://img.shields.io/badge/POWERPOINT-B7472A?style=for-the-badge&logo=microsoft-powerpoint&logoColor=white)](https://docs.google.com/presentation/d/1gpYKtbu3-wTxwrp7OETVl8aiAA4hDhQ9/edit?usp=sharing&ouid=100062750372709514654&rtpof=true&sd=true)
 
 ## 목차 📋
 - [프로젝트 소개](#프로젝트-소개)
